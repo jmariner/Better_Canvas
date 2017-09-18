@@ -43,57 +43,6 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 		});
 	},
 
-	/*
-	function loadVars(callback) {
-
-		Utils.getJSON(chrome.extension.getURL("/data/vars.json"), mainData => {
-			Utils.getJSON(chrome.extension.getURL("/data/sass.json"), sassData => {
-
-				const scope = {
-					courseID: DATA.courseID
-				};
-
-				let newVars = $.extend({}, sassData, mainData);
-
-				const processObject = (obj, objName) => {
-					$.each(obj, (key, val) => {
-
-						// if first array item is this string, replace the array with the joined lines
-						if (val instanceof Array && val[0] === "MULTILINE") {
-							val = val.slice(1).join("");
-							obj[key] = val;
-						}
-
-						if (typeof val === "object") {
-							processObject(val, key);
-						}
-						else if (typeof val === "string") {
-
-							if (newVars.prefix_types.includes(objName) || newVars.prefix_types.includes(key))
-								val = newVars.prefix + "-" + val;
-
-							if (objName == "data_attr")
-								val = "data-" + val;
-
-							// format scope is the already-formatted vars, up until this one was reached
-							obj[key] = Utils.scopeFormat(val, $.extend({}, scope, newVars));
-						}
-
-					});
-				};
-
-				processObject(newVars, "root");
-
-				delete newVars.prefix_types;
-				V = newVars;
-
-				Utils.runCb(callback);
-
-			});
-		});
-
-	},*/
-
 	function getCourseTabs(callback, end) {
 
 		Utils.getJSON(V.canvas.api.urls.custom_colors, (colorData: {custom_colors: Map<string, string>}) => {
@@ -258,125 +207,6 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 
 	},
 
-	/*
-	function _getAssignments(callback) {
-
-		// hopefully 1000 is enough to get all in one go
-		const url = Utils.perPage(V.canvas.api.urls.assignments, 1000);
-
-		Utils.getJSON(url, resultData => {
-
-			resultData.forEach(assignmentJson => {
-				if (assignmentJson.quiz_id) {
-					DATA.contentToAssignment.set(assignmentJson.quiz_id, assignmentJson.id);
-				}
-				else if (assignmentJson.discussion_topic) {
-					DATA.contentToAssignment.set(assignmentJson.discussion_topic.id, assignmentJson.id);
-				}
-			});
-
-			Utils.runCb(callback);
-		});
-
-	},
-
-	function getModules(callback) {
-
-		// hopefully no more than 10 modules
-		const url = Utils.perPage(V.canvas.api.urls.modules, 10);
-
-		Utils.getJSON(url, resultData => {
-
-			resultData.forEach(moduleData => {
-				DATA.modules.set(moduleData.id, new Module(moduleData));
-				DATA.moduleItemCounts.set(moduleData.id, moduleData.items_count);
-			});
-
-			Utils.runCb(callback);
-		});
-
-	},
-
-	function getModuleItems(callback) {
-
-		const moduleIDs = Array.from(DATA.modules.keys());
-		let waitingCount = moduleIDs.length;
-
-		moduleIDs.forEach(moduleID => {
-
-		// const _getModuleItems = function (moduleIdIndex) {
-		//
-		// 	if (moduleIdIndex >= moduleIDs.length) {
-		// 		Utils.runCb(callback);
-		// 		return;
-		// 	}
-		//
-		// 	const moduleID = moduleIDs[moduleIdIndex];
-
-
-			const url = Utils.perPage(
-				Utils.format(V.canvas.api.urls.module_items, {moduleID}),
-				DATA.moduleItemCounts.get(moduleID));
-
-			Utils.getJSON(url, resultData => {
-
-				resultData.forEach(modItem => {
-					const item = new ModuleItem(modItem);
-					DATA.moduleItems.set(modItem.id, item);
-					DATA.modules.get(modItem.module_id).items.push(item);
-				});
-
-				if (--waitingCount === 0)
-					Utils.runCb(callback);
-
-			//	_getModuleItems(moduleIdIndex + 1);
-
-			});
-
-	//	};
-		});
-
-	//	_getModuleItems(0);
-
-	},
-
-
-	function getCustomData(callback) {
-
-		const url = Utils.format(V.canvas.api.urls.custom_data, {dataPath: ""});
-
-		Utils.getJSON(url, resultData => {
-			resultData = resultData.data;
-
-			// this happens when there was an issue getting the data or there was no data at all
-			if (resultData === undefined) {
-				Utils.runCb(callback);
-				return;
-			}
-
-			const complete = (resultData.completed_assignments || {})[DATA.courseID] || [];
-			const hidden = (resultData.hidden_assignments || {})[DATA.courseID] || [];
-
-			// Map.forEach takes "function(value, key, map)"
-			DATA.moduleItems.forEach((modItem, modItemId) => {
-				modItem.checked = complete.includes(modItemId);
-				modItem.hidden = hidden.includes(modItemId);
-			});
-
-			const activeStates = resultData.active_states || [];
-
-			// load states from config
-			$.each(V.state, (name, stateData) => {
-				const active = activeStates.includes(name);
-				DATA.states.set(name, new State(name, stateData, active));
-			});
-
-			Utils.runCb(callback);
-
-		});
-
-	}*/
-
 ];
 
 (function init() {
@@ -426,7 +256,7 @@ class Main {
 
 		// =============== misc global init stuff ============================
 
-		// this was annoying me - removing all repeated whitespace in class attributes
+		// removing all repeated whitespace in class attributes
 		$("[class]").attr("class", (i, oldClass) => (oldClass.match(/\S+/g) || []).join(" "));
 
 		// clean up discussion post images
@@ -613,7 +443,8 @@ class Main {
 					$("#"+i.canvasElementId).find(".module-item-status-icon").after(V.element.submission_icon);
 			});
 
-			*/
+		*/
+
 		// === add click event for hide buttons ===
 
 		PAGE.main.on("click", `.${V.cssClass.hide_button} > i`, function() {
@@ -794,37 +625,30 @@ class UI {
 	}
 
 	private static updateTableOfContents(module?: Module) {
-	//	if (DATA.elements.toc === null) return;
+		const allItems = module.items.filter(i => !i.isSubHeader && !i.hidden);
+		const totalItems = allItems.length;
 
-	//	if (module === undefined) {
-	//		Array.from(DATA.modules.values()).forEach(UI.updateTableOfContents);
-	//	}
-	//	else {
-			const allItems = module.items.filter(i => !i.isSubHeader && !i.hidden);
-			const totalItems = allItems.length;
+		let checkedItems, percent;
 
-			let checkedItems, percent;
+		if (totalItems > 0) {
+			checkedItems = allItems.filter(i => i.checked).length;
+			percent = Math.round(checkedItems / totalItems * 100);
+		}
+		else {
+			checkedItems = 0;
+			percent = 0;
+		}
 
-			if (totalItems > 0) {
-				checkedItems = allItems.filter(i => i.checked).length;
-				percent = Math.round(checkedItems / totalItems * 100);
-			}
-			else {
-				checkedItems = 0;
-				percent = 0;
-			}
+		const backgroundImage = Utils.format(V.misc.toc_background, {percent});
 
-			const backgroundImage = Utils.format(V.misc.toc_background, {percent});
-
-			DATA.elements.toc
-				.find(`[${V.data_attr.toc_module_id}='${module.id}']`)
-				.attr(V.data_attr.toc_total, totalItems)
-				.attr(V.data_attr.toc_checked_count, checkedItems)
-				.attr(V.data_attr.toc_percentage, percent)
-				.closest("li")
-				.toggleClass(V.cssClass.item_hidden, totalItems === 0)
-				.css({backgroundImage});
-	//	}
+		DATA.elements.toc
+			.find(`[${V.data_attr.toc_module_id}='${module.id}']`)
+			.attr(V.data_attr.toc_total, totalItems)
+			.attr(V.data_attr.toc_checked_count, checkedItems)
+			.attr(V.data_attr.toc_percentage, percent)
+			.closest("li")
+			.toggleClass(V.cssClass.item_hidden, totalItems === 0)
+			.css({backgroundImage});
 	}
 
 	static updateModules() {

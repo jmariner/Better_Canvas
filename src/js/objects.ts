@@ -9,8 +9,6 @@ type Callback = () => void;
 class Data {
 	coursePage: CanvasPage;
 	courseID: number;
-//	contentToAssignment: Map<number, number>; // content id => assignment id
-//	moduleItemCounts: Map<number, number>; // module id => module item count
 	modules: Map<number, Module>; // module id => array of ModuleItem
 	moduleItems: Map<number, ModuleItem>; // module item id => ModuleItem
 	states: Map<string, State>; // stateName => State
@@ -21,8 +19,6 @@ class Data {
 	elements: {jump_button: JQuery, toc: JQuery};
 
 	constructor() {
-	//	this.contentToAssignment = new Map();
-	//	this.moduleItemCounts = new Map();
 		this.modules = new Map();
 		this.moduleItems = new Map();
 		this.states = new Map();
@@ -57,42 +53,6 @@ class Page {
 			this.grades = $("#grades_summary");
 	}
 }
-
-/*
-// layout of config file (vars.json + sass.json)
-class Config {
-
-	prefix;
-
-	"class": {active, checkbox_parent, checkbox_checked, checkbox_td, flash, course_link_text,
-		item_hidden, hide_button, hide_disabled, toc_ratio, toc_title, fixed};
-
-	data_attr: {toc_module_id, toc_total, toc_checked_count, toc_percentage, mod_item_id, course_name, course_code};
-
-	id: {toc, jump_button};
-
-	misc: {toc_background};
-
-	// all items in this map are only used in the scss file, so omitting them here
-	//color: {...};
-
-	tooltip: {mark_complete, mark_incomplete, hide, unhide, hide_disabled, jump_button};
-	element: {checkbox, hide_button, course_link, toc, toc_item, jump_button, submission_icon};
-	state: Object; // don't care here, only used during init to set DATA.states
-
-	ui: {top_inside_ratio: number, scroll_top_offset: number, jump_top_cutoff: number,
-		toc_top_margin: number, scroll_time: number, fade_time: number};
-
-	canvas: {
-		selector: {
-			module, module_item, subheader
-		}
-		api: {
-			namespace, rootUrl, per_page: number,
-			urls: {custom_data, favorite_courses, custom_colors, assignments, modules, module_items}
-		}
-	};
-}*/
 
 class CustomCourseTab {
     readonly id: number;
@@ -231,68 +191,6 @@ class ModuleItem {
 
 }
 
-/*
-class ModuleItem0 {
-    private name: string;
-    private type: ModuleItemType;
-    private gradebookId: number;
-
-    readonly contentId: number;
-    readonly moduleItemId: number;
-    readonly isSubHeader: boolean;
-    readonly canvasElementId: string;
-
-    checked: boolean;
-    hidden: boolean;
-    checkboxElement: JQuery;
-    hideElement: JQuery;
-
-    constructor(moduleItemJson) {
-
-        this.moduleItemId = moduleItemJson.id;
-        this.name = moduleItemJson.title;
-
-        let typeString: string = moduleItemJson.type
-            .replace(/([A-Z])/g, (r, string) => "_"+string)
-            .replace(/^_/, "").toUpperCase();
-
-        this.type = ModuleItemType[typeString];
-        this.isSubHeader = this.type === ModuleItemType.SUB_HEADER;
-
-        this.contentId = moduleItemJson.content_id;
-        if (this.type === ModuleItemType.ASSIGNMENT) {
-            this.gradebookId = this.contentId;
-        }
-        else {
-            this.gradebookId = null;
-        }
-
-        this.checked = false;
-        this.hidden = false;
-
-        switch (DATA.coursePage) {
-            case CanvasPage.MODULES:
-                this.canvasElementId = "context_module_item_" + this.moduleItemId; // li element
-                break;
-            case CanvasPage.GRADES:
-                this.canvasElementId = "submission_" + this.gradebookId; // tr element
-                break;
-            default:
-                this.canvasElementId = null;
-        }
-
-    }
-
-    setAssignmentId(id: number) {
-    	this.gradebookId = id;
-	}
-
-	get isGraded() {
-    	return this.gradebookId !== null;
-	}
-
-}*/
-
 enum ModuleItemType {
     //noinspection JSUnusedGlobalSymbols
 	ASSIGNMENT, SUB_HEADER, DISCUSSION, QUIZ, PAGE, FILE, EXTERNAL_URL
@@ -377,35 +275,6 @@ class Utils {
 		}
 		return current;
 	}
-
-	/** @deprecated */
-	/*
-	static getPaginatedJSONArray(url: string, callback: (data: any[]) => void) {
-
-		let allData: any[] = [];
-
-		let getPage = function(page) {
-
-			Utils.getJSON(`${url}?page=${page}&per_page=${V.canvas.api.per_page}`, result => {
-
-				if (result.length > 0) {
-					allData = allData.concat(result);
-
-					if (result.length === V.canvas.api.per_page)
-						getPage(page + 1);
-					else
-						Utils.safeCb(callback)(allData);
-				}
-				else {
-					Utils.safeCb(callback)(allData);
-				}
-
-			});
-		};
-
-		getPage(1);
-
-	}*/
 
 	static perPage(url: string, perPage: number) {
 		return `${url}?per_page=${perPage}`;

@@ -1,0 +1,62 @@
+@import '/src/js/vars.ts';
+
+@font-face {
+	font-family: 'Roboto';
+	font-style: normal;
+	font-weight: 400;
+	src: url("/fonts/Roboto-Regular.ttf");
+}
+
+// unquote shorthand
+@function u($arg) { @return unquote($arg); }
+
+// "vars" variable is set by the vars.ts import
+@function var($type, $name) { @return map-get(map-get($vars, $type), $name); }
+
+// ===== functions for getting and using values from sass.json =====
+
+@function data_attr($value, $attr: true) {
+	@if $attr {
+		//	@return attr(data-#{prefix($data_attr, $value)});
+		@return attr(#{data_attr($value, false)});
+	}
+	@else {
+		//	@return data-#{prefix($data_attr, $value)};
+		//	@return map-get($data_attr, $value);
+		@return var(data_attr, $value);
+	}
+}
+
+@function class($value, $el:"") {
+	//	@return u("#{u(#{$el})}.#{prefix($class, $value)}");
+	//	@return u("#{u(#{$el})}.#{map-get($cssClass, $value)}");
+	@return u("#{u(#{$el})}.#{var(cssClass, $value)}");
+}
+
+
+@function id($value, $el:"") {
+	//	@return u("##{prefix($id, $value)}");
+	//	@return u("##{map-get($id, $value)}");
+	@return u("#{u(#{$el})}##{var(id, $value)}");
+}
+
+@function state($value, $el:"") {
+	//	@return u("#{u(#{$el})}.#{prefix(map-get($state, $value), class)}");
+	//	@return u("#{u(#{$el})}.#{map-get(map-get($state, $value), cssClass)}");
+	@return u("#{u(#{$el})}.#{map-get(var(state, $value), cssClass)}");
+}
+
+@function ui($value) {
+	//	@return map-get($ui, $value);
+	@return var(ui, $value);
+}
+
+@function color($value, $transparentizeRatio: -1) {
+	@if $transparentizeRatio == -1 {
+		//	@return map-get($color, $value);
+		@return var(color, $value);
+	}
+	@else {
+		@return transparentize(color($value), $transparentizeRatio);
+	}
+}

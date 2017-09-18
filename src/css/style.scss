@@ -1,0 +1,443 @@
+@charset "UTF-8";
+@import 'canvas_icons';
+@import 'vars';
+
+$canvasIconFont: "InstructureIcons-Solid";
+$courseLinkSize: 28px;
+$checkboxSize: 20px;
+$iconSize: 22px;
+$checkboxBorderSize: 2;
+$hideButtonSize: 14px;
+$jumpButtonSize: 36px;
+$jumpButtonOffset: 16px;
+$tocBorderWidth: 1px;
+
+@mixin square($size, $includeFontSize: false) { 
+	width: $size;
+	height: $size;
+
+	@if $includeFontSize {
+		font-size: $size;
+	}
+}
+
+@mixin canvasIcon($name, $size: 0) {
+	content: map-get($canvas_icons, $name);
+	font-family: $canvasIconFont;
+	display: inline-block;
+	vertical-align: middle;
+	font-style: normal;
+	line-height: 1;
+
+	@if $size > 0 {
+		@include square($size, true);
+	}
+}
+
+// convert ms to seconds
+@function secs($ms) {
+	@return #{$ms / 1000}s;
+}
+
+// ===== styles =====
+
+#context_modules {
+
+	#{class(flash)} {
+		&.context_module, &.context_module_item > div.ig-row {
+			animation: flash 0.75s ease;
+		}
+	}
+
+	@keyframes flash {
+	//	0%, 100% { background-color: transparent; }
+		50% { background-color: color(highlight_red, 0.5); }
+	}
+
+}
+
+#menu {
+
+	div.menu-item-icon-container > i {
+		@include square($courseLinkSize);
+		color: white;
+		&:before {
+			@include canvasIcon(star /*"\EAB6"*/, $courseLinkSize);
+		}
+	}
+
+	a.ic-app-header__menu-list-link { 
+		text-decoration: none;
+		&:hover, &:focus {
+			background-color: rgba(0, 0, 0, .5);
+		}
+	}
+
+	#{class(course_link_text, div)} {
+
+		&:before {
+			content: data_attr(course_name);
+			display: inline;
+		}
+
+		&:after {
+			border-right-color: inherit;
+		}
+
+		body.primary-nav-expanded & {
+			background-color: transparent !important;
+
+			&:before {
+				content: data_attr(course_code);
+			}
+		}
+	}
+}
+
+#content li.context_module_item {
+
+	// TODO play with the timing of these transitions
+
+	max-height: 100px;
+	overflow: hidden;
+	transition: max-height secs(ui(fade_time)) linear;
+
+	> div.ig-row {
+		// for hidden fading to/from gray background
+		transition: background-color secs(ui(fade_time)) linear;
+	}
+
+	// 'show hidden' state enabled and this item hidden
+	#{state(show_hidden, body)} &#{class(item_hidden)} > div.ig-row {
+
+		&, #{class(checkbox_parent, div)} > input[type='checkbox']:after {
+			background-color: lightgray;
+		}
+	}
+
+	// 'show hidden' not enabled and item hidden OR 'hide checked' enabled and item checked
+	body:not(#{state(show_hidden)}) &#{class(item_hidden)},
+	#{state(hide_checked, body)} &#{class(checkbox_checked)} {
+	//	display: none;
+		max-height: 0;
+	}
+}
+
+#content div.context_module {
+	max-height: 5000px;
+	overflow: hidden;
+	transition: max-height secs(ui(fade_time)) linear,
+				padding secs(ui(fade_time)) linear,
+				background-color secs(ui(fade_time)) linear;
+
+	#{state(show_hidden, body)} &#{class(item_hidden)} {
+		background-color: lightgray;
+	}
+
+	body:not(#{state(show_hidden)}) &#{class(item_hidden)} {
+		max-height: 0;
+		padding-top: 0;
+		padding-bottom: 0;
+		border-bottom: none;
+	}
+}
+
+// the hide button
+#{class(hide_button, div)} {
+	position: absolute;
+	top: 3px;
+	right: 3px;
+	@include square($hideButtonSize);
+	display: inline-block;
+	cursor: pointer;
+	visibility: hidden;
+
+	&#{class(hide_disabled)} {
+		opacity: 0.25;
+		cursor: default;
+	}
+
+	#content li.context_module_item:hover & {
+		visibility: visible;
+
+		&:not(#{class(hide_disabled)}):hover > i:before {
+			color: color(highlight_red);
+		}
+	}
+
+	> i {
+		@include square($hideButtonSize);
+
+		&:before  {
+			@include canvasIcon(x, $hideButtonSize);
+			color: color(checkbox_border);
+			position: absolute;
+			top: 0;
+			left: 0;
+		}
+
+		&#{class(item_hidden)}:before {
+			content: map-get($canvas_icons, eye);
+		}
+	}
+}
+
+// the checkbox
+#{class(checkbox_parent, div)} {
+	position: relative;
+
+	@include square($checkboxSize);
+
+	li.context_module_item & {
+		margin-right: $checkboxSize;
+	}
+
+	> input[type='checkbox'] {
+		position: absolute;
+		cursor: pointer;
+		margin: 0;
+		left: 0;
+		top: 0;
+		@include square($checkboxSize);
+		min-height: 0;
+		outline: none;
+
+		&:before {
+			@include canvasIcon(check, $checkboxSize);
+			color: color(checkbox_check);
+			position: absolute;
+			top: 0;
+			left: 0;
+			z-index: 1;
+
+			transition: transform 0.4s cubic-bezier(0.45, 1.8, 0.5, 0.75),
+						color 0.2s linear;
+			transform: scale(0);
+		}
+
+	//	&:hover:not(:checked):before {
+	//		content: map-get($canvas_icons, question);
+	//		transition-delay: 0.75s, 0s;
+	//		transform: scale(1);
+	//	}
+
+		&:checked:before {
+			transform: scale(1);
+		}
+
+		&:hover:checked:before {
+			transition-delay: 0s, 0.75s;
+			color: red;
+		}
+
+		#{state(highlight_unchecked, body)} li.context_module_item:not(#{class(item_hidden)}) &:not(:checked):after {
+			border-color: color(highlight_orange);
+		}
+
+		&:after {
+			content: "";
+			position: absolute;
+			top: #{-$checkboxBorderSize}px;
+			left: #{-$checkboxBorderSize}px;
+			@include square($checkboxSize);
+			border: #{$checkboxBorderSize}px solid color(checkbox_border);
+			border-radius: 5px;
+			background: white;
+			cursor: pointer;
+		}
+
+	}
+}
+
+// the icon wrapper
+#{class(item_icon, div)} {
+
+	&, > i {
+		@include square($iconSize);
+	}
+
+	& > i:before {
+		@include square($iconSize, true);
+	}
+
+	margin-right: $iconSize/2;
+
+}
+
+#grades_summary #{class(checkbox_td, td)} {
+	width: $checkboxSize + 2;
+
+	& + th {
+		padding-left: 8px;
+		word-break: keep-all;
+
+		> .unread-grade {
+			margin-left: -10px;
+		}
+	}
+}
+
+#{id(toc, div)} {
+
+	margin: #{ui(toc_top_margin)}px 0;
+	padding: 0 0 0 24px;
+	height: calc(100vh - #{2 * ui(toc_top_margin)}px - #{$jumpButtonOffset + $jumpButtonSize});
+
+	&#{class(fixed)} {
+		position: fixed;
+		left: 54px; // width of canvas sidebar
+		top: 0 !important; // important to override inline styles
+
+		body.primary-nav-expanded & {
+			left: 84px; // expanded sidebar width
+		}
+	}
+
+	> nav {
+
+		font-size: 12px;
+
+		> ul > li {
+
+			body:not(#{state(show_hidden)}) &#{class(item_hidden)} {
+				display: none;
+			}
+
+			#{state(show_hidden, body)} &#{class(item_hidden)} {
+				background-color: lightgray !important;
+
+				#{class(toc_ratio, div)} {
+					display: none;
+				}
+			}
+
+			border: solid $tocBorderWidth color(toc_border);
+			margin-bottom: -1px; // collapses bottom borders
+
+		//	&:not(:last-child) {
+		//		border-bottom: none;
+		//	}
+
+			> a {
+				white-space: normal;
+				padding: 5px 5px 5px 8px;
+				text-align: left;
+				border-radius: 0;
+
+				&:focus {
+					outline: none;
+					background: none;
+				}
+
+				&:hover {
+					background-color: rgba(0, 0, 0, .25);
+				}
+
+				> #{class(toc_ratio, div)} {
+
+					text-decoration: none;
+					padding: 8px 0 0 8px;
+
+					&:not([#{data_attr(toc_total, false)}]) {
+						visibility: hidden;
+					}
+
+					&:before, &:after {
+						display: inline-block;
+						width: 4em;
+					}
+
+					&:before {
+						content: data_attr(toc_checked_count) "/" data_attr(toc_total);
+					}
+
+					&:after {
+						content: data_attr(toc_percentage)"%";
+					}
+				}
+
+			}
+		}
+	}
+
+	#{class(toc_title, div)} {
+		text-align: center;
+		font-size: 14px;
+		padding: 8px;
+		background-color: color(toc_title);
+		color: white;
+		border: $tocBorderWidth solid color(toc_border);
+		border-bottom: none;
+		border-top: $tocBorderWidth solid color(toc_border) !important;
+	}
+}
+
+#{id(jump_button)} {
+	position: fixed;
+	bottom: -#{$jumpButtonSize};
+	left: 138px; // middle of left sidebar
+	transition: bottom .4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+	cursor: pointer;
+	color: color(jump_button);
+	z-index: 999;
+
+	body.primary-nav-expanded & {
+		left: 168px; // add 30px to account for expanded nav
+	}
+
+	&:hover {
+		color: lighten(color(jump_button), 25%);
+	}
+
+	&#{class(active)} {
+		bottom: 16px;
+	}
+
+	> i {
+
+		@include square($jumpButtonSize);
+		color: inherit;
+
+		&:before {
+			@include canvasIcon(drop-down /*"\EA34"*/, $jumpButtonSize);
+			transform-origin: center;
+			transform: scale(1, -1);
+		}
+	}
+}
+
+// ================ misc additions to canvas styles ========================
+
+body.primary-nav-expanded div.ic-app-header__secondary-navigation {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+}
+
+#content ul.context_module_items {
+
+	&:not(:empty) { // TODO does this do anything?
+		border: 1px solid color(checkbox_border);
+		border-radius: 3px;
+		border-bottom: none;
+	}
+
+	> li {
+
+		margin-top: 0;
+
+		> .ig-row {
+			border: none;
+			border-bottom: 1px solid color(checkbox_border);
+		}
+	}
+}
+
+#content #context_modules_sortable_container {
+	padding-bottom: 0;
+}
+
+aside#right-side ul#question_list {
+	max-height: none !important;
+}

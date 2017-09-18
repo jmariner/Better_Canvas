@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "types": ["jquery", "chrome", "node", "node-sass"],
+    "lib": ["es2016", "dom"],
+    "module": "system",
+    "target": "es5",
+    "removeComments": true,
+    "sourceMap": true
+  },
+  "files": [
+    "src/js/main.ts",
+    "src/js/popup.ts",
+    "src/js/options.ts"
+  ],
+  "compileOnSave": false,
+  "exclude": [
+    "node_modules"
+  ]
+}

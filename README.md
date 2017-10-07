@@ -30,3 +30,11 @@ This application accesses the Canvas API through a user's personal access token,
 
 ### Quiz View
 * Expanded question list in sidebar, removing the need to scroll the list
+
+## Screenshots
+
+### Popup
+![Popup Screenshot](img/screenshots/popup.png)
+
+### Table of Contents
+![TOC Screenshot](img/screenshots/table-of-contents.png)

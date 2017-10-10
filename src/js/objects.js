@@ -52,6 +52,8 @@ var State = (function () {
         var _this = this;
         this.name = key;
         this.bodyClass = stateData.cssClass;
+        this.onEnable = stateData.onEnable;
+        this.onDisable = stateData.onDisable;
         this.active = active;
         this.onPages = [];
         stateData.pages.forEach(function (page) {
@@ -60,6 +62,12 @@ var State = (function () {
                 _this.onPages.push(_page);
         });
     }
+    State.prototype.onChange = function (newState, vars, body) {
+        if (newState)
+            this.onEnable(vars, body);
+        else
+            this.onDisable(vars, body);
+    };
     return State;
 }());
 var Module = (function () {

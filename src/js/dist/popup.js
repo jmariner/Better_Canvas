@@ -52,6 +52,8 @@ var State = (function () {
         var _this = this;
         this.name = key;
         this.bodyClass = stateData.cssClass;
+        this.onEnable = stateData.onEnable;
+        this.onDisable = stateData.onDisable;
         this.active = active;
         this.onPages = [];
         stateData.pages.forEach(function (page) {
@@ -60,6 +62,12 @@ var State = (function () {
                 _this.onPages.push(_page);
         });
     }
+    State.prototype.onChange = function (newState, vars, body) {
+        if (newState)
+            this.onEnable(vars, body);
+        else
+            this.onDisable(vars, body);
+    };
     return State;
 }());
 var Module = (function () {
@@ -376,7 +384,8 @@ var Vars;
                 toc_percentage: "toc-percentage",
                 mod_item_id: "item-id",
                 course_name: "course-name",
-                course_code: "course-code"
+                course_code: "course-code",
+                def_indent: "default-indent"
             };
             this.id = {
                 toc: "toc",
@@ -402,7 +411,9 @@ var Vars;
                 jump_top_cutoff: 100,
                 toc_top_margin: 32,
                 scroll_time: 500,
-                fade_time: 500
+                fade_time: 500,
+                subheader_indent: 0,
+                main_indent: 1
             };
             this.state = {
                 show_hidden: {
@@ -419,6 +430,25 @@ var Vars;
                     cssClass: "mark-unchecked",
                     pages: ["modules", "grades"],
                     desc: "Mark unchecked items"
+                },
+                disable_indent_override: {
+                    pages: ["modules"],
+                    desc: "Disable Indent Overrides",
+                    onDisable: function (vars, body) {
+                        [0, 1, 2, 3, 4, 5].forEach(function (level) {
+                            return $(vars.canvas.selector.module_item, body).removeClass("indent_" + level);
+                        });
+                        $(vars.canvas.selector.subheader, body).addClass("indent_" + vars.ui.subheader_indent);
+                        $(vars.canvas.selector.not_subheader, body).addClass("indent_" + vars.ui.main_indent);
+                    },
+                    onEnable: function (vars, body) {
+                        $(vars.canvas.selector.module_item, body).each(function () {
+                            var _this = this;
+                            [0, 1, 2, 3, 4, 5].forEach(function (level) { return $(_this).removeClass("indent_" + level); });
+                            var defLevel = $(this).attr(vars.data_attr.def_indent);
+                            $(this).addClass("indent_" + defLevel);
+                        });
+                    }
                 }
             };
             var processObject = function (obj, objName) {
@@ -485,7 +515,8 @@ var Vars;
                     module: "div.context_module",
                     module_item: "li.context_module_item",
                     module_items: "ul.context_module_items",
-                    subheader: "li.context_module_sub_header"
+                    subheader: "li.context_module_sub_header",
+                    not_subheader: "li.context_module_item:not(.context_module_sub_header)"
                 },
                 api: {
                     namespace: _this._canvas.namespace,

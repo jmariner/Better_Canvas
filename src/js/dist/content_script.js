@@ -52,6 +52,8 @@ var State = (function () {
         var _this = this;
         this.name = key;
         this.bodyClass = stateData.cssClass;
+        this.onEnable = stateData.onEnable;
+        this.onDisable = stateData.onDisable;
         this.active = active;
         this.onPages = [];
         stateData.pages.forEach(function (page) {
@@ -60,6 +62,12 @@ var State = (function () {
                 _this.onPages.push(_page);
         });
     }
+    State.prototype.onChange = function (newState, vars, body) {
+        if (newState)
+            this.onEnable(vars, body);
+        else
+            this.onDisable(vars, body);
+    };
     return State;
 }());
 var Module = (function () {
@@ -376,7 +384,8 @@ var Vars;
                 toc_percentage: "toc-percentage",
                 mod_item_id: "item-id",
                 course_name: "course-name",
-                course_code: "course-code"
+                course_code: "course-code",
+                def_indent: "default-indent"
             };
             this.id = {
                 toc: "toc",
@@ -402,7 +411,9 @@ var Vars;
                 jump_top_cutoff: 100,
                 toc_top_margin: 32,
                 scroll_time: 500,
-                fade_time: 500
+                fade_time: 500,
+                subheader_indent: 0,
+                main_indent: 1
             };
             this.state = {
                 show_hidden: {
@@ -419,6 +430,25 @@ var Vars;
                     cssClass: "mark-unchecked",
                     pages: ["modules", "grades"],
                     desc: "Mark unchecked items"
+                },
+                disable_indent_override: {
+                    pages: ["modules"],
+                    desc: "Disable Indent Overrides",
+                    onDisable: function (vars, body) {
+                        [0, 1, 2, 3, 4, 5].forEach(function (level) {
+                            return $(vars.canvas.selector.module_item, body).removeClass("indent_" + level);
+                        });
+                        $(vars.canvas.selector.subheader, body).addClass("indent_" + vars.ui.subheader_indent);
+                        $(vars.canvas.selector.not_subheader, body).addClass("indent_" + vars.ui.main_indent);
+                    },
+                    onEnable: function (vars, body) {
+                        $(vars.canvas.selector.module_item, body).each(function () {
+                            var _this = this;
+                            [0, 1, 2, 3, 4, 5].forEach(function (level) { return $(_this).removeClass("indent_" + level); });
+                            var defLevel = $(this).attr(vars.data_attr.def_indent);
+                            $(this).addClass("indent_" + defLevel);
+                        });
+                    }
                 }
             };
             var processObject = function (obj, objName) {
@@ -485,7 +515,8 @@ var Vars;
                     module: "div.context_module",
                     module_item: "li.context_module_item",
                     module_items: "ul.context_module_items",
-                    subheader: "li.context_module_sub_header"
+                    subheader: "li.context_module_sub_header",
+                    not_subheader: "li.context_module_item:not(.context_module_sub_header)"
                 },
                 api: {
                     namespace: _this._canvas.namespace,
@@ -537,7 +568,7 @@ var Vars;
         DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
         DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
         if (onCoursePage)
-            console.debug("on course", DATA.courseID, "page, at", CanvasPage[DATA.coursePage]);
+            console.debug("On course #" + DATA.courseID + " page, at " + CanvasPage[DATA.coursePage]);
         V = Vars.VARS;
         V.init(DATA.courseID);
         Utils.loadToken(function (success) {
@@ -767,6 +798,18 @@ var Main = (function () {
         if (DATA.coursePage !== CanvasPage.MODULES)
             return;
         $(V.canvas.selector.module_items).filter(function (i, el) { return !el.innerHTML.trim().length; }).html("");
+        var disabledIndent = DATA.states.get("disable_indent_override").active;
+        $(V.canvas.selector.module_item).each(function () {
+            var _this = this;
+            var defIndent = [0, 1, 2, 3, 4, 5].filter(function (level) { return $(_this).hasClass("indent_" + level); })[0];
+            $(this).attr(V.data_attr.def_indent, defIndent);
+            if (!disabledIndent)
+                $(this).removeClass("indent_" + defIndent);
+        });
+        if (!disabledIndent) {
+            $(V.canvas.selector.subheader).addClass("indent_" + V.ui.subheader_indent);
+            $(V.canvas.selector.not_subheader).addClass("indent_" + V.ui.main_indent);
+        }
         var toc = $(V.element.toc);
         var ul = toc.find("ul");
         DATA.modules.forEach(function (mod, modId) {
@@ -793,7 +836,13 @@ var Main = (function () {
         });
     };
     Main.getState = function (stateName) {
-        return DATA.states.has(stateName) ? PAGE.body.hasClass(DATA.states.get(stateName).bodyClass) : null;
+        if (DATA.states.has(stateName)) {
+            var state = DATA.states.get(stateName);
+            return state.active;
+        }
+        else {
+            return null;
+        }
     };
     Main.setState = function (stateName, state) {
         if (!DATA.states.has(stateName))
@@ -801,8 +850,10 @@ var Main = (function () {
         var stateObj = DATA.states.get(stateName);
         if (!stateObj.onPages.includes(DATA.coursePage))
             return;
-        PAGE.body.toggleClass(stateObj.bodyClass, state);
+        if (stateObj.bodyClass)
+            PAGE.body.toggleClass(stateObj.bodyClass, state);
         stateObj.active = state;
+        stateObj.onChange(state, V, PAGE.body);
         var url = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "/active_states" });
         Utils.editDataArray(url, state, [stateName]);
     };

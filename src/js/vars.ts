@@ -33,7 +33,8 @@ namespace Vars {
 			toc_percentage: "toc-percentage",
 			mod_item_id: "item-id",
 			course_name: "course-name",
-			course_code: "course-code"
+			course_code: "course-code",
+			def_indent: "default-indent"
 		};
 
 		id = {
@@ -63,7 +64,9 @@ namespace Vars {
 			jump_top_cutoff: 100,
 			toc_top_margin: 32,
 			scroll_time: 500,
-			fade_time: 500
+			fade_time: 500,
+			subheader_indent: 0,
+			main_indent: 1
 		};
 
 		state = {
@@ -81,6 +84,23 @@ namespace Vars {
 				cssClass: "mark-unchecked",
 				pages: ["modules", "grades"],
 				desc: "Mark unchecked items"
+			},
+			disable_indent_override: {
+				pages: ["modules"],
+				desc: "Disable Indent Overrides",
+				onDisable: (vars, body) => {
+					[0,1,2,3,4,5].forEach(level =>
+						$(vars.canvas.selector.module_item, body).removeClass("indent_"+level));
+					$(vars.canvas.selector.subheader, body).addClass("indent_"+vars.ui.subheader_indent);
+					$(vars.canvas.selector.not_subheader, body).addClass("indent_"+vars.ui.main_indent);
+				},
+				onEnable: (vars, body) => {
+					$(vars.canvas.selector.module_item, body).each(function() {
+						[0,1,2,3,4,5].forEach(level => $(this).removeClass("indent_"+level));
+						const defLevel = $(this).attr(vars.data_attr.def_indent);
+						$(this).addClass("indent_"+defLevel);
+					});
+				}
 			}
 		};
 
@@ -206,7 +226,8 @@ namespace Vars {
 				module: "div.context_module",
 				module_item: "li.context_module_item",
 				module_items: "ul.context_module_items",
-				subheader: "li.context_module_sub_header"
+				subheader: "li.context_module_sub_header",
+				not_subheader: "li.context_module_item:not(.context_module_sub_header)"
 			},
 			api: {
 				namespace: this._canvas.namespace,

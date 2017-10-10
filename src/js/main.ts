@@ -25,8 +25,7 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 		const onCoursePage = urlMatch !== null;
 		DATA.coursePage = onCoursePage ? CanvasPage[(urlMatch[2] || "home").toUpperCase()] : null;
 		DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
-		DATA.
-		inPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
+		DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
 
 		if (onCoursePage)
 			console.debug(`On course #${DATA.courseID} page, at ${CanvasPage[DATA.coursePage]}`);
@@ -404,6 +403,24 @@ class Main {
 		// === clean up empty modules ===
 		$(V.canvas.selector.module_items).filter((i, el) => !el.innerHTML.trim().length).html("");
 
+		// === set custom indent level ===
+
+		const disabledIndent = DATA.states.get("disable_indent_override").active;
+
+		$(V.canvas.selector.module_item).each(function() {
+			const defIndent =
+				[0,1,2,3,4,5].filter(level => $(this).hasClass("indent_"+level))[0];
+			$(this).attr(V.data_attr.def_indent, defIndent);
+			if (!disabledIndent)
+				$(this).removeClass("indent_"+defIndent);
+		});
+
+		if (!disabledIndent) {
+			$(V.canvas.selector.subheader).addClass("indent_"+V.ui.subheader_indent);
+			$(V.canvas.selector.not_subheader).addClass("indent_"+V.ui.main_indent);
+		}
+
+
 		// === place and populate the table of contents ===
 
 		const toc = $(V.element.toc);
@@ -454,7 +471,14 @@ class Main {
 	}
 
 	static getState(stateName: string): boolean {
-		return DATA.states.has(stateName) ? PAGE.body.hasClass(DATA.states.get(stateName).bodyClass) : null;
+		if (DATA.states.has(stateName)) {
+			const state = DATA.states.get(stateName);
+		//	return PAGE.body.hasClass(state.bodyClass);
+			return state.active;
+		}
+		else {
+			return null;
+		}
 	}
 
 	static setState(stateName: string, state: boolean) {
@@ -464,8 +488,11 @@ class Main {
 
 		if (!stateObj.onPages.includes(DATA.coursePage)) return;
 
-		PAGE.body.toggleClass(stateObj.bodyClass, state);
+		if (stateObj.bodyClass)
+			PAGE.body.toggleClass(stateObj.bodyClass, state);
+
 		stateObj.active = state;
+		stateObj.onChange(state, V, PAGE.body);
 
 		const url = Utils.format(V.canvas.api.urls.custom_data, {dataPath: "/active_states"});
 		Utils.editDataArray(url, state, [stateName]);

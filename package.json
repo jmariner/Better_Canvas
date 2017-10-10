@@ -4,6 +4,7 @@
   "devDependencies": {
     "@types/node": "^7.0.32",
     "@types/node-sass": "^3.10.32",
+    "download": "^6.2.5",
     "grunt": "~1.0.1",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-watch": "^1.0.0",

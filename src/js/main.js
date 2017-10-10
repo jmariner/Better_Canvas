@@ -14,7 +14,7 @@ var MAIN_FLOW = [
         DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
         DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
         if (onCoursePage)
-            console.debug("on course", DATA.courseID, "page, at", CanvasPage[DATA.coursePage]);
+            console.debug("On course #" + DATA.courseID + " page, at " + CanvasPage[DATA.coursePage]);
         V = Vars.VARS;
         V.init(DATA.courseID);
         Utils.loadToken(function (success) {
@@ -244,6 +244,18 @@ var Main = (function () {
         if (DATA.coursePage !== CanvasPage.MODULES)
             return;
         $(V.canvas.selector.module_items).filter(function (i, el) { return !el.innerHTML.trim().length; }).html("");
+        var disabledIndent = DATA.states.get("disable_indent_override").active;
+        $(V.canvas.selector.module_item).each(function () {
+            var _this = this;
+            var defIndent = [0, 1, 2, 3, 4, 5].filter(function (level) { return $(_this).hasClass("indent_" + level); })[0];
+            $(this).attr(V.data_attr.def_indent, defIndent);
+            if (!disabledIndent)
+                $(this).removeClass("indent_" + defIndent);
+        });
+        if (!disabledIndent) {
+            $(V.canvas.selector.subheader).addClass("indent_" + V.ui.subheader_indent);
+            $(V.canvas.selector.not_subheader).addClass("indent_" + V.ui.main_indent);
+        }
         var toc = $(V.element.toc);
         var ul = toc.find("ul");
         DATA.modules.forEach(function (mod, modId) {
@@ -270,7 +282,13 @@ var Main = (function () {
         });
     };
     Main.getState = function (stateName) {
-        return DATA.states.has(stateName) ? PAGE.body.hasClass(DATA.states.get(stateName).bodyClass) : null;
+        if (DATA.states.has(stateName)) {
+            var state = DATA.states.get(stateName);
+            return state.active;
+        }
+        else {
+            return null;
+        }
     };
     Main.setState = function (stateName, state) {
         if (!DATA.states.has(stateName))
@@ -278,8 +296,10 @@ var Main = (function () {
         var stateObj = DATA.states.get(stateName);
         if (!stateObj.onPages.includes(DATA.coursePage))
             return;
-        PAGE.body.toggleClass(stateObj.bodyClass, state);
+        if (stateObj.bodyClass)
+            PAGE.body.toggleClass(stateObj.bodyClass, state);
         stateObj.active = state;
+        stateObj.onChange(state, V, PAGE.body);
         var url = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "/active_states" });
         Utils.editDataArray(url, state, [stateName]);
     };

@@ -1,6 +1,7 @@
 const sass = require("node-sass");
 const path = require("path");
 const fs = require("fs");
+const noop = ()=>{};
 
 require("ts-node").register({
 	disableWarnings: true
@@ -10,7 +11,6 @@ const dir = __dirname + "/src/css/";
 fs.readdir(dir, (e, files) => {
 	if (e) return;
 	files.map(f => {
-	//	const fileMatch = f.match(/^.+[/\\]([^_][^/\\]+)\.scss$/);
 		const fileMatch = f.match(/^([^_][^/\\]+)\.scss$/);
 	//	console.log(f, fileMatch);
 		return fileMatch ? fileMatch[1] : null;
@@ -31,8 +31,8 @@ function render(fileName: string) {
 			console.error(error.formatted);
 		}
 		else {
-			fs.writeFile(outFile, result.css);
-			fs.writeFile(outFile + ".map", result.map);
+			fs.writeFile(outFile, result.css, noop);
+			fs.writeFile(outFile + ".map", result.map, noop);
 		}
 	});
 

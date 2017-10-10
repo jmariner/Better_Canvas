@@ -55,39 +55,49 @@ class Page {
 }
 
 class CustomCourseTab {
-    readonly id: number;
-    readonly name: string;
-    readonly code: string;
-    readonly color: string;
+	readonly id: number;
+	readonly name: string;
+	readonly code: string;
+	readonly color: string;
 
-    constructor(courseData: CanvasAPI.Course, color: string) {
-        this.id = courseData.id;
-        this.name = courseData.name;
-        this.code = courseData.course_code;
-        this.color = color;
-    }
+	constructor(courseData: CanvasAPI.Course, color: string) {
+		this.id = courseData.id;
+		this.name = courseData.name;
+		this.code = courseData.course_code;
+		this.color = color;
+	}
 
 }
 
 class State {
-    private name: string;
-    readonly bodyClass: string;
-    readonly onPages: CanvasPage[];
+	private name: string;
+	private onEnable: (vars: any, body: JQuery) => void;
+	private onDisable: (vars: any, body: JQuery) => void;
 
-    public active: boolean;
+	readonly bodyClass: string;
+	readonly onPages: CanvasPage[];
 
-    constructor(key, stateData, active) {
-        this.name = key;
-        this.bodyClass = stateData.cssClass;
-        this.active = active;
-        this.onPages = [];
+	public active: boolean;
+
+	constructor(key, stateData, active) {
+		this.name = key;
+		this.bodyClass = stateData.cssClass;
+		this.onEnable = stateData.onEnable;
+		this.onDisable = stateData.onDisable;
+		this.active = active;
+		this.onPages = [];
 
 		stateData.pages.forEach((page: string) => {
 			const _page = CanvasPage[page.toUpperCase()];
 			if (_page !== undefined)
 				this.onPages.push(_page);
 		});
-    }
+	}
+
+	onChange(newState: boolean, vars, body: JQuery) {
+		if (newState) this.onEnable(vars, body);
+		else this.onDisable(vars, body);
+	}
 
 }
 
@@ -192,13 +202,13 @@ class ModuleItem {
 }
 
 enum ModuleItemType {
-    //noinspection JSUnusedGlobalSymbols
+	//noinspection JSUnusedGlobalSymbols
 	ASSIGNMENT, SUB_HEADER, DISCUSSION, QUIZ, PAGE, FILE, EXTERNAL_URL
 }
 
 enum CanvasPage {
 	//noinspection JSUnusedGlobalSymbols
-    MODULES, GRADES, HOME, USERS, GROUPS, COLLABORATIONS, DISCUSSION_TOPICS, EXTERNAL_TOOLS, ASSIGNMENTS
+	MODULES, GRADES, HOME, USERS, GROUPS, COLLABORATIONS, DISCUSSION_TOPICS, EXTERNAL_TOOLS, ASSIGNMENTS
 }
 
 enum MessageType {

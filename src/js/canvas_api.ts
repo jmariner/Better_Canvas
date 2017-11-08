@@ -4,6 +4,7 @@ namespace CanvasAPI {
 	// https://canvas.instructure.com/doc/api/assignments.html
 	// https://canvas.instructure.com/doc/api/discussion_topics.html
 	// https://canvas.instructure.com/doc/api/courses.html
+	// https://canvas.instructure.com/doc/api/files.html
 
 	export interface Module {
 		id: number;
@@ -189,6 +190,29 @@ namespace CanvasAPI {
 		course_format: string;
 		access_restricted_by_date: boolean;
 		time_zone: string;
+	}
+
+	export interface File {
+		size: number;
+		"content-type": string;
+		url: string;
+		id: number;
+		display_name: string;
+		created_at: string;
+		updated_at: string;
+		unlock_at: string;
+		modified_at: string;
+		locked: boolean;
+		hidden: boolean;
+		lock_at: string;
+		locked_for_user: boolean;
+	//	lock_info: ???;
+		lock_explanation: string;
+		hidden_for_user: boolean;
+		thumbnail_url: string;
+		mime_class: string;
+	//	media_entry_id: ???;
+		preview_url: string;
 	}
 
 }

@@ -32,11 +32,17 @@ module.exports = function(grunt) {
 		watch: {
 			options: {
 				spawn: false,
-				event: ["changed"],
-				atBegin: true
+				event: ["changed"]
+			},
+			vars: {
+				files: "src/js/vars.ts",
+				tasks: ["run:ts", "concat", "run:scss"],
+				options: {
+					atBegin: true
+				}
 			},
 			ts: {
-				files: "src/js/*.ts",
+				files: ["src/js/*.ts", "!src/js/vars.ts"],
 				tasks: ["run:ts", "concat"]
 			},
 			scss: {

@@ -20,6 +20,8 @@ namespace Vars {
 			toc_title: "toc-title",
 			fixed: "fixed",
 			item_icon: "icon-wrapper",
+			download: "download-btn",
+			external_url: "url-btn",
 
 			popup_loaded: "done-loading",
 			popup_connected: "page-connected",
@@ -50,7 +52,7 @@ namespace Vars {
 		color = {
 			toc_fill: "rgba(0, 255, 0, .75)",
 			toc_border: "rgb(102, 120, 135)",
-			toc_title: "rgb(57, 75, 88)",
+			toc_title: "var(--ic-brand-primary)", //"rgb(57, 75, 88)",
 			checkbox_check: "rgb(22, 160, 133)",
 			checkbox_border: "rgb(102, 120, 135)",
 			highlight_orange: "rgb(255, 152, 0)",
@@ -87,7 +89,7 @@ namespace Vars {
 			},
 			disable_indent_override: {
 				pages: ["modules"],
-				desc: "Disable Indent Overrides",
+				desc: "Disable indent overrides",
 				onDisable: (vars, body) => {
 					[0,1,2,3,4,5].forEach(level =>
 						$(vars.canvas.selector.module_item, body).removeClass("indent_"+level));
@@ -150,6 +152,8 @@ namespace Vars {
 			hide_disabled: "Cannot hide graded item",
 			jump_button: "Jump to top",
 			waiting: "Waiting...",
+			download: "Download file: \"{filename}\"",
+			external_url: "Visit external URL",
 			has_submission: "Assignment has submission",
 			popup_no_unchecked: "No unchecked items to jump to"
 		};
@@ -166,11 +170,20 @@ namespace Vars {
 						<input type='checkbox' ${this.data_attr.mod_item_id}='{item_id}'>
 					</div>`,
 
+			download_button:
+					`<div style='display:none' class='${this.cssClass.download}' title='${this.tooltip.download}'>
+						<a href="{file_url}"></a>
+					</div>`,
+
+			url_button:
+					`<div style='display:none' class='${this.cssClass.external_url}' title='${this.tooltip.external_url}'>
+						<a href="{external_url}" class="not_external" target="_blank"></a>
+					</div>`,
+
 			hide_button:
 					`<div style='display:none' class='${this.cssClass.hide_button}'>
 						<i ${this.data_attr.mod_item_id}='{item_id}'></i>
 					</div>`,
-
 
 			course_link:
 				`<li style='background-color: {tabColor}' class='menu-item ic-app-header__menu-list-item'>
@@ -227,7 +240,8 @@ namespace Vars {
 				module_item: "li.context_module_item",
 				module_items: "ul.context_module_items",
 				subheader: "li.context_module_sub_header",
-				not_subheader: "li.context_module_item:not(.context_module_sub_header)"
+				not_subheader: "li.context_module_item:not(.context_module_sub_header)",
+				top_nav: "div.ic-app-nav-toggle-and-crumbs"
 			},
 			api: {
 				namespace: this._canvas.namespace,
@@ -239,7 +253,8 @@ namespace Vars {
 					custom_colors: `${this._canvas.root_url}users/self/colors`,
 					assignments: `${this._canvas.root_url}users/self/courses/{courseID}/assignments`,
 					modules: `${this._canvas.root_url}courses/{courseID}/modules`,
-					module_items: `${this._canvas.root_url}courses/{courseID}/modules/{moduleID}/items`
+					module_items: `${this._canvas.root_url}courses/{courseID}/modules/{moduleID}/items`,
+					file_direct: `${this._canvas.root_url}courses/{courseID}/files/{fileID}`,
 				},
 				data_urls: {
 					active_states: "active_states",

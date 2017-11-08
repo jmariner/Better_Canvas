@@ -12,7 +12,7 @@ class Data {
 	modules: Map<number, Module>; // module id => array of ModuleItem
 	moduleItems: Map<number, ModuleItem>; // module item id => ModuleItem
 	states: Map<string, State>; // stateName => State
-	courseTabs: CustomCourseTab[];
+	courseTabs: Map<number, CustomCourseTab>; // course id => course tab
 	onMainPage: boolean;
 	name: string;
 	extensionId: string;
@@ -22,7 +22,7 @@ class Data {
 		this.modules = new Map();
 		this.moduleItems = new Map();
 		this.states = new Map();
-		this.courseTabs = [];
+		this.courseTabs = new Map();
 
 		this.elements = {jump_button: null, toc: null};
 
@@ -95,8 +95,8 @@ class State {
 	}
 
 	onChange(newState: boolean, vars, body: JQuery) {
-		if (newState) this.onEnable(vars, body);
-		else this.onDisable(vars, body);
+		if (newState) Utils.safeCb(this.onEnable)(vars, body);
+		else Utils.safeCb(this.onDisable)(vars, body);
 	}
 
 }
@@ -120,9 +120,11 @@ class ModuleItem {
 	private _id: number;
 	private _name: string;
 	private moduleId: number;
-	private type: ModuleItemType;
+	private _type: ModuleItemType;
 	private assignmentId: number;
-	private contentId: number;
+	private _contentId: number;
+	private _fileData: CanvasAPI.File;
+	private _externalUrl: string;
 
 	public isSubmitted: boolean;
 
@@ -135,7 +137,7 @@ class ModuleItem {
 
 	public static fromContentId(contentId: number): ModuleItem {
 		const item = new ModuleItem();
-		item.contentId = contentId;
+		item._contentId = contentId;
 		ModuleItem.byContentId.set(contentId, item);
 		return item;
 	}
@@ -148,23 +150,28 @@ class ModuleItem {
 		this._id = moduleItemJson.id;
 		this._name = moduleItemJson.title;
 		this.moduleId = moduleItemJson.module_id;
+		this._externalUrl = moduleItemJson.external_url || null;
 
 		let typeString: string = moduleItemJson.type
 			.replace(/([A-Z])/g, (r, s) => "_"+s)
 			.replace(/^_/, "").toUpperCase();
 
-		this.type = ModuleItemType[typeString];
+		this._type = ModuleItemType[typeString];
+
+		if (this._type === undefined)
+			console.warn(`Unknown module item type: "${typeString}"`);
 
 		this.checked = false;
 		this.hidden = false;
 
-		if (this.type === ModuleItemType.ASSIGNMENT)
+		if (this._type === ModuleItemType.ASSIGNMENT)
 			this.setAssignmentId(moduleItemJson.content_id);
 		else
 			this.assignmentId = null;
 	}
 
 	public setAssignmentId(id: number) { this.assignmentId = id; }
+	public setFileData(data: CanvasAPI.File) { this._fileData = data; }
 
 	get canvasElementId() {
 		switch (DATA.coursePage) {
@@ -179,9 +186,12 @@ class ModuleItem {
 
 	get id() { return this._id; }
 	get name() { return this._name;	}
+	get type(): ModuleItemType { return this._type; }
 	get isGraded() { return this.assignmentId !== null; }
-	get isSubHeader() { return this.type === ModuleItemType.SUB_HEADER; }
+	get isSubHeader() { return this._type === ModuleItemType.SUB_HEADER; }
 	get module() { return DATA.modules.get(this.moduleId); }
+	get externalUrl() { return this._externalUrl; }
+	get contentId() { return this._contentId; }
 
 	get checkboxElement(): JQuery { return this._checkboxElement; }
 	set checkboxElement(value: JQuery) {
@@ -199,11 +209,13 @@ class ModuleItem {
 			throw "Invalid Module Item Element: " + value;
 	}
 
+	get fileData(): CanvasAPI.File { return this._fileData; }
+
 }
 
 enum ModuleItemType {
 	//noinspection JSUnusedGlobalSymbols
-	ASSIGNMENT, SUB_HEADER, DISCUSSION, QUIZ, PAGE, FILE, EXTERNAL_URL
+	ASSIGNMENT, SUB_HEADER, DISCUSSION, QUIZ, PAGE, FILE, EXTERNAL_URL, EXTERNAL_TOOL
 }
 
 enum CanvasPage {

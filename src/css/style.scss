@@ -250,6 +250,34 @@ $tocBorderWidth: 1px;
 	}
 }
 
+#{class(download, div)}, #{class(external_url, div)} {
+	position: relative;
+	margin-right: $checkboxSize;
+
+	@include square($checkboxSize);
+
+	> a {
+		position: absolute;
+		top: 0;
+		left: 0;
+		outline: 0;
+
+		@include square($checkboxSize);
+
+		&:before {
+			position: absolute;
+		}
+	}
+}
+
+#{class(download, div)} > a:before {
+	@include canvasIcon(download, $checkboxSize);
+}
+
+#{class(external_url, div)} > a:before {
+	@include canvasIcon(link, $checkboxSize);
+}
+
 // the icon wrapper
 #{class(item_icon, div)} {
 
@@ -439,6 +467,18 @@ body.primary-nav-expanded div.ic-app-header__secondary-navigation {
 	padding-bottom: 0;
 }
 
+nav#breadcrumbs {
+	background-color: transparent;
+}
+
+div.ic-app-nav-toggle-and-crumbs {
+	margin: 0 24px 0 0;
+	padding-left: 24px;
+	position: relative;
+	border-bottom-width: 8px;
+	border-bottom-color: var(--ic-brand-primary);
+}
+
 aside#right-side ul#question_list {
-	max-height: none !important;
+	max-height: none !important
 }

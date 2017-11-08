@@ -17,7 +17,7 @@ var Data = (function () {
         this.modules = new Map();
         this.moduleItems = new Map();
         this.states = new Map();
-        this.courseTabs = [];
+        this.courseTabs = new Map();
         this.elements = { jump_button: null, toc: null };
     }
     return Data;
@@ -64,9 +64,9 @@ var State = (function () {
     }
     State.prototype.onChange = function (newState, vars, body) {
         if (newState)
-            this.onEnable(vars, body);
+            Utils.safeCb(this.onEnable)(vars, body);
         else
-            this.onDisable(vars, body);
+            Utils.safeCb(this.onDisable)(vars, body);
     };
     return State;
 }());
@@ -86,7 +86,7 @@ var ModuleItem = (function () {
     }
     ModuleItem.fromContentId = function (contentId) {
         var item = new ModuleItem();
-        item.contentId = contentId;
+        item._contentId = contentId;
         ModuleItem.byContentId.set(contentId, item);
         return item;
     };
@@ -94,18 +94,22 @@ var ModuleItem = (function () {
         this._id = moduleItemJson.id;
         this._name = moduleItemJson.title;
         this.moduleId = moduleItemJson.module_id;
+        this._externalUrl = moduleItemJson.external_url || null;
         var typeString = moduleItemJson.type
             .replace(/([A-Z])/g, function (r, s) { return "_" + s; })
             .replace(/^_/, "").toUpperCase();
-        this.type = ModuleItemType[typeString];
+        this._type = ModuleItemType[typeString];
+        if (this._type === undefined)
+            console.warn("Unknown module item type: \"" + typeString + "\"");
         this.checked = false;
         this.hidden = false;
-        if (this.type === ModuleItemType.ASSIGNMENT)
+        if (this._type === ModuleItemType.ASSIGNMENT)
             this.setAssignmentId(moduleItemJson.content_id);
         else
             this.assignmentId = null;
     };
     ModuleItem.prototype.setAssignmentId = function (id) { this.assignmentId = id; };
+    ModuleItem.prototype.setFileData = function (data) { this._fileData = data; };
     Object.defineProperty(ModuleItem.prototype, "canvasElementId", {
         get: function () {
             switch (DATA.coursePage) {
@@ -130,18 +134,33 @@ var ModuleItem = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(ModuleItem.prototype, "type", {
+        get: function () { return this._type; },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(ModuleItem.prototype, "isGraded", {
         get: function () { return this.assignmentId !== null; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(ModuleItem.prototype, "isSubHeader", {
-        get: function () { return this.type === ModuleItemType.SUB_HEADER; },
+        get: function () { return this._type === ModuleItemType.SUB_HEADER; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(ModuleItem.prototype, "module", {
         get: function () { return DATA.modules.get(this.moduleId); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ModuleItem.prototype, "externalUrl", {
+        get: function () { return this._externalUrl; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ModuleItem.prototype, "contentId", {
+        get: function () { return this._contentId; },
         enumerable: true,
         configurable: true
     });
@@ -167,6 +186,11 @@ var ModuleItem = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(ModuleItem.prototype, "fileData", {
+        get: function () { return this._fileData; },
+        enumerable: true,
+        configurable: true
+    });
     return ModuleItem;
 }());
 ModuleItem.byContentId = new Map();
@@ -179,6 +203,7 @@ var ModuleItemType;
     ModuleItemType[ModuleItemType["PAGE"] = 4] = "PAGE";
     ModuleItemType[ModuleItemType["FILE"] = 5] = "FILE";
     ModuleItemType[ModuleItemType["EXTERNAL_URL"] = 6] = "EXTERNAL_URL";
+    ModuleItemType[ModuleItemType["EXTERNAL_TOOL"] = 7] = "EXTERNAL_TOOL";
 })(ModuleItemType || (ModuleItemType = {}));
 var CanvasPage;
 (function (CanvasPage) {

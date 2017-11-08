@@ -17,7 +17,7 @@ var Data = (function () {
         this.modules = new Map();
         this.moduleItems = new Map();
         this.states = new Map();
-        this.courseTabs = [];
+        this.courseTabs = new Map();
         this.elements = { jump_button: null, toc: null };
     }
     return Data;
@@ -64,9 +64,9 @@ var State = (function () {
     }
     State.prototype.onChange = function (newState, vars, body) {
         if (newState)
-            this.onEnable(vars, body);
+            Utils.safeCb(this.onEnable)(vars, body);
         else
-            this.onDisable(vars, body);
+            Utils.safeCb(this.onDisable)(vars, body);
     };
     return State;
 }());
@@ -86,7 +86,7 @@ var ModuleItem = (function () {
     }
     ModuleItem.fromContentId = function (contentId) {
         var item = new ModuleItem();
-        item.contentId = contentId;
+        item._contentId = contentId;
         ModuleItem.byContentId.set(contentId, item);
         return item;
     };
@@ -94,18 +94,22 @@ var ModuleItem = (function () {
         this._id = moduleItemJson.id;
         this._name = moduleItemJson.title;
         this.moduleId = moduleItemJson.module_id;
+        this._externalUrl = moduleItemJson.external_url || null;
         var typeString = moduleItemJson.type
             .replace(/([A-Z])/g, function (r, s) { return "_" + s; })
             .replace(/^_/, "").toUpperCase();
-        this.type = ModuleItemType[typeString];
+        this._type = ModuleItemType[typeString];
+        if (this._type === undefined)
+            console.warn("Unknown module item type: \"" + typeString + "\"");
         this.checked = false;
         this.hidden = false;
-        if (this.type === ModuleItemType.ASSIGNMENT)
+        if (this._type === ModuleItemType.ASSIGNMENT)
             this.setAssignmentId(moduleItemJson.content_id);
         else
             this.assignmentId = null;
     };
     ModuleItem.prototype.setAssignmentId = function (id) { this.assignmentId = id; };
+    ModuleItem.prototype.setFileData = function (data) { this._fileData = data; };
     Object.defineProperty(ModuleItem.prototype, "canvasElementId", {
         get: function () {
             switch (DATA.coursePage) {
@@ -130,18 +134,33 @@ var ModuleItem = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(ModuleItem.prototype, "type", {
+        get: function () { return this._type; },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(ModuleItem.prototype, "isGraded", {
         get: function () { return this.assignmentId !== null; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(ModuleItem.prototype, "isSubHeader", {
-        get: function () { return this.type === ModuleItemType.SUB_HEADER; },
+        get: function () { return this._type === ModuleItemType.SUB_HEADER; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(ModuleItem.prototype, "module", {
         get: function () { return DATA.modules.get(this.moduleId); },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ModuleItem.prototype, "externalUrl", {
+        get: function () { return this._externalUrl; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ModuleItem.prototype, "contentId", {
+        get: function () { return this._contentId; },
         enumerable: true,
         configurable: true
     });
@@ -167,6 +186,11 @@ var ModuleItem = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(ModuleItem.prototype, "fileData", {
+        get: function () { return this._fileData; },
+        enumerable: true,
+        configurable: true
+    });
     return ModuleItem;
 }());
 ModuleItem.byContentId = new Map();
@@ -179,6 +203,7 @@ var ModuleItemType;
     ModuleItemType[ModuleItemType["PAGE"] = 4] = "PAGE";
     ModuleItemType[ModuleItemType["FILE"] = 5] = "FILE";
     ModuleItemType[ModuleItemType["EXTERNAL_URL"] = 6] = "EXTERNAL_URL";
+    ModuleItemType[ModuleItemType["EXTERNAL_TOOL"] = 7] = "EXTERNAL_TOOL";
 })(ModuleItemType || (ModuleItemType = {}));
 var CanvasPage;
 (function (CanvasPage) {
@@ -373,6 +398,8 @@ var Vars;
                 toc_title: "toc-title",
                 fixed: "fixed",
                 item_icon: "icon-wrapper",
+                download: "download-btn",
+                external_url: "url-btn",
                 popup_loaded: "done-loading",
                 popup_connected: "page-connected",
                 popup_require_page: "require-page",
@@ -398,7 +425,7 @@ var Vars;
             this.color = {
                 toc_fill: "rgba(0, 255, 0, .75)",
                 toc_border: "rgb(102, 120, 135)",
-                toc_title: "rgb(57, 75, 88)",
+                toc_title: "var(--ic-brand-primary)",
                 checkbox_check: "rgb(22, 160, 133)",
                 checkbox_border: "rgb(102, 120, 135)",
                 highlight_orange: "rgb(255, 152, 0)",
@@ -433,7 +460,7 @@ var Vars;
                 },
                 disable_indent_override: {
                     pages: ["modules"],
-                    desc: "Disable Indent Overrides",
+                    desc: "Disable indent overrides",
                     onDisable: function (vars, body) {
                         [0, 1, 2, 3, 4, 5].forEach(function (level) {
                             return $(vars.canvas.selector.module_item, body).removeClass("indent_" + level);
@@ -489,6 +516,8 @@ var Vars;
                 hide_disabled: "Cannot hide graded item",
                 jump_button: "Jump to top",
                 waiting: "Waiting...",
+                download: "Download file: \"{filename}\"",
+                external_url: "Visit external URL",
                 has_submission: "Assignment has submission",
                 popup_no_unchecked: "No unchecked items to jump to"
             };
@@ -498,6 +527,8 @@ var Vars;
             };
             _this.element = {
                 checkbox: "<div style='display:none' class='" + _this.cssClass.checkbox_parent + "'>\n\t\t\t\t\t\t<input type='checkbox' " + _this.data_attr.mod_item_id + "='{item_id}'>\n\t\t\t\t\t</div>",
+                download_button: "<div style='display:none' class='" + _this.cssClass.download + "' title='" + _this.tooltip.download + "'>\n\t\t\t\t\t\t<a href=\"{file_url}\"></a>\n\t\t\t\t\t</div>",
+                url_button: "<div style='display:none' class='" + _this.cssClass.external_url + "' title='" + _this.tooltip.external_url + "'>\n\t\t\t\t\t\t<a href=\"{external_url}\" class=\"not_external\" target=\"_blank\"></a>\n\t\t\t\t\t</div>",
                 hide_button: "<div style='display:none' class='" + _this.cssClass.hide_button + "'>\n\t\t\t\t\t\t<i " + _this.data_attr.mod_item_id + "='{item_id}'></i>\n\t\t\t\t\t</div>",
                 course_link: "<li style='background-color: {tabColor}' class='menu-item ic-app-header__menu-list-item'>\n\t\t\t\t\t<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>\n\t\t\t\t\t\t<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>\n\t\t\t\t\t\t<div style='background-color: {tabColor}; border-right-color: {tabColor}'\n\t\t\t\t\t\t\t\t" + _this.data_attr.course_name + "='{name}' " + _this.data_attr.course_code + "='{code}'\n\t\t\t\t\t\t\t\tclass='menu-item__text " + _this.cssClass.course_link_text + "'></div>\n\t\t\t\t\t</a>\n\t\t\t\t</li>",
                 toc: "<div id='" + _this.id.toc + "' class='ic-app-course-menu list-view'>\n\t\t\t\t\t<div class='" + _this.cssClass.toc_title + "'>Table of Contents</div>\n\t\t\t\t\t<nav><ul></ul></nav>\n\t\t\t\t</div>",
@@ -516,7 +547,8 @@ var Vars;
                     module_item: "li.context_module_item",
                     module_items: "ul.context_module_items",
                     subheader: "li.context_module_sub_header",
-                    not_subheader: "li.context_module_item:not(.context_module_sub_header)"
+                    not_subheader: "li.context_module_item:not(.context_module_sub_header)",
+                    top_nav: "div.ic-app-nav-toggle-and-crumbs"
                 },
                 api: {
                     namespace: _this._canvas.namespace,
@@ -528,7 +560,8 @@ var Vars;
                         custom_colors: _this._canvas.root_url + "users/self/colors",
                         assignments: _this._canvas.root_url + "users/self/courses/{courseID}/assignments",
                         modules: _this._canvas.root_url + "courses/{courseID}/modules",
-                        module_items: _this._canvas.root_url + "courses/{courseID}/modules/{moduleID}/items"
+                        module_items: _this._canvas.root_url + "courses/{courseID}/modules/{moduleID}/items",
+                        file_direct: _this._canvas.root_url + "courses/{courseID}/files/{fileID}",
                     },
                     data_urls: {
                         active_states: "active_states",
@@ -583,7 +616,7 @@ var Vars;
             Utils.getJSON(V.canvas.api.urls.favorite_courses, function (resultData) {
                 resultData.forEach(function (courseData) {
                     var color = colorData.custom_colors["course_" + courseData.id];
-                    DATA.courseTabs.push(new CustomCourseTab(courseData, color));
+                    DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
                 });
                 Utils.runCb(DATA.onMainPage ? callback : end);
             });
@@ -631,7 +664,13 @@ var Vars;
             var moduleIDs = Array.from(DATA.modules.keys());
             var waitingCount = moduleIDs.length;
             moduleIDs.forEach(function (moduleID) {
-                var moduleItemsUrl = Utils.perPage(Utils.format(V.canvas.api.urls.module_items, { moduleID: moduleID }), DATA.modules.get(moduleID).itemCount);
+                var itemCount = DATA.modules.get(moduleID).itemCount;
+                if (itemCount === 0) {
+                    if (--waitingCount === 0)
+                        next();
+                    return;
+                }
+                var moduleItemsUrl = Utils.perPage(Utils.format(V.canvas.api.urls.module_items, { moduleID: moduleID }), itemCount);
                 Utils.getJSON(moduleItemsUrl, function (resultData) {
                     resultData.forEach(function (modItemJson) {
                         var item;
@@ -650,7 +689,7 @@ var Vars;
                         next();
                 });
             });
-        }); }).then(function () {
+        }); }).then(function () { return new Promise(function (next) {
             var customDataUrl = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "" });
             Utils.getJSON(customDataUrl, function (resultData) {
                 var customData = resultData.data;
@@ -669,9 +708,22 @@ var Vars;
                     var stateObj = new State(name, stateData, activeStates.includes(name));
                     DATA.states.set(name, stateObj);
                 });
-                partDone();
+                next();
             });
-        });
+        }); }).then(function () { return new Promise(function (next) {
+            var fileItems = Array.from(DATA.moduleItems.values())
+                .filter(function (item) { return item.type == ModuleItemType.FILE; });
+            var waitingCount = fileItems.length;
+            fileItems.forEach(function (item) {
+                var fileDataUrl = Utils.scopeFormat(V.canvas.api.urls.file_direct, { fileID: item.contentId });
+                Utils.getJSON(fileDataUrl, function (resultData) {
+                    item.setFileData(resultData);
+                    if (--waitingCount === 0)
+                        next();
+                });
+            });
+        }); })
+            .then(partDone);
     },
 ];
 (function init() {
@@ -728,8 +780,6 @@ var Main = (function () {
                 code: courseTab.code
             }));
         });
-        if (DATA.coursePage === null)
-            return;
         DATA.elements.jump_button =
             $(V.element.jump_button)
                 .find("i")
@@ -739,9 +789,13 @@ var Main = (function () {
             })
                 .end()
                 .appendTo(PAGE.main);
-        if (!DATA.onMainPage)
+        if (DATA.coursePage === null)
             return;
         $("ul#menu > li").removeClass("ic-app-header__menu-list-item--active");
+        var color = DATA.courseTabs.get(DATA.courseID).color;
+        document.documentElement.style.setProperty("--ic-brand-primary", color);
+        if (!DATA.onMainPage)
+            return;
         Array.from(DATA.states.values())
             .filter(function (s) { return s.active && s.onPages.includes(DATA.coursePage); })
             .forEach(function (s) { return PAGE.body.addClass(s.bodyClass); });
@@ -834,6 +888,30 @@ var Main = (function () {
         PAGE.main.on("click", "." + V.cssClass.hide_button + " > i", function () {
             Main.onHideButtonClick($(this));
         });
+        var modItems = Array.from(DATA.moduleItems.values());
+        modItems.filter(function (item) { return item.type == ModuleItemType.FILE; })
+            .forEach(function (item) {
+            var element = Utils.format(V.element.download_button, {
+                file_url: item.fileData.url,
+                filename: item.fileData.display_name
+            });
+            $(element).insertBefore(item.checkboxElement);
+        });
+        $("." + V.cssClass.download).show();
+        modItems.filter(function (item) { return item.type == ModuleItemType.EXTERNAL_URL; })
+            .forEach(function (item) {
+            var element = Utils.format(V.element.url_button, {
+                external_url: item.externalUrl
+            });
+            $(element).insertBefore(item.checkboxElement);
+            $("#" + item.canvasElementId).find("a.external_url_link.title")
+                .attr("href", function () { return $(this).attr("data-item-href"); })
+                .removeAttr("target rel")
+                .removeClass("external")
+                .addClass("ig-title")
+                .find(".ui-icon").remove();
+        });
+        $("." + V.cssClass.external_url).show();
     };
     Main.getState = function (stateName) {
         if (DATA.states.has(stateName)) {

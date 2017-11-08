@@ -29,7 +29,7 @@ var MAIN_FLOW = [
             Utils.getJSON(V.canvas.api.urls.favorite_courses, function (resultData) {
                 resultData.forEach(function (courseData) {
                     var color = colorData.custom_colors["course_" + courseData.id];
-                    DATA.courseTabs.push(new CustomCourseTab(courseData, color));
+                    DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
                 });
                 Utils.runCb(DATA.onMainPage ? callback : end);
             });
@@ -77,7 +77,13 @@ var MAIN_FLOW = [
             var moduleIDs = Array.from(DATA.modules.keys());
             var waitingCount = moduleIDs.length;
             moduleIDs.forEach(function (moduleID) {
-                var moduleItemsUrl = Utils.perPage(Utils.format(V.canvas.api.urls.module_items, { moduleID: moduleID }), DATA.modules.get(moduleID).itemCount);
+                var itemCount = DATA.modules.get(moduleID).itemCount;
+                if (itemCount === 0) {
+                    if (--waitingCount === 0)
+                        next();
+                    return;
+                }
+                var moduleItemsUrl = Utils.perPage(Utils.format(V.canvas.api.urls.module_items, { moduleID: moduleID }), itemCount);
                 Utils.getJSON(moduleItemsUrl, function (resultData) {
                     resultData.forEach(function (modItemJson) {
                         var item;
@@ -96,7 +102,7 @@ var MAIN_FLOW = [
                         next();
                 });
             });
-        }); }).then(function () {
+        }); }).then(function () { return new Promise(function (next) {
             var customDataUrl = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "" });
             Utils.getJSON(customDataUrl, function (resultData) {
                 var customData = resultData.data;
@@ -115,9 +121,22 @@ var MAIN_FLOW = [
                     var stateObj = new State(name, stateData, activeStates.includes(name));
                     DATA.states.set(name, stateObj);
                 });
-                partDone();
+                next();
             });
-        });
+        }); }).then(function () { return new Promise(function (next) {
+            var fileItems = Array.from(DATA.moduleItems.values())
+                .filter(function (item) { return item.type == ModuleItemType.FILE; });
+            var waitingCount = fileItems.length;
+            fileItems.forEach(function (item) {
+                var fileDataUrl = Utils.scopeFormat(V.canvas.api.urls.file_direct, { fileID: item.contentId });
+                Utils.getJSON(fileDataUrl, function (resultData) {
+                    item.setFileData(resultData);
+                    if (--waitingCount === 0)
+                        next();
+                });
+            });
+        }); })
+            .then(partDone);
     },
 ];
 (function init() {
@@ -174,8 +193,6 @@ var Main = (function () {
                 code: courseTab.code
             }));
         });
-        if (DATA.coursePage === null)
-            return;
         DATA.elements.jump_button =
             $(V.element.jump_button)
                 .find("i")
@@ -185,9 +202,13 @@ var Main = (function () {
             })
                 .end()
                 .appendTo(PAGE.main);
-        if (!DATA.onMainPage)
+        if (DATA.coursePage === null)
             return;
         $("ul#menu > li").removeClass("ic-app-header__menu-list-item--active");
+        var color = DATA.courseTabs.get(DATA.courseID).color;
+        document.documentElement.style.setProperty("--ic-brand-primary", color);
+        if (!DATA.onMainPage)
+            return;
         Array.from(DATA.states.values())
             .filter(function (s) { return s.active && s.onPages.includes(DATA.coursePage); })
             .forEach(function (s) { return PAGE.body.addClass(s.bodyClass); });
@@ -280,6 +301,30 @@ var Main = (function () {
         PAGE.main.on("click", "." + V.cssClass.hide_button + " > i", function () {
             Main.onHideButtonClick($(this));
         });
+        var modItems = Array.from(DATA.moduleItems.values());
+        modItems.filter(function (item) { return item.type == ModuleItemType.FILE; })
+            .forEach(function (item) {
+            var element = Utils.format(V.element.download_button, {
+                file_url: item.fileData.url,
+                filename: item.fileData.display_name
+            });
+            $(element).insertBefore(item.checkboxElement);
+        });
+        $("." + V.cssClass.download).show();
+        modItems.filter(function (item) { return item.type == ModuleItemType.EXTERNAL_URL; })
+            .forEach(function (item) {
+            var element = Utils.format(V.element.url_button, {
+                external_url: item.externalUrl
+            });
+            $(element).insertBefore(item.checkboxElement);
+            $("#" + item.canvasElementId).find("a.external_url_link.title")
+                .attr("href", function () { return $(this).attr("data-item-href"); })
+                .removeAttr("target rel")
+                .removeClass("external")
+                .addClass("ig-title")
+                .find(".ui-icon").remove();
+        });
+        $("." + V.cssClass.external_url).show();
     };
     Main.getState = function (stateName) {
         if (DATA.states.has(stateName)) {

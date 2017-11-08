@@ -49,7 +49,7 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 			Utils.getJSON(V.canvas.api.urls.favorite_courses, (resultData: CanvasAPI.Course[]) => {
 				resultData.forEach(courseData => {
 					const color = colorData.custom_colors["course_" + courseData.id];
-					DATA.courseTabs.push(new CustomCourseTab(courseData, color));
+					DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
 				});
 
 				// if the user is on the grades or modules page, continue with the flow
@@ -123,7 +123,6 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 			Utils.getJSON(modulesUrl, (resultData: CanvasAPI.Module[]) => {
 
 				resultData.forEach(moduleData => {
-				//	if (moduleData.items_count > 0)
 					DATA.modules.set(moduleData.id, new Module(moduleData));
 				});
 
@@ -131,16 +130,23 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 			});
 
 		})
-		.then(() => new Promise(next =>  { // get module items for each module
+		.then(() => new Promise(next => { // get module items for each module
 
 			const moduleIDs = Array.from(DATA.modules.keys());
 			let waitingCount = moduleIDs.length;
 
 			moduleIDs.forEach(moduleID => {
 
+				const itemCount = DATA.modules.get(moduleID).itemCount;
+
+				if (itemCount === 0) {
+					if (--waitingCount === 0) next();
+					return;
+				}
+
 				const moduleItemsUrl = Utils.perPage(
 					Utils.format(V.canvas.api.urls.module_items, {moduleID}),
-					DATA.modules.get(moduleID).itemCount);
+					itemCount);
 
 				Utils.getJSON(moduleItemsUrl, (resultData: CanvasAPI.ModuleItem[]) => {
 
@@ -168,7 +174,7 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 
 			});
 
-		})).then(() => {
+		})).then(() => new Promise(next => { // get custom data
 
 			const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, {dataPath: ""});
 
@@ -198,10 +204,28 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 					DATA.states.set(name, stateObj);
 				});
 
-				partDone();
+				next();
 
 			});
-		})
+		})).then(() => new Promise(next => { // get file urls for file items
+
+			const fileItems = Array.from(DATA.moduleItems.values())
+			.filter(item => item.type == ModuleItemType.FILE);
+
+			let waitingCount = fileItems.length;
+
+			fileItems.forEach(item => {
+				const fileDataUrl = Utils.scopeFormat(V.canvas.api.urls.file_direct, {fileID: item.contentId});
+				Utils.getJSON(fileDataUrl, (resultData: CanvasAPI.File) => {
+
+					item.setFileData(resultData);
+
+					if (--waitingCount === 0) next();
+				});
+			});
+
+		}))
+		.then(partDone);
 
 
 	},
@@ -282,7 +306,7 @@ class Main {
 			.find(".menu-item__text")
 			.text("All Courses");
 
-		// === course links ===
+		// === insert course links ===
 
 		const $insertionPoint = PAGE.sidebar.children().eq(2);
 		DATA.courseTabs.forEach((courseTab) => {
@@ -296,12 +320,8 @@ class Main {
 			);
 		});
 
-		// ======================= course page cutoff ===============
-		// everything past this point is for course pages
-		// ==========================================================
-		if (DATA.coursePage === null) return;
-
 		// === place "jump to top" button ===
+
 		DATA.elements.jump_button =
 			$(V.element.jump_button)
 			.find("i")
@@ -312,13 +332,24 @@ class Main {
 			.end()
 			.appendTo(PAGE.main);
 
+		// ======================= course page cutoff ===============
+		// everything past this point is for course pages
+		// ==========================================================
+		if (DATA.coursePage === null) return;
+
+		// ==== clear the active menu tab since we're using custom tabs ====
+
+		$("ul#menu > li").removeClass("ic-app-header__menu-list-item--active");
+
+		// ==== apply course color to brand colors ====
+
+		const color = DATA.courseTabs.get(DATA.courseID).color;
+		document.documentElement.style.setProperty("--ic-brand-primary", color);
+
 		// ====================== main page cutoff ==================
 		// everything past this is only for modules/grades pages
 		// ==========================================================
 		if (!DATA.onMainPage) return;
-
-		// clear the active menu tab since we're using custom tabs
-		$("ul#menu > li").removeClass("ic-app-header__menu-list-item--active");
 
 		// === load initial states ===
 
@@ -420,7 +451,6 @@ class Main {
 			$(V.canvas.selector.not_subheader).addClass("indent_"+V.ui.main_indent);
 		}
 
-
 		// === place and populate the table of contents ===
 
 		const toc = $(V.element.toc);
@@ -467,6 +497,42 @@ class Main {
 		PAGE.main.on("click", `.${V.cssClass.hide_button} > i`, function() {
 			Main.onHideButtonClick($(this));
 		});
+
+		// === add quick download buttons to FILE items
+
+		const modItems = Array.from(DATA.moduleItems.values());
+
+		modItems.filter(item => item.type == ModuleItemType.FILE)
+			.forEach(item => {
+				const element = Utils.format(V.element.download_button, {
+					file_url: item.fileData.url,
+					filename: item.fileData.display_name
+				});
+				$(element).insertBefore(item.checkboxElement);
+		});
+
+		$("."+V.cssClass.download).show();
+
+		// === add quick link button to EXTERNAL_URL items
+
+		modItems.filter(item => item.type == ModuleItemType.EXTERNAL_URL)
+			.forEach(item => {
+				const element = Utils.format(V.element.url_button, {
+					external_url: item.externalUrl
+				});
+				$(element).insertBefore(item.checkboxElement);
+
+				$("#"+item.canvasElementId).find("a.external_url_link.title")
+				.attr("href", function() { return $(this).attr("data-item-href"); })
+				.removeAttr("target rel")
+				.removeClass("external")
+				.addClass("ig-title")
+				.find(".ui-icon").remove()
+			});
+
+		$("."+V.cssClass.external_url).show()
+		// need to clear the "a" contents cause canvas inserts the external link icon
+	//	$("."+V.cssClass.external_url).show().find("a").html("");
 
 	}
 

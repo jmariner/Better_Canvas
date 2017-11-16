@@ -288,7 +288,7 @@ var Utils = (function () {
             string = string.replace(new RegExp("\\{" + i + "\\}", "gi"), formatParams[i]);
         return "" + string;
     };
-    Utils.scopeFormat = function (string, scope) {
+    Utils.pathFormat = function (string, scope) {
         if (!string.includes("{"))
             return string;
         return string.replace(/{([^{}]+)}/g, function (match, p1) {
@@ -611,7 +611,7 @@ var Vars;
         Vars.prototype.init = function (courseID) {
             var _this = this;
             $.each(this.canvas.api.urls, function (key, url) {
-                _this.canvas.api.urls[key] = _this.canvas.api.root_url + Utils.scopeFormat(url, { courseID: courseID });
+                _this.canvas.api.urls[key] = _this.canvas.api.root_url + Utils.format(url, { courseID: courseID });
             });
         };
         return Vars;

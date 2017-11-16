@@ -1,14 +1,17 @@
 module.exports = function(grunt) {
 
 	grunt.initConfig({
-		run: {
+		execute: {
 			options: {
 			},
 			ts: {
-				exec: "/run/node node_modules/typescript/lib/tsc.js"
+				src: ["node_modules/typescript/lib/tsc.js"]
 			},
 			scss: {
-				exec: "/run/node node_modules/ts-node/dist/bin.js scss-compile.ts"
+				options: {
+					args: ["scss-compile.ts"]
+				},
+				src: ["node_modules/ts-node/dist/bin.js"]
 			}
 		},
 		concat: {
@@ -36,23 +39,23 @@ module.exports = function(grunt) {
 			},
 			vars: {
 				files: "src/js/vars.ts",
-				tasks: ["run:ts", "concat", "run:scss"],
+				tasks: ["execute:ts", "concat", "execute:scss"],
 				options: {
 					atBegin: true
 				}
 			},
 			ts: {
 				files: ["src/js/*.ts", "!src/js/vars.ts"],
-				tasks: ["run:ts", "concat"]
+				tasks: ["execute:ts", "concat"]
 			},
 			scss: {
 				files: "src/css/*.scss",
-				tasks: ["run:scss"]
+				tasks: ["execute:scss"]
 			}
 		}
 	});
 
-	grunt.loadNpmTasks("grunt-run");
+	grunt.loadNpmTasks("grunt-execute");
 	grunt.loadNpmTasks("grunt-contrib-concat");
 	grunt.loadNpmTasks("grunt-contrib-watch");
 };

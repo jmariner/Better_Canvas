@@ -268,7 +268,7 @@ namespace Vars {
 
 		init(courseID: number) {
 			$.each(this.canvas.api.urls, (key, url) => {
-				this.canvas.api.urls[key] = this.canvas.api.root_url + Utils.scopeFormat(url, {courseID});
+				this.canvas.api.urls[key] = this.canvas.api.root_url + Utils.format(url, {courseID});
 			});
 		}
 	}

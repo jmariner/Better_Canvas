@@ -298,7 +298,7 @@ class Utils {
 		return ""+string;
 	}
 
-	static scopeFormat(string: string, scope: Object) {
+	static pathFormat(string: string, scope: Object) {
 
 		if (!string.includes("{")) return string;
 

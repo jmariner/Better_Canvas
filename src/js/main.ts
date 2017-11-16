@@ -218,6 +218,8 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 	function getCustomData(callback) {
 		const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, {dataPath: ""});
 
+	//	const resultData = await Utils.getJSON2(customDataUrl);
+
 		Utils.getJSON(customDataUrl, (resultData: {data: CanvasAPI.CustomData}) => {
 			const customData = resultData.data;
 

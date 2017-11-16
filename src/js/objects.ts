@@ -362,6 +362,14 @@ class Utils {
 		req.send();
 	}
 
+	static async getJSON2(url: string) {
+		return new Promise((resolve, reject) => {
+			Utils.getJSON(url, resultData => {
+				resolve(resultData);
+			});
+		});
+	}
+
 	static putData(url: string, data: any | any[], callback: (success: boolean) => any) {
 		let bodyData = {ns: V.canvas.api.namespace, data};
 		let action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";

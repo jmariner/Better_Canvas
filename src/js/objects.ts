@@ -1,5 +1,5 @@
 // ===== objects.ts =====
-let V: Vars.Vars; //Config;
+let V: Vars.Vars;
 let ACCESS_TOKEN: string = null;
 let DATA: Data;
 let PAGE: Page;
@@ -13,6 +13,7 @@ class Data {
 	moduleItems: Map<number, ModuleItem>; // module item id => ModuleItem
 	states: Map<string, State>; // stateName => State
 	courseTabs: Map<number, CustomCourseTab>; // course id => course tab
+	navTabs: Map<string, NavTab>; // tab id string => tab
 	onMainPage: boolean;
 	name: string;
 	extensionId: string;
@@ -23,6 +24,7 @@ class Data {
 		this.moduleItems = new Map();
 		this.states = new Map();
 		this.courseTabs = new Map();
+		this.navTabs = new Map();
 
 		this.elements = {jump_button: null, toc: null};
 
@@ -32,6 +34,7 @@ class Data {
 class Page {
 
 	body: JQuery;
+	scrollingElement: JQuery;
 	main?: JQuery;
 	content?: JQuery;
 	left?: JQuery;
@@ -41,6 +44,7 @@ class Page {
 	initialize() {
 
 		this.body = $("body");
+		this.scrollingElement = $(document.scrollingElement || document.body);
 		this.sidebar = $("#menu");
 		this.main = $("#main");
 
@@ -67,6 +71,34 @@ class CustomCourseTab {
 		this.color = color;
 	}
 
+}
+
+class NavTab {
+	readonly id: string;
+	private readonly initPosition: number;
+	private _position: number;
+
+	constructor(tabData: CanvasAPI.Tab) {
+		this.id = tabData.id;
+		this._position = null;
+		this.initPosition = tabData.position;
+	}
+
+	public setPosition(pos) {
+		this._position = pos;
+	}
+
+	get hasCustomPosition(): boolean {
+		return this._position != null;
+	}
+
+	get position(): number {
+		return this._position == null ? this.initPosition : this._position == -1 ? null : this._position;
+	}
+
+	get hidden(): boolean {
+		return this._position == -1;
+	}
 }
 
 class State {
@@ -107,7 +139,7 @@ class Module {
 	readonly itemCount: number;
 	readonly items: ModuleItem[];
 
-	constructor(moduleJson) {
+	constructor(moduleJson: CanvasAPI.Module) {
 		this.name = moduleJson.name;
 		this.id = moduleJson.id;
 		this.itemCount = moduleJson.items_count;
@@ -330,12 +362,12 @@ class Utils {
 		req.send();
 	}
 
-	static putDataArray(url: string, array: any[], callback: (success: boolean) => any) {
-		let data = {ns: V.canvas.api.namespace, data: array};
-		let action = array.length > 0 ? "PUT" : "DELETE";
+	static putData(url: string, data: any | any[], callback: (success: boolean) => any) {
+		let bodyData = {ns: V.canvas.api.namespace, data};
+		let action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
 
 		if (action === "DELETE")
-			delete data.data;
+			delete bodyData.data;
 
 		const req = new XMLHttpRequest();
 
@@ -351,7 +383,7 @@ class Utils {
 		req.open(action, url);
 		req.setRequestHeader("Content-Type", "application/json");
 		req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
-		req.send(JSON.stringify(data));
+		req.send(JSON.stringify(bodyData));
 	}
 
 	static appendDataArray(url: string, values: any[], callback: (success: boolean) => any) {
@@ -359,7 +391,7 @@ class Utils {
 		// url is same for get/put
 		Utils.getJSON(url, resultData => {
 			let array = resultData.data ? resultData.data.concat(values) : values;
-			Utils.putDataArray(url, array, callback);
+			Utils.putData(url, array, callback);
 		});
 	}
 
@@ -373,7 +405,7 @@ class Utils {
 				return;
 			}
 			array = array.filter(val => !values.includes(val));
-			Utils.putDataArray(url, array, callback);
+			Utils.putData(url, array, callback);
 		});
 	}
 

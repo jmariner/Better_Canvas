@@ -73,7 +73,7 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 
 	},
 
-	function getItemData(callback) {
+	function getMainData(callback) {
 
 		// in here, we're sending request for assignments at the same time as the one for modules then items
 		// we cannot assume that one will be quicker than the other, so keep track and continue when both are done
@@ -87,6 +87,7 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 		// hopefully 1000 is enough to get all in one go
 		const assignmentsUrl = Utils.perPage(V.canvas.api.urls.assignments, 1000);
 
+		// get assignments
 		Utils.getJSON(assignmentsUrl, (resultData: CanvasAPI.Assignment[]) => {
 
 			resultData.forEach(assignmentJson => {
@@ -110,11 +111,12 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 					assignmentJson.has_submitted_submissions : null;
 			});
 
-			// getItemData done
+			// assignments done
 			partDone();
 
 		});
 
+		// begin modules -> module items -> custom data -> file information
 		new Promise(next => { // get modules
 
 			// hopefully no more than 25 modules
@@ -174,39 +176,6 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 
 			});
 
-		})).then(() => new Promise(next => { // get custom data
-
-			const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, {dataPath: ""});
-
-			Utils.getJSON(customDataUrl, (resultData: {data: CanvasAPI.CustomData}) => {
-				const customData = resultData.data;
-
-				// this happens when there was an issue getting the data or there was no data at all
-				if (customData === undefined) {
-					Utils.runCb(callback);
-					return;
-				}
-
-				let complete = customData.completed_assignments && customData.completed_assignments[DATA.courseID] || [];
-				let hidden = customData.hidden_assignments && customData.hidden_assignments[DATA.courseID] || [];
-
-				// Map.forEach takes "function(value, key, map)"
-				DATA.moduleItems.forEach((modItem, modItemId) => {
-					modItem.checked = complete.includes(modItemId);
-					modItem.hidden = hidden.includes(modItemId);
-				});
-
-				const activeStates = customData.active_states || [];
-
-				// load states from config
-				$.each(V.state, (name, stateData) => {
-					const stateObj = new State(name, stateData, activeStates.includes(name));
-					DATA.states.set(name, stateObj);
-				});
-
-				next();
-
-			});
 		})).then(() => new Promise(next => { // get file urls for file items
 
 			const fileItems = Array.from(DATA.moduleItems.values())
@@ -215,7 +184,7 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 			let waitingCount = fileItems.length;
 
 			fileItems.forEach(item => {
-				const fileDataUrl = Utils.scopeFormat(V.canvas.api.urls.file_direct, {fileID: item.contentId});
+				const fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, {fileID: item.contentId});
 				Utils.getJSON(fileDataUrl, (resultData: CanvasAPI.File) => {
 
 					item.setFileData(resultData);
@@ -225,10 +194,73 @@ const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
 			});
 
 		}))
+		.then(() => new Promise(next => { // get navigation tabs
+
+			// should never be more than 25 tabs
+			const navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
+
+			Utils.getJSON(navTabUrl, (resultData: CanvasAPI.Tab[]) => {
+
+				resultData.forEach(tab => {
+					DATA.navTabs.set(tab.id, new NavTab(tab));
+				});
+
+				next();
+
+			});
+
+		}))
 		.then(partDone);
 
-
 	},
+
+
+	function getCustomData(callback) {
+		const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, {dataPath: ""});
+
+		Utils.getJSON(customDataUrl, (resultData: {data: CanvasAPI.CustomData}) => {
+			const customData = resultData.data;
+
+			// this happens when there was an issue getting the data or there was no data at all
+			if (customData === undefined) {
+				Utils.runCb(callback);
+				return;
+			}
+
+			// === load complete / hidden assignments ===
+
+			const complete: number[] = customData.completed_assignments ? customData.completed_assignments[DATA.courseID] : [];
+			const hidden: number[] = customData.hidden_assignments ? customData.hidden_assignments[DATA.courseID] : [];
+
+			// Map.forEach takes "function(value, key, map)"
+			DATA.moduleItems.forEach((modItem, modItemId) => {
+				modItem.checked = complete.includes(modItemId);
+				modItem.hidden = hidden.includes(modItemId);
+			});
+
+			// === load active state list ===
+
+			const activeStates: string[] = customData.active_states || [];
+
+			// load states from config
+			$.each(V.state, (name, stateData) => {
+				const stateObj = new State(name, stateData, activeStates.includes(name));
+				DATA.states.set(name, stateObj);
+			});
+
+			// === load hidden tabs ===
+
+			const tabPositions: object = customData.tab_positions ? customData.tab_positions[DATA.courseID] : [];
+
+			DATA.navTabs.forEach((navTab, tabId) => {
+				if (tabPositions[tabId] !== undefined)
+					navTab.setPosition(tabPositions[tabId]);
+			});
+
+			Utils.runCb(callback);
+		});
+
+	}
 
 ];
 
@@ -341,21 +373,31 @@ class Main {
 
 		$("ul#menu > li").removeClass("ic-app-header__menu-list-item--active");
 
-		// ==== apply course color to brand colors ====
-
-		const color = DATA.courseTabs.get(DATA.courseID).color;
-		document.documentElement.style.setProperty("--ic-brand-primary", color);
-
-		// ====================== main page cutoff ==================
-		// everything past this is only for modules/grades pages
-		// ==========================================================
-		if (!DATA.onMainPage) return;
-
 		// === load initial states ===
 
 		Array.from(DATA.states.values())
 			.filter(s => s.active && s.onPages.includes(DATA.coursePage))
 			.forEach(s => PAGE.body.addClass(s.bodyClass));
+
+		// ==== apply course color to brand colors ====
+
+		const color = DATA.courseTabs.get(DATA.courseID).color;
+		document.documentElement.style.setProperty("--ic-brand-primary", color);
+
+		// ==== clear empty nav tabs ===
+
+		$(V.canvas.selector.nav_tabs).find("li:empty").remove();
+
+		// ==== apply the custom nav tab positions ===
+
+		Array.from(DATA.navTabs.values()).filter(tab => tab.hasCustomPosition)
+			.sort((tabA, tabB) => tabA.position - tabB.position)
+			.forEach(UI.updateNavTabPosition);
+
+		// ====================== main page cutoff ==================
+		// everything past this is only for modules/grades pages
+		// ==========================================================
+		if (!DATA.onMainPage) return;
 
 		// === place checkboxes & hide buttons ===
 
@@ -399,7 +441,6 @@ class Main {
 				UI.updateHideButton(item);
 				item.hideElement.show();
 			}
-
 
 		});
 
@@ -478,7 +519,7 @@ class Main {
 			.appendTo(PAGE.main)
 			.data("cutoff", toc.offset().top - V.ui.toc_top_margin);
 
-		UI.updateModules();
+		Array.from(DATA.modules.values()).forEach(UI.updateModule);
 
 		// === add submission status icons ===
 
@@ -531,15 +572,12 @@ class Main {
 			});
 
 		$("."+V.cssClass.external_url).show()
-		// need to clear the "a" contents cause canvas inserts the external link icon
-	//	$("."+V.cssClass.external_url).show().find("a").html("");
 
-	}
+	} // end initPage
 
 	static getState(stateName: string): boolean {
 		if (DATA.states.has(stateName)) {
 			const state = DATA.states.get(stateName);
-		//	return PAGE.body.hasClass(state.bodyClass);
 			return state.active;
 		}
 		else {
@@ -562,6 +600,21 @@ class Main {
 
 		const url = Utils.format(V.canvas.api.urls.custom_data, {dataPath: "/active_states"});
 		Utils.editDataArray(url, state, [stateName]);
+	}
+
+	static setNavTabPosition(tab: NavTab, position: number) {
+
+		const url = Utils.format(V.canvas.api.urls.custom_data, {
+			dataPath: ["", V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id].join("/")
+		});
+
+		Utils.putData(url, position, success => {
+			if (success) {
+				tab.setPosition(position);
+				UI.updateNavTabPosition(tab);
+			}
+			else throw "Tab position update failed.";
+		});
 	}
 
 	// element is the <input>
@@ -642,7 +695,7 @@ class Main {
 		if (source.id !== DATA.extensionId) return;
 
 		if (data.type === MessageType.BASIC) {
-			const unchecked = Array.from(DATA.moduleItems.values()).filter(i=>!i.checked&&!i.hidden&&!i.isSubHeader);
+			const unchecked = Array.from(DATA.moduleItems.values()).filter(i=>!i.checked && !i.hidden && !i.isSubHeader);
 			switch (data.action) {
 				case "ping":
 					respondFunc({pong: $.now()});
@@ -744,10 +797,6 @@ class UI {
 			.css({backgroundImage});
 	}
 
-	static updateModules() {
-		Array.from(DATA.modules.values()).forEach(UI.updateModule);
-	}
-
 	static updateModule(module: Module) {
 
 		if (DATA.elements.toc !== null)
@@ -759,8 +808,21 @@ class UI {
 
 	}
 
+	static updateNavTabPosition(tab: NavTab) {
+
+		if (!tab.hasCustomPosition) throw "Tab has no custom position";
+
+		const tabList = $(V.canvas.selector.nav_tabs);
+		const tabEl = tabList.find("a."+tab.id).parent();
+
+		if (tab.hidden)
+			tabEl.hide();
+		else
+			tabEl.show().detach().insertBefore(tabList.children().eq(tab.position-1));
+	}
+
 	static updateScrollPosition() {
-		const scrollTop = document.body.scrollTop;
+		const scrollTop = PAGE.scrollingElement.prop("scrollTop");
 
 		if (DATA.elements.toc !== null) {
 			DATA.elements.toc
@@ -790,7 +852,7 @@ class UI {
 		}
 		else { // if not, scroll to it
 			let scrollTop = element.offset().top - V.ui.scroll_top_offset;
-			PAGE.body.animate({scrollTop},
+			PAGE.scrollingElement.animate({scrollTop},
 				V.ui.scroll_time,
 				() => UI.flashElement(element));
 		}

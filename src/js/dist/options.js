@@ -18,6 +18,7 @@ var Data = (function () {
         this.moduleItems = new Map();
         this.states = new Map();
         this.courseTabs = new Map();
+        this.navTabs = new Map();
         this.elements = { jump_button: null, toc: null };
     }
     return Data;
@@ -27,6 +28,7 @@ var Page = (function () {
     }
     Page.prototype.initialize = function () {
         this.body = $("body");
+        this.scrollingElement = $(document.scrollingElement || document.body);
         this.sidebar = $("#menu");
         this.main = $("#main");
         if (DATA.onMainPage) {
@@ -46,6 +48,38 @@ var CustomCourseTab = (function () {
         this.color = color;
     }
     return CustomCourseTab;
+}());
+var NavTab = (function () {
+    function NavTab(tabData) {
+        this.id = tabData.id;
+        this._position = null;
+        this.initPosition = tabData.position;
+    }
+    NavTab.prototype.setPosition = function (pos) {
+        this._position = pos;
+    };
+    Object.defineProperty(NavTab.prototype, "hasCustomPosition", {
+        get: function () {
+            return this._position != null;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NavTab.prototype, "position", {
+        get: function () {
+            return this._position == null ? this.initPosition : this._position == -1 ? null : this._position;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NavTab.prototype, "hidden", {
+        get: function () {
+            return this._position == -1;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return NavTab;
 }());
 var State = (function () {
     function State(key, stateData, active) {
@@ -305,11 +339,11 @@ var Utils = (function () {
         req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
         req.send();
     };
-    Utils.putDataArray = function (url, array, callback) {
-        var data = { ns: V.canvas.api.namespace, data: array };
-        var action = array.length > 0 ? "PUT" : "DELETE";
+    Utils.putData = function (url, data, callback) {
+        var bodyData = { ns: V.canvas.api.namespace, data: data };
+        var action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
         if (action === "DELETE")
-            delete data.data;
+            delete bodyData.data;
         var req = new XMLHttpRequest();
         req.onreadystatechange = function () {
             if (req.readyState === 4) {
@@ -319,12 +353,12 @@ var Utils = (function () {
         req.open(action, url);
         req.setRequestHeader("Content-Type", "application/json");
         req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
-        req.send(JSON.stringify(data));
+        req.send(JSON.stringify(bodyData));
     };
     Utils.appendDataArray = function (url, values, callback) {
         Utils.getJSON(url, function (resultData) {
             var array = resultData.data ? resultData.data.concat(values) : values;
-            Utils.putDataArray(url, array, callback);
+            Utils.putData(url, array, callback);
         });
     };
     Utils.subtractDataArray = function (url, values, callback) {
@@ -335,7 +369,7 @@ var Utils = (function () {
                 return;
             }
             array = array.filter(function (val) { return !values.includes(val); });
-            Utils.putDataArray(url, array, callback);
+            Utils.putData(url, array, callback);
         });
     };
     Utils.editDataArray = function (url, append, values, callback) {
@@ -548,25 +582,27 @@ var Vars;
                     module_items: "ul.context_module_items",
                     subheader: "li.context_module_sub_header",
                     not_subheader: "li.context_module_item:not(.context_module_sub_header)",
-                    top_nav: "div.ic-app-nav-toggle-and-crumbs"
+                    nav_tabs: "ul#section-tabs"
                 },
                 api: {
                     namespace: _this._canvas.namespace,
                     root_url: _this._canvas.root_url,
                     per_page: 100,
                     urls: {
-                        custom_data: _this._canvas.root_url + "users/self/custom_data{dataPath}?ns=" + _this._canvas.namespace,
-                        favorite_courses: _this._canvas.root_url + "users/self/favorites/courses",
-                        custom_colors: _this._canvas.root_url + "users/self/colors",
-                        assignments: _this._canvas.root_url + "users/self/courses/{courseID}/assignments",
-                        modules: _this._canvas.root_url + "courses/{courseID}/modules",
-                        module_items: _this._canvas.root_url + "courses/{courseID}/modules/{moduleID}/items",
-                        file_direct: _this._canvas.root_url + "courses/{courseID}/files/{fileID}",
+                        custom_data: "users/self/custom_data{dataPath}?ns=" + _this._canvas.namespace,
+                        favorite_courses: "users/self/favorites/courses",
+                        custom_colors: "users/self/colors",
+                        assignments: "users/self/courses/{courseID}/assignments",
+                        modules: "courses/{courseID}/modules",
+                        module_items: "courses/{courseID}/modules/{moduleID}/items",
+                        file_direct: "courses/{courseID}/files/{fileID}",
+                        navigation_tabs: "courses/{courseID}/tabs"
                     },
                     data_urls: {
                         active_states: "active_states",
                         completed_assignments: "completed_assignments",
-                        hidden_assignments: "hidden_assignments"
+                        hidden_assignments: "hidden_assignments",
+                        tab_positions: "tab_positions"
                     }
                 },
             };
@@ -574,9 +610,8 @@ var Vars;
         }
         Vars.prototype.init = function (courseID) {
             var _this = this;
-            var formatData = { courseID: courseID };
-            $.each(this.canvas.api.urls, function (key, val) {
-                _this.canvas.api.urls[key] = Utils.scopeFormat(val, formatData);
+            $.each(this.canvas.api.urls, function (key, url) {
+                _this.canvas.api.urls[key] = _this.canvas.api.root_url + Utils.scopeFormat(url, { courseID: courseID });
             });
         };
         return Vars;

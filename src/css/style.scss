@@ -479,6 +479,10 @@ div.ic-app-nav-toggle-and-crumbs {
 	border-bottom-color: var(--ic-brand-primary);
 }
 
+.ic-app-course-menu span#section-tabs-header-subtitle {
+	display: none;
+}
+
 aside#right-side ul#question_list {
 	max-height: none !important
 }

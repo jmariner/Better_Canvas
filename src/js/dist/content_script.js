@@ -18,6 +18,7 @@ var Data = (function () {
         this.moduleItems = new Map();
         this.states = new Map();
         this.courseTabs = new Map();
+        this.navTabs = new Map();
         this.elements = { jump_button: null, toc: null };
     }
     return Data;
@@ -27,6 +28,7 @@ var Page = (function () {
     }
     Page.prototype.initialize = function () {
         this.body = $("body");
+        this.scrollingElement = $(document.scrollingElement || document.body);
         this.sidebar = $("#menu");
         this.main = $("#main");
         if (DATA.onMainPage) {
@@ -46,6 +48,38 @@ var CustomCourseTab = (function () {
         this.color = color;
     }
     return CustomCourseTab;
+}());
+var NavTab = (function () {
+    function NavTab(tabData) {
+        this.id = tabData.id;
+        this._position = null;
+        this.initPosition = tabData.position;
+    }
+    NavTab.prototype.setPosition = function (pos) {
+        this._position = pos;
+    };
+    Object.defineProperty(NavTab.prototype, "hasCustomPosition", {
+        get: function () {
+            return this._position != null;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NavTab.prototype, "position", {
+        get: function () {
+            return this._position == null ? this.initPosition : this._position == -1 ? null : this._position;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NavTab.prototype, "hidden", {
+        get: function () {
+            return this._position == -1;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return NavTab;
 }());
 var State = (function () {
     function State(key, stateData, active) {
@@ -305,11 +339,11 @@ var Utils = (function () {
         req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
         req.send();
     };
-    Utils.putDataArray = function (url, array, callback) {
-        var data = { ns: V.canvas.api.namespace, data: array };
-        var action = array.length > 0 ? "PUT" : "DELETE";
+    Utils.putData = function (url, data, callback) {
+        var bodyData = { ns: V.canvas.api.namespace, data: data };
+        var action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
         if (action === "DELETE")
-            delete data.data;
+            delete bodyData.data;
         var req = new XMLHttpRequest();
         req.onreadystatechange = function () {
             if (req.readyState === 4) {
@@ -319,12 +353,12 @@ var Utils = (function () {
         req.open(action, url);
         req.setRequestHeader("Content-Type", "application/json");
         req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
-        req.send(JSON.stringify(data));
+        req.send(JSON.stringify(bodyData));
     };
     Utils.appendDataArray = function (url, values, callback) {
         Utils.getJSON(url, function (resultData) {
             var array = resultData.data ? resultData.data.concat(values) : values;
-            Utils.putDataArray(url, array, callback);
+            Utils.putData(url, array, callback);
         });
     };
     Utils.subtractDataArray = function (url, values, callback) {
@@ -335,7 +369,7 @@ var Utils = (function () {
                 return;
             }
             array = array.filter(function (val) { return !values.includes(val); });
-            Utils.putDataArray(url, array, callback);
+            Utils.putData(url, array, callback);
         });
     };
     Utils.editDataArray = function (url, append, values, callback) {
@@ -548,25 +582,27 @@ var Vars;
                     module_items: "ul.context_module_items",
                     subheader: "li.context_module_sub_header",
                     not_subheader: "li.context_module_item:not(.context_module_sub_header)",
-                    top_nav: "div.ic-app-nav-toggle-and-crumbs"
+                    nav_tabs: "ul#section-tabs"
                 },
                 api: {
                     namespace: _this._canvas.namespace,
                     root_url: _this._canvas.root_url,
                     per_page: 100,
                     urls: {
-                        custom_data: _this._canvas.root_url + "users/self/custom_data{dataPath}?ns=" + _this._canvas.namespace,
-                        favorite_courses: _this._canvas.root_url + "users/self/favorites/courses",
-                        custom_colors: _this._canvas.root_url + "users/self/colors",
-                        assignments: _this._canvas.root_url + "users/self/courses/{courseID}/assignments",
-                        modules: _this._canvas.root_url + "courses/{courseID}/modules",
-                        module_items: _this._canvas.root_url + "courses/{courseID}/modules/{moduleID}/items",
-                        file_direct: _this._canvas.root_url + "courses/{courseID}/files/{fileID}",
+                        custom_data: "users/self/custom_data{dataPath}?ns=" + _this._canvas.namespace,
+                        favorite_courses: "users/self/favorites/courses",
+                        custom_colors: "users/self/colors",
+                        assignments: "users/self/courses/{courseID}/assignments",
+                        modules: "courses/{courseID}/modules",
+                        module_items: "courses/{courseID}/modules/{moduleID}/items",
+                        file_direct: "courses/{courseID}/files/{fileID}",
+                        navigation_tabs: "courses/{courseID}/tabs"
                     },
                     data_urls: {
                         active_states: "active_states",
                         completed_assignments: "completed_assignments",
-                        hidden_assignments: "hidden_assignments"
+                        hidden_assignments: "hidden_assignments",
+                        tab_positions: "tab_positions"
                     }
                 },
             };
@@ -574,9 +610,8 @@ var Vars;
         }
         Vars.prototype.init = function (courseID) {
             var _this = this;
-            var formatData = { courseID: courseID };
-            $.each(this.canvas.api.urls, function (key, val) {
-                _this.canvas.api.urls[key] = Utils.scopeFormat(val, formatData);
+            $.each(this.canvas.api.urls, function (key, url) {
+                _this.canvas.api.urls[key] = _this.canvas.api.root_url + Utils.scopeFormat(url, { courseID: courseID });
             });
         };
         return Vars;
@@ -622,7 +657,7 @@ var Vars;
             });
         });
     },
-    function getItemData(callback) {
+    function getMainData(callback) {
         var firstDone = false;
         var partDone = function () {
             if (firstDone)
@@ -690,32 +725,11 @@ var Vars;
                 });
             });
         }); }).then(function () { return new Promise(function (next) {
-            var customDataUrl = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "" });
-            Utils.getJSON(customDataUrl, function (resultData) {
-                var customData = resultData.data;
-                if (customData === undefined) {
-                    Utils.runCb(callback);
-                    return;
-                }
-                var complete = customData.completed_assignments && customData.completed_assignments[DATA.courseID] || [];
-                var hidden = customData.hidden_assignments && customData.hidden_assignments[DATA.courseID] || [];
-                DATA.moduleItems.forEach(function (modItem, modItemId) {
-                    modItem.checked = complete.includes(modItemId);
-                    modItem.hidden = hidden.includes(modItemId);
-                });
-                var activeStates = customData.active_states || [];
-                $.each(V.state, function (name, stateData) {
-                    var stateObj = new State(name, stateData, activeStates.includes(name));
-                    DATA.states.set(name, stateObj);
-                });
-                next();
-            });
-        }); }).then(function () { return new Promise(function (next) {
             var fileItems = Array.from(DATA.moduleItems.values())
                 .filter(function (item) { return item.type == ModuleItemType.FILE; });
             var waitingCount = fileItems.length;
             fileItems.forEach(function (item) {
-                var fileDataUrl = Utils.scopeFormat(V.canvas.api.urls.file_direct, { fileID: item.contentId });
+                var fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, { fileID: item.contentId });
                 Utils.getJSON(fileDataUrl, function (resultData) {
                     item.setFileData(resultData);
                     if (--waitingCount === 0)
@@ -723,8 +737,44 @@ var Vars;
                 });
             });
         }); })
+            .then(function () { return new Promise(function (next) {
+            var navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
+            Utils.getJSON(navTabUrl, function (resultData) {
+                resultData.forEach(function (tab) {
+                    DATA.navTabs.set(tab.id, new NavTab(tab));
+                });
+                next();
+            });
+        }); })
             .then(partDone);
     },
+    function getCustomData(callback) {
+        var customDataUrl = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "" });
+        Utils.getJSON(customDataUrl, function (resultData) {
+            var customData = resultData.data;
+            if (customData === undefined) {
+                Utils.runCb(callback);
+                return;
+            }
+            var complete = customData.completed_assignments ? customData.completed_assignments[DATA.courseID] : [];
+            var hidden = customData.hidden_assignments ? customData.hidden_assignments[DATA.courseID] : [];
+            DATA.moduleItems.forEach(function (modItem, modItemId) {
+                modItem.checked = complete.includes(modItemId);
+                modItem.hidden = hidden.includes(modItemId);
+            });
+            var activeStates = customData.active_states || [];
+            $.each(V.state, function (name, stateData) {
+                var stateObj = new State(name, stateData, activeStates.includes(name));
+                DATA.states.set(name, stateObj);
+            });
+            var tabPositions = customData.tab_positions ? customData.tab_positions[DATA.courseID] : [];
+            DATA.navTabs.forEach(function (navTab, tabId) {
+                if (tabPositions[tabId] !== undefined)
+                    navTab.setPosition(tabPositions[tabId]);
+            });
+            Utils.runCb(callback);
+        });
+    }
 ];
 (function init() {
     var start = $.now();
@@ -792,13 +842,17 @@ var Main = (function () {
         if (DATA.coursePage === null)
             return;
         $("ul#menu > li").removeClass("ic-app-header__menu-list-item--active");
-        var color = DATA.courseTabs.get(DATA.courseID).color;
-        document.documentElement.style.setProperty("--ic-brand-primary", color);
-        if (!DATA.onMainPage)
-            return;
         Array.from(DATA.states.values())
             .filter(function (s) { return s.active && s.onPages.includes(DATA.coursePage); })
             .forEach(function (s) { return PAGE.body.addClass(s.bodyClass); });
+        var color = DATA.courseTabs.get(DATA.courseID).color;
+        document.documentElement.style.setProperty("--ic-brand-primary", color);
+        $(V.canvas.selector.nav_tabs).find("li:empty").remove();
+        Array.from(DATA.navTabs.values()).filter(function (tab) { return tab.hasCustomPosition; })
+            .sort(function (tabA, tabB) { return tabA.position - tabB.position; })
+            .forEach(UI.updateNavTabPosition);
+        if (!DATA.onMainPage)
+            return;
         Array.from(DATA.moduleItems.values()).forEach(function (item) {
             var item_id = item.id;
             var mainEl = $("#" + item.canvasElementId);
@@ -884,7 +938,7 @@ var Main = (function () {
             .css("top", PAGE.left.height() + V.ui.toc_top_margin)
             .appendTo(PAGE.main)
             .data("cutoff", toc.offset().top - V.ui.toc_top_margin);
-        UI.updateModules();
+        Array.from(DATA.modules.values()).forEach(UI.updateModule);
         PAGE.main.on("click", "." + V.cssClass.hide_button + " > i", function () {
             Main.onHideButtonClick($(this));
         });
@@ -934,6 +988,19 @@ var Main = (function () {
         stateObj.onChange(state, V, PAGE.body);
         var url = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "/active_states" });
         Utils.editDataArray(url, state, [stateName]);
+    };
+    Main.setNavTabPosition = function (tab, position) {
+        var url = Utils.format(V.canvas.api.urls.custom_data, {
+            dataPath: ["", V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id].join("/")
+        });
+        Utils.putData(url, position, function (success) {
+            if (success) {
+                tab.setPosition(position);
+                UI.updateNavTabPosition(tab);
+            }
+            else
+                throw "Tab position update failed.";
+        });
     };
     Main.onCheckboxChange = function (el) {
         var id = Number($(el).attr(V.data_attr.mod_item_id));
@@ -1081,17 +1148,24 @@ var UI = (function () {
             .toggleClass(V.cssClass.item_hidden, totalItems === 0)
             .css({ backgroundImage: backgroundImage });
     };
-    UI.updateModules = function () {
-        Array.from(DATA.modules.values()).forEach(UI.updateModule);
-    };
     UI.updateModule = function (module) {
         if (DATA.elements.toc !== null)
             UI.updateTableOfContents(module);
         var noItems = module.items.filter(function (i) { return !i.isSubHeader && !i.hidden; }).length === 0;
         $("#context_module_" + module.id).toggleClass(V.cssClass.item_hidden, noItems);
     };
+    UI.updateNavTabPosition = function (tab) {
+        if (!tab.hasCustomPosition)
+            throw "Tab has no custom position";
+        var tabList = $(V.canvas.selector.nav_tabs);
+        var tabEl = tabList.find("a." + tab.id).parent();
+        if (tab.hidden)
+            tabEl.hide();
+        else
+            tabEl.show().detach().insertBefore(tabList.children().eq(tab.position - 1));
+    };
     UI.updateScrollPosition = function () {
-        var scrollTop = document.body.scrollTop;
+        var scrollTop = PAGE.scrollingElement.prop("scrollTop");
         if (DATA.elements.toc !== null) {
             DATA.elements.toc
                 .toggleClass(V.cssClass.fixed, scrollTop > DATA.elements.toc.data("cutoff"));
@@ -1111,7 +1185,7 @@ var UI = (function () {
         }
         else {
             var scrollTop = element.offset().top - V.ui.scroll_top_offset;
-            PAGE.body.animate({ scrollTop: scrollTop }, V.ui.scroll_time, function () { return UI.flashElement(element); });
+            PAGE.scrollingElement.animate({ scrollTop: scrollTop }, V.ui.scroll_time, function () { return UI.flashElement(element); });
         }
     };
     UI.flashElement = function (element) {

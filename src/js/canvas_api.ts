@@ -1,10 +1,13 @@
 namespace CanvasAPI {
 
-	// https://canvas.instructure.com/doc/api/modules.html
-	// https://canvas.instructure.com/doc/api/assignments.html
-	// https://canvas.instructure.com/doc/api/discussion_topics.html
-	// https://canvas.instructure.com/doc/api/courses.html
-	// https://canvas.instructure.com/doc/api/files.html
+	/*
+		https://canvas.instructure.com/doc/api/modules.html
+		https://canvas.instructure.com/doc/api/assignments.html
+		https://canvas.instructure.com/doc/api/discussion_topics.html
+		https://canvas.instructure.com/doc/api/courses.html
+		https://canvas.instructure.com/doc/api/files.html
+		https://canvas.instructure.com/doc/api/submissions.html
+	*/
 
 	export interface Module {
 		id: number;
@@ -96,8 +99,6 @@ namespace CanvasAPI {
 		assignment_visibility: number[];
 	//	overrides: ???;
 		omit_from_final_grade: boolean;
-
-		// undocumented
 		has_submitted_submissions: boolean;
 	}
 
@@ -146,6 +147,7 @@ namespace CanvasAPI {
 		active_states: string[];
 		completed_assignments: Map<number, number[]>;
 		hidden_assignments: Map<number, number[]>;
+		tab_positions: Map<number, string[]>;
 	}
 
 	export interface Course {
@@ -215,4 +217,43 @@ namespace CanvasAPI {
 		preview_url: string;
 	}
 
+	export interface Submission {
+		assignment_id: number;
+	//	assignment: ???;
+	//	course: ???;
+		attempt: number;
+		body: string;
+		grade: string;
+		grade_matches_current_submission: boolean;
+		html_url: string;
+		preview_url: string;
+		score: number;
+		submission_comments: string;
+		submission_type: string;
+		submitted_at: string;
+		url: string;
+		user_id: number;
+		grader_id: number;
+		graded_at: string;
+	//	user: ???;
+		late: boolean;
+		assignment_visible: boolean;
+		excused: boolean;
+		missing: boolean;
+		late_policy_status: string;
+		points_deducted: number;
+		seconds_late: number;
+		workflow_state: string;
+	}
+
+	export interface Tab {
+		id: string;
+		label: string;
+		html_url: string;
+		full_url: string;
+		url?: string;
+		position: number;
+		visibility: string;
+		type: string;
+	}
 }

@@ -178,25 +178,27 @@ var Vars;
                     module_items: "ul.context_module_items",
                     subheader: "li.context_module_sub_header",
                     not_subheader: "li.context_module_item:not(.context_module_sub_header)",
-                    top_nav: "div.ic-app-nav-toggle-and-crumbs"
+                    nav_tabs: "ul#section-tabs"
                 },
                 api: {
                     namespace: _this._canvas.namespace,
                     root_url: _this._canvas.root_url,
                     per_page: 100,
                     urls: {
-                        custom_data: _this._canvas.root_url + "users/self/custom_data{dataPath}?ns=" + _this._canvas.namespace,
-                        favorite_courses: _this._canvas.root_url + "users/self/favorites/courses",
-                        custom_colors: _this._canvas.root_url + "users/self/colors",
-                        assignments: _this._canvas.root_url + "users/self/courses/{courseID}/assignments",
-                        modules: _this._canvas.root_url + "courses/{courseID}/modules",
-                        module_items: _this._canvas.root_url + "courses/{courseID}/modules/{moduleID}/items",
-                        file_direct: _this._canvas.root_url + "courses/{courseID}/files/{fileID}",
+                        custom_data: "users/self/custom_data{dataPath}?ns=" + _this._canvas.namespace,
+                        favorite_courses: "users/self/favorites/courses",
+                        custom_colors: "users/self/colors",
+                        assignments: "users/self/courses/{courseID}/assignments",
+                        modules: "courses/{courseID}/modules",
+                        module_items: "courses/{courseID}/modules/{moduleID}/items",
+                        file_direct: "courses/{courseID}/files/{fileID}",
+                        navigation_tabs: "courses/{courseID}/tabs"
                     },
                     data_urls: {
                         active_states: "active_states",
                         completed_assignments: "completed_assignments",
-                        hidden_assignments: "hidden_assignments"
+                        hidden_assignments: "hidden_assignments",
+                        tab_positions: "tab_positions"
                     }
                 },
             };
@@ -204,9 +206,8 @@ var Vars;
         }
         Vars.prototype.init = function (courseID) {
             var _this = this;
-            var formatData = { courseID: courseID };
-            $.each(this.canvas.api.urls, function (key, val) {
-                _this.canvas.api.urls[key] = Utils.scopeFormat(val, formatData);
+            $.each(this.canvas.api.urls, function (key, url) {
+                _this.canvas.api.urls[key] = _this.canvas.api.root_url + Utils.scopeFormat(url, { courseID: courseID });
             });
         };
         return Vars;

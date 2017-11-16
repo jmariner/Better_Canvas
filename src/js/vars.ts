@@ -241,33 +241,34 @@ namespace Vars {
 				module_items: "ul.context_module_items",
 				subheader: "li.context_module_sub_header",
 				not_subheader: "li.context_module_item:not(.context_module_sub_header)",
-				top_nav: "div.ic-app-nav-toggle-and-crumbs"
+				nav_tabs: "ul#section-tabs"
 			},
 			api: {
 				namespace: this._canvas.namespace,
 				root_url: this._canvas.root_url,
 				per_page: 100,
 				urls: {
-					custom_data: `${this._canvas.root_url}users/self/custom_data{dataPath}?ns=${this._canvas.namespace}`,
-					favorite_courses: `${this._canvas.root_url}users/self/favorites/courses`,
-					custom_colors: `${this._canvas.root_url}users/self/colors`,
-					assignments: `${this._canvas.root_url}users/self/courses/{courseID}/assignments`,
-					modules: `${this._canvas.root_url}courses/{courseID}/modules`,
-					module_items: `${this._canvas.root_url}courses/{courseID}/modules/{moduleID}/items`,
-					file_direct: `${this._canvas.root_url}courses/{courseID}/files/{fileID}`,
+					custom_data: `users/self/custom_data{dataPath}?ns=${this._canvas.namespace}`,
+					favorite_courses: "users/self/favorites/courses",
+					custom_colors: "users/self/colors",
+					assignments: "users/self/courses/{courseID}/assignments",
+					modules: "courses/{courseID}/modules",
+					module_items: "courses/{courseID}/modules/{moduleID}/items",
+					file_direct: "courses/{courseID}/files/{fileID}",
+					navigation_tabs: "courses/{courseID}/tabs"
 				},
 				data_urls: {
 					active_states: "active_states",
 					completed_assignments: "completed_assignments",
-					hidden_assignments: "hidden_assignments"
+					hidden_assignments: "hidden_assignments",
+					tab_positions: "tab_positions"
 				}
 			},
 		};
 
 		init(courseID: number) {
-			const formatData = {courseID};
-			$.each(this.canvas.api.urls, (key, val) => {
-				this.canvas.api.urls[key] = Utils.scopeFormat(val, formatData);
+			$.each(this.canvas.api.urls, (key, url) => {
+				this.canvas.api.urls[key] = this.canvas.api.root_url + Utils.scopeFormat(url, {courseID});
 			});
 		}
 	}

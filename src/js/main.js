@@ -35,7 +35,7 @@ var MAIN_FLOW = [
             });
         });
     },
-    function getItemData(callback) {
+    function getMainData(callback) {
         var firstDone = false;
         var partDone = function () {
             if (firstDone)
@@ -103,32 +103,11 @@ var MAIN_FLOW = [
                 });
             });
         }); }).then(function () { return new Promise(function (next) {
-            var customDataUrl = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "" });
-            Utils.getJSON(customDataUrl, function (resultData) {
-                var customData = resultData.data;
-                if (customData === undefined) {
-                    Utils.runCb(callback);
-                    return;
-                }
-                var complete = customData.completed_assignments && customData.completed_assignments[DATA.courseID] || [];
-                var hidden = customData.hidden_assignments && customData.hidden_assignments[DATA.courseID] || [];
-                DATA.moduleItems.forEach(function (modItem, modItemId) {
-                    modItem.checked = complete.includes(modItemId);
-                    modItem.hidden = hidden.includes(modItemId);
-                });
-                var activeStates = customData.active_states || [];
-                $.each(V.state, function (name, stateData) {
-                    var stateObj = new State(name, stateData, activeStates.includes(name));
-                    DATA.states.set(name, stateObj);
-                });
-                next();
-            });
-        }); }).then(function () { return new Promise(function (next) {
             var fileItems = Array.from(DATA.moduleItems.values())
                 .filter(function (item) { return item.type == ModuleItemType.FILE; });
             var waitingCount = fileItems.length;
             fileItems.forEach(function (item) {
-                var fileDataUrl = Utils.scopeFormat(V.canvas.api.urls.file_direct, { fileID: item.contentId });
+                var fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, { fileID: item.contentId });
                 Utils.getJSON(fileDataUrl, function (resultData) {
                     item.setFileData(resultData);
                     if (--waitingCount === 0)
@@ -136,8 +115,44 @@ var MAIN_FLOW = [
                 });
             });
         }); })
+            .then(function () { return new Promise(function (next) {
+            var navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
+            Utils.getJSON(navTabUrl, function (resultData) {
+                resultData.forEach(function (tab) {
+                    DATA.navTabs.set(tab.id, new NavTab(tab));
+                });
+                next();
+            });
+        }); })
             .then(partDone);
     },
+    function getCustomData(callback) {
+        var customDataUrl = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "" });
+        Utils.getJSON(customDataUrl, function (resultData) {
+            var customData = resultData.data;
+            if (customData === undefined) {
+                Utils.runCb(callback);
+                return;
+            }
+            var complete = customData.completed_assignments ? customData.completed_assignments[DATA.courseID] : [];
+            var hidden = customData.hidden_assignments ? customData.hidden_assignments[DATA.courseID] : [];
+            DATA.moduleItems.forEach(function (modItem, modItemId) {
+                modItem.checked = complete.includes(modItemId);
+                modItem.hidden = hidden.includes(modItemId);
+            });
+            var activeStates = customData.active_states || [];
+            $.each(V.state, function (name, stateData) {
+                var stateObj = new State(name, stateData, activeStates.includes(name));
+                DATA.states.set(name, stateObj);
+            });
+            var tabPositions = customData.tab_positions ? customData.tab_positions[DATA.courseID] : [];
+            DATA.navTabs.forEach(function (navTab, tabId) {
+                if (tabPositions[tabId] !== undefined)
+                    navTab.setPosition(tabPositions[tabId]);
+            });
+            Utils.runCb(callback);
+        });
+    }
 ];
 (function init() {
     var start = $.now();
@@ -205,13 +220,17 @@ var Main = (function () {
         if (DATA.coursePage === null)
             return;
         $("ul#menu > li").removeClass("ic-app-header__menu-list-item--active");
-        var color = DATA.courseTabs.get(DATA.courseID).color;
-        document.documentElement.style.setProperty("--ic-brand-primary", color);
-        if (!DATA.onMainPage)
-            return;
         Array.from(DATA.states.values())
             .filter(function (s) { return s.active && s.onPages.includes(DATA.coursePage); })
             .forEach(function (s) { return PAGE.body.addClass(s.bodyClass); });
+        var color = DATA.courseTabs.get(DATA.courseID).color;
+        document.documentElement.style.setProperty("--ic-brand-primary", color);
+        $(V.canvas.selector.nav_tabs).find("li:empty").remove();
+        Array.from(DATA.navTabs.values()).filter(function (tab) { return tab.hasCustomPosition; })
+            .sort(function (tabA, tabB) { return tabA.position - tabB.position; })
+            .forEach(UI.updateNavTabPosition);
+        if (!DATA.onMainPage)
+            return;
         Array.from(DATA.moduleItems.values()).forEach(function (item) {
             var item_id = item.id;
             var mainEl = $("#" + item.canvasElementId);
@@ -297,7 +316,7 @@ var Main = (function () {
             .css("top", PAGE.left.height() + V.ui.toc_top_margin)
             .appendTo(PAGE.main)
             .data("cutoff", toc.offset().top - V.ui.toc_top_margin);
-        UI.updateModules();
+        Array.from(DATA.modules.values()).forEach(UI.updateModule);
         PAGE.main.on("click", "." + V.cssClass.hide_button + " > i", function () {
             Main.onHideButtonClick($(this));
         });
@@ -347,6 +366,19 @@ var Main = (function () {
         stateObj.onChange(state, V, PAGE.body);
         var url = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "/active_states" });
         Utils.editDataArray(url, state, [stateName]);
+    };
+    Main.setNavTabPosition = function (tab, position) {
+        var url = Utils.format(V.canvas.api.urls.custom_data, {
+            dataPath: ["", V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id].join("/")
+        });
+        Utils.putData(url, position, function (success) {
+            if (success) {
+                tab.setPosition(position);
+                UI.updateNavTabPosition(tab);
+            }
+            else
+                throw "Tab position update failed.";
+        });
     };
     Main.onCheckboxChange = function (el) {
         var id = Number($(el).attr(V.data_attr.mod_item_id));
@@ -494,17 +526,24 @@ var UI = (function () {
             .toggleClass(V.cssClass.item_hidden, totalItems === 0)
             .css({ backgroundImage: backgroundImage });
     };
-    UI.updateModules = function () {
-        Array.from(DATA.modules.values()).forEach(UI.updateModule);
-    };
     UI.updateModule = function (module) {
         if (DATA.elements.toc !== null)
             UI.updateTableOfContents(module);
         var noItems = module.items.filter(function (i) { return !i.isSubHeader && !i.hidden; }).length === 0;
         $("#context_module_" + module.id).toggleClass(V.cssClass.item_hidden, noItems);
     };
+    UI.updateNavTabPosition = function (tab) {
+        if (!tab.hasCustomPosition)
+            throw "Tab has no custom position";
+        var tabList = $(V.canvas.selector.nav_tabs);
+        var tabEl = tabList.find("a." + tab.id).parent();
+        if (tab.hidden)
+            tabEl.hide();
+        else
+            tabEl.show().detach().insertBefore(tabList.children().eq(tab.position - 1));
+    };
     UI.updateScrollPosition = function () {
-        var scrollTop = document.body.scrollTop;
+        var scrollTop = PAGE.scrollingElement.prop("scrollTop");
         if (DATA.elements.toc !== null) {
             DATA.elements.toc
                 .toggleClass(V.cssClass.fixed, scrollTop > DATA.elements.toc.data("cutoff"));
@@ -524,7 +563,7 @@ var UI = (function () {
         }
         else {
             var scrollTop = element.offset().top - V.ui.scroll_top_offset;
-            PAGE.body.animate({ scrollTop: scrollTop }, V.ui.scroll_time, function () { return UI.flashElement(element); });
+            PAGE.scrollingElement.animate({ scrollTop: scrollTop }, V.ui.scroll_time, function () { return UI.flashElement(element); });
         }
     };
     UI.flashElement = function (element) {

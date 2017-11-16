@@ -18,6 +18,7 @@ var Data = (function () {
         this.moduleItems = new Map();
         this.states = new Map();
         this.courseTabs = new Map();
+        this.navTabs = new Map();
         this.elements = { jump_button: null, toc: null };
     }
     return Data;
@@ -27,6 +28,7 @@ var Page = (function () {
     }
     Page.prototype.initialize = function () {
         this.body = $("body");
+        this.scrollingElement = $(document.scrollingElement || document.body);
         this.sidebar = $("#menu");
         this.main = $("#main");
         if (DATA.onMainPage) {
@@ -46,6 +48,38 @@ var CustomCourseTab = (function () {
         this.color = color;
     }
     return CustomCourseTab;
+}());
+var NavTab = (function () {
+    function NavTab(tabData) {
+        this.id = tabData.id;
+        this._position = null;
+        this.initPosition = tabData.position;
+    }
+    NavTab.prototype.setPosition = function (pos) {
+        this._position = pos;
+    };
+    Object.defineProperty(NavTab.prototype, "hasCustomPosition", {
+        get: function () {
+            return this._position != null;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NavTab.prototype, "position", {
+        get: function () {
+            return this._position == null ? this.initPosition : this._position == -1 ? null : this._position;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(NavTab.prototype, "hidden", {
+        get: function () {
+            return this._position == -1;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return NavTab;
 }());
 var State = (function () {
     function State(key, stateData, active) {
@@ -305,11 +339,11 @@ var Utils = (function () {
         req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
         req.send();
     };
-    Utils.putDataArray = function (url, array, callback) {
-        var data = { ns: V.canvas.api.namespace, data: array };
-        var action = array.length > 0 ? "PUT" : "DELETE";
+    Utils.putData = function (url, data, callback) {
+        var bodyData = { ns: V.canvas.api.namespace, data: data };
+        var action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
         if (action === "DELETE")
-            delete data.data;
+            delete bodyData.data;
         var req = new XMLHttpRequest();
         req.onreadystatechange = function () {
             if (req.readyState === 4) {
@@ -319,12 +353,12 @@ var Utils = (function () {
         req.open(action, url);
         req.setRequestHeader("Content-Type", "application/json");
         req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
-        req.send(JSON.stringify(data));
+        req.send(JSON.stringify(bodyData));
     };
     Utils.appendDataArray = function (url, values, callback) {
         Utils.getJSON(url, function (resultData) {
             var array = resultData.data ? resultData.data.concat(values) : values;
-            Utils.putDataArray(url, array, callback);
+            Utils.putData(url, array, callback);
         });
     };
     Utils.subtractDataArray = function (url, values, callback) {
@@ -335,7 +369,7 @@ var Utils = (function () {
                 return;
             }
             array = array.filter(function (val) { return !values.includes(val); });
-            Utils.putDataArray(url, array, callback);
+            Utils.putData(url, array, callback);
         });
     };
     Utils.editDataArray = function (url, append, values, callback) {

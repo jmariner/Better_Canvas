@@ -43,7 +43,7 @@ import MessageSender = chrome.runtime.MessageSender;
 
 	// try to load access token
 	try {
-		ACCESS_TOKEN = await UtilsAsync.loadToken();
+		ACCESS_TOKEN = await Utils.loadToken();
 	}
 	catch (e) {
 		Utils.accessTokenPrompt();
@@ -57,11 +57,11 @@ import MessageSender = chrome.runtime.MessageSender;
 	const courseTabFlow = async function() {
 
 		const courseColors = (
-			await UtilsAsync.getJSON<{custom_colors: Map<string, string>}>(V.canvas.api.urls.custom_colors)
+			await Utils.getJSON<{custom_colors: Map<string, string>}>(V.canvas.api.urls.custom_colors)
 		).custom_colors;
 
 		const favoriteCourses =
-			await UtilsAsync.getJSON<CanvasAPI.Course[]>(V.canvas.api.urls.favorite_courses);
+			await Utils.getJSON<CanvasAPI.Course[]>(V.canvas.api.urls.favorite_courses);
 
 		for (let courseData of favoriteCourses) {
 			const color = courseColors["course_" + courseData.id];
@@ -77,7 +77,7 @@ import MessageSender = chrome.runtime.MessageSender;
 	const navTabFlow = async function() {
 
 		const navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
-		const navTabs = await UtilsAsync.getJSON<CanvasAPI.Tab[]>(navTabUrl);
+		const navTabs = await Utils.getJSON<CanvasAPI.Tab[]>(navTabUrl);
 		for (let tab of navTabs)
 			DATA.navTabs.set(tab.id, new NavTab(tab));
 
@@ -91,7 +91,7 @@ import MessageSender = chrome.runtime.MessageSender;
 
 		// hopefully 1000 is enough to get all in one go
 		const assignmentsUrl = Utils.perPage(V.canvas.api.urls.assignments, 1000);
-		const assignments = await UtilsAsync.getJSON<CanvasAPI.Assignment[]>(assignmentsUrl);
+		const assignments = await Utils.getJSON<CanvasAPI.Assignment[]>(assignmentsUrl);
 
 		for (let assignmentJson of assignments) {
 
@@ -123,7 +123,7 @@ import MessageSender = chrome.runtime.MessageSender;
 		// ===== modules =====
 
 		const modulesUrl = Utils.perPage(V.canvas.api.urls.modules, 25);
-		const modules = await UtilsAsync.getJSON<CanvasAPI.Module[]>(modulesUrl);
+		const modules = await Utils.getJSON<CanvasAPI.Module[]>(modulesUrl);
 		for (let moduleData of modules) {
 			DATA.modules.set(moduleData.id, new Module(moduleData));
 		}
@@ -141,7 +141,7 @@ import MessageSender = chrome.runtime.MessageSender;
 						module.itemCount);
 
 					// return the promise instead of awaiting on this so it can be used in Promise.all
-					return UtilsAsync.getJSON<CanvasAPI.ModuleItem[]>(moduleItemsUrl);
+					return Utils.getJSON<CanvasAPI.ModuleItem[]>(moduleItemsUrl);
 
 				});
 
@@ -179,7 +179,7 @@ import MessageSender = chrome.runtime.MessageSender;
 		const filePromises: Promise<CanvasAPI.File>[] = fileItems.map(item => {
 			const fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, {fileID: item.contentId});
 			// return promise for Promise.all
-			return UtilsAsync.getJSON<CanvasAPI.File>(fileDataUrl);
+			return Utils.getJSON<CanvasAPI.File>(fileDataUrl);
 		});
 
 		const files: CanvasAPI.File[] = await Promise.all(filePromises);
@@ -197,7 +197,7 @@ import MessageSender = chrome.runtime.MessageSender;
 
 		const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, {dataPath: ""});
 		const customData: CanvasAPI.CustomData = (
-			await UtilsAsync.getJSON<{data:CanvasAPI.CustomData}>(customDataUrl)
+			await Utils.getJSON<{data:CanvasAPI.CustomData}>(customDataUrl)
 		).data;
 
 		// this happens when there was an issue getting the data or there was no data at all
@@ -656,9 +656,9 @@ class Main {
 				case "count unchecked":
 					respondFunc({count: unchecked.length});
 					break;
-				case "update token":
-					Utils.loadToken(respondFunc);
-					break;
+			//	case "update token":
+			//		Utils.loadToken(respondFunc);
+			//		break;
 				case "jump to first unchecked":
 					let uncheckedEls = unchecked
 						.map(i => document.getElementById(i.canvasElementId));

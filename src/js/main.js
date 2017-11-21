@@ -27,7 +27,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         V = Vars.VARS;
         V.init(DATA.courseID);
         try {
-            ACCESS_TOKEN = yield UtilsAsync.loadToken();
+            ACCESS_TOKEN = yield Utils.loadToken();
         }
         catch (e) {
             Utils.accessTokenPrompt();
@@ -35,8 +35,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         }
         const courseTabFlow = function () {
             return __awaiter(this, void 0, void 0, function* () {
-                const courseColors = (yield UtilsAsync.getJSON(V.canvas.api.urls.custom_colors)).custom_colors;
-                const favoriteCourses = yield UtilsAsync.getJSON(V.canvas.api.urls.favorite_courses);
+                const courseColors = (yield Utils.getJSON(V.canvas.api.urls.custom_colors)).custom_colors;
+                const favoriteCourses = yield Utils.getJSON(V.canvas.api.urls.favorite_courses);
                 for (let courseData of favoriteCourses) {
                     const color = courseColors["course_" + courseData.id];
                     DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
@@ -46,7 +46,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         const navTabFlow = function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
-                const navTabs = yield UtilsAsync.getJSON(navTabUrl);
+                const navTabs = yield Utils.getJSON(navTabUrl);
                 for (let tab of navTabs)
                     DATA.navTabs.set(tab.id, new NavTab(tab));
             });
@@ -54,7 +54,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         const assignmentFlow = function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const assignmentsUrl = Utils.perPage(V.canvas.api.urls.assignments, 1000);
-                const assignments = yield UtilsAsync.getJSON(assignmentsUrl);
+                const assignments = yield Utils.getJSON(assignmentsUrl);
                 for (let assignmentJson of assignments) {
                     let contentId;
                     if (assignmentJson.quiz_id)
@@ -75,7 +75,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         const moduleItemFlow = function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const modulesUrl = Utils.perPage(V.canvas.api.urls.modules, 25);
-                const modules = yield UtilsAsync.getJSON(modulesUrl);
+                const modules = yield Utils.getJSON(modulesUrl);
                 for (let moduleData of modules) {
                     DATA.modules.set(moduleData.id, new Module(moduleData));
                 }
@@ -84,7 +84,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
                     .filter(mod => mod.itemCount > 0)
                     .map(module => {
                     const moduleItemsUrl = Utils.perPage(Utils.format(V.canvas.api.urls.module_items, { moduleID: module.id }), module.itemCount);
-                    return UtilsAsync.getJSON(moduleItemsUrl);
+                    return Utils.getJSON(moduleItemsUrl);
                 });
                 const moduleItemSets = yield Promise.all(itemSetPromises);
                 for (let items of moduleItemSets) {
@@ -107,7 +107,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
                     .filter(item => item.type == ModuleItemType.FILE);
                 const filePromises = fileItems.map(item => {
                     const fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, { fileID: item.contentId });
-                    return UtilsAsync.getJSON(fileDataUrl);
+                    return Utils.getJSON(fileDataUrl);
                 });
                 const files = yield Promise.all(filePromises);
                 for (let file of files)
@@ -117,7 +117,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         const customDataFlow = function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "" });
-                const customData = (yield UtilsAsync.getJSON(customDataUrl)).data;
+                const customData = (yield Utils.getJSON(customDataUrl)).data;
                 if (customData === undefined)
                     return;
                 const complete = Utils.getOrDefault(customData.completed_assignments, DATA.courseID, new Array());
@@ -425,9 +425,6 @@ class Main {
                     break;
                 case "count unchecked":
                     respondFunc({ count: unchecked.length });
-                    break;
-                case "update token":
-                    Utils.loadToken(respondFunc);
                     break;
                 case "jump to first unchecked":
                     let uncheckedEls = unchecked

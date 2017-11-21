@@ -213,30 +213,6 @@ class Exception {
         return this.reason;
     }
 }
-class UtilsAsync {
-    static getJSON(url) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                Utils.getJSON(url, resultData => {
-                    resolve(resultData);
-                });
-            });
-        });
-    }
-    static loadToken() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                chrome.storage.sync.get(V.misc.token_key, resultData => {
-                    const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
-                    if (success)
-                        resolve(resultData[V.misc.token_key]);
-                    else
-                        reject();
-                });
-            });
-        });
-    }
-}
 class Utils {
     static format(string, ...formatArgs) {
         const formatParams = (formatArgs.length === 1 && typeof formatArgs[0] === "object") ? formatArgs[0] : formatArgs;
@@ -244,43 +220,25 @@ class Utils {
             string = string.replace(new RegExp("\\{" + i + "\\}", "gi"), formatParams[i]);
         return "" + string;
     }
-    static pathFormat(string, scope) {
-        if (!string.includes("{"))
-            return string;
-        return string.replace(/{([^{}]+)}/g, (match, p1) => {
-            if (p1.includes(".")) {
-                let val = Utils.getPathValue(scope, p1);
-                if (val !== null)
-                    return val;
-            }
-            else if (scope.hasOwnProperty(p1)) {
-                return scope[p1];
-            }
-            return match;
-        });
-    }
     static getOrDefault(object, key, def) {
         if (object === undefined || object[key] === undefined)
             return def;
         else
             return object[key];
     }
-    static getPathValue(object, pathString) {
-        const pathParts = pathString.split(".");
-        let current = object;
-        for (let part in pathParts) {
-            part = pathParts[part];
-            if (!current.hasOwnProperty(part))
-                return null;
-            if (typeof current === "object")
-                current = current[part];
-        }
-        return current;
-    }
     static perPage(url, perPage) {
         return `${url}?per_page=${perPage}`;
     }
-    static getJSON(url, callback) {
+    static getJSON(url) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                Utils.getJSON_Sync(url, resultData => {
+                    resolve(resultData);
+                });
+            });
+        });
+    }
+    static getJSON_Sync(url, callback) {
         if (ACCESS_TOKEN === null)
             throw new Error("Access token not set");
         let req = new XMLHttpRequest();
@@ -290,7 +248,7 @@ class Utils {
                     case 404:
                         throw "404 error when getting JSON";
                     case 400:
-                        console.info("400 error when getting JSON was OKAY");
+                        console.debug("400 error when getting JSON was OKAY");
                     default:
                         Utils.safeCb(callback)(JSON.parse(req.responseText.replace("while(1);", "")));
                 }
@@ -318,13 +276,13 @@ class Utils {
         req.send(JSON.stringify(bodyData));
     }
     static appendDataArray(url, values, callback) {
-        Utils.getJSON(url, resultData => {
+        Utils.getJSON_Sync(url, resultData => {
             let array = resultData.data ? resultData.data.concat(values) : values;
             Utils.putData(url, array, callback);
         });
     }
     static subtractDataArray(url, values, callback) {
-        Utils.getJSON(url, resultData => {
+        Utils.getJSON_Sync(url, resultData => {
             let array = resultData.data || [];
             if (array.length === 0) {
                 Utils.safeCb(callback)(true);
@@ -340,12 +298,17 @@ class Utils {
         else
             Utils.subtractDataArray(url, values, callback);
     }
-    static loadToken(callback) {
-        chrome.storage.sync.get(V.misc.token_key, resultData => {
-            const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
-            if (success)
-                ACCESS_TOKEN = resultData[V.misc.token_key];
-            Utils.safeCb(callback)(success);
+    static loadToken() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                chrome.storage.sync.get(V.misc.token_key, resultData => {
+                    const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
+                    if (success)
+                        resolve(resultData[V.misc.token_key]);
+                    else
+                        reject();
+                });
+            });
         });
     }
     static accessTokenPrompt() {

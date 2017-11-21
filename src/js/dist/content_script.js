@@ -213,30 +213,6 @@ class Exception {
         return this.reason;
     }
 }
-class UtilsAsync {
-    static getJSON(url) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                Utils.getJSON(url, resultData => {
-                    resolve(resultData);
-                });
-            });
-        });
-    }
-    static loadToken() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                chrome.storage.sync.get(V.misc.token_key, resultData => {
-                    const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
-                    if (success)
-                        resolve(resultData[V.misc.token_key]);
-                    else
-                        reject();
-                });
-            });
-        });
-    }
-}
 class Utils {
     static format(string, ...formatArgs) {
         const formatParams = (formatArgs.length === 1 && typeof formatArgs[0] === "object") ? formatArgs[0] : formatArgs;
@@ -244,43 +220,25 @@ class Utils {
             string = string.replace(new RegExp("\\{" + i + "\\}", "gi"), formatParams[i]);
         return "" + string;
     }
-    static pathFormat(string, scope) {
-        if (!string.includes("{"))
-            return string;
-        return string.replace(/{([^{}]+)}/g, (match, p1) => {
-            if (p1.includes(".")) {
-                let val = Utils.getPathValue(scope, p1);
-                if (val !== null)
-                    return val;
-            }
-            else if (scope.hasOwnProperty(p1)) {
-                return scope[p1];
-            }
-            return match;
-        });
-    }
     static getOrDefault(object, key, def) {
         if (object === undefined || object[key] === undefined)
             return def;
         else
             return object[key];
     }
-    static getPathValue(object, pathString) {
-        const pathParts = pathString.split(".");
-        let current = object;
-        for (let part in pathParts) {
-            part = pathParts[part];
-            if (!current.hasOwnProperty(part))
-                return null;
-            if (typeof current === "object")
-                current = current[part];
-        }
-        return current;
-    }
     static perPage(url, perPage) {
         return `${url}?per_page=${perPage}`;
     }
-    static getJSON(url, callback) {
+    static getJSON(url) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                Utils.getJSON_Sync(url, resultData => {
+                    resolve(resultData);
+                });
+            });
+        });
+    }
+    static getJSON_Sync(url, callback) {
         if (ACCESS_TOKEN === null)
             throw new Error("Access token not set");
         let req = new XMLHttpRequest();
@@ -290,7 +248,7 @@ class Utils {
                     case 404:
                         throw "404 error when getting JSON";
                     case 400:
-                        console.info("400 error when getting JSON was OKAY");
+                        console.debug("400 error when getting JSON was OKAY");
                     default:
                         Utils.safeCb(callback)(JSON.parse(req.responseText.replace("while(1);", "")));
                 }
@@ -318,13 +276,13 @@ class Utils {
         req.send(JSON.stringify(bodyData));
     }
     static appendDataArray(url, values, callback) {
-        Utils.getJSON(url, resultData => {
+        Utils.getJSON_Sync(url, resultData => {
             let array = resultData.data ? resultData.data.concat(values) : values;
             Utils.putData(url, array, callback);
         });
     }
     static subtractDataArray(url, values, callback) {
-        Utils.getJSON(url, resultData => {
+        Utils.getJSON_Sync(url, resultData => {
             let array = resultData.data || [];
             if (array.length === 0) {
                 Utils.safeCb(callback)(true);
@@ -340,12 +298,17 @@ class Utils {
         else
             Utils.subtractDataArray(url, values, callback);
     }
-    static loadToken(callback) {
-        chrome.storage.sync.get(V.misc.token_key, resultData => {
-            const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
-            if (success)
-                ACCESS_TOKEN = resultData[V.misc.token_key];
-            Utils.safeCb(callback)(success);
+    static loadToken() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                chrome.storage.sync.get(V.misc.token_key, resultData => {
+                    const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
+                    if (success)
+                        resolve(resultData[V.misc.token_key]);
+                    else
+                        reject();
+                });
+            });
         });
     }
     static accessTokenPrompt() {
@@ -623,7 +586,7 @@ class Utils {
         V = Vars.VARS;
         V.init(DATA.courseID);
         try {
-            ACCESS_TOKEN = yield UtilsAsync.loadToken();
+            ACCESS_TOKEN = yield Utils.loadToken();
         }
         catch (e) {
             Utils.accessTokenPrompt();
@@ -631,8 +594,8 @@ class Utils {
         }
         const courseTabFlow = function () {
             return __awaiter(this, void 0, void 0, function* () {
-                const courseColors = (yield UtilsAsync.getJSON(V.canvas.api.urls.custom_colors)).custom_colors;
-                const favoriteCourses = yield UtilsAsync.getJSON(V.canvas.api.urls.favorite_courses);
+                const courseColors = (yield Utils.getJSON(V.canvas.api.urls.custom_colors)).custom_colors;
+                const favoriteCourses = yield Utils.getJSON(V.canvas.api.urls.favorite_courses);
                 for (let courseData of favoriteCourses) {
                     const color = courseColors["course_" + courseData.id];
                     DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
@@ -642,7 +605,7 @@ class Utils {
         const navTabFlow = function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
-                const navTabs = yield UtilsAsync.getJSON(navTabUrl);
+                const navTabs = yield Utils.getJSON(navTabUrl);
                 for (let tab of navTabs)
                     DATA.navTabs.set(tab.id, new NavTab(tab));
             });
@@ -650,7 +613,7 @@ class Utils {
         const assignmentFlow = function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const assignmentsUrl = Utils.perPage(V.canvas.api.urls.assignments, 1000);
-                const assignments = yield UtilsAsync.getJSON(assignmentsUrl);
+                const assignments = yield Utils.getJSON(assignmentsUrl);
                 for (let assignmentJson of assignments) {
                     let contentId;
                     if (assignmentJson.quiz_id)
@@ -671,7 +634,7 @@ class Utils {
         const moduleItemFlow = function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const modulesUrl = Utils.perPage(V.canvas.api.urls.modules, 25);
-                const modules = yield UtilsAsync.getJSON(modulesUrl);
+                const modules = yield Utils.getJSON(modulesUrl);
                 for (let moduleData of modules) {
                     DATA.modules.set(moduleData.id, new Module(moduleData));
                 }
@@ -680,7 +643,7 @@ class Utils {
                     .filter(mod => mod.itemCount > 0)
                     .map(module => {
                     const moduleItemsUrl = Utils.perPage(Utils.format(V.canvas.api.urls.module_items, { moduleID: module.id }), module.itemCount);
-                    return UtilsAsync.getJSON(moduleItemsUrl);
+                    return Utils.getJSON(moduleItemsUrl);
                 });
                 const moduleItemSets = yield Promise.all(itemSetPromises);
                 for (let items of moduleItemSets) {
@@ -703,7 +666,7 @@ class Utils {
                     .filter(item => item.type == ModuleItemType.FILE);
                 const filePromises = fileItems.map(item => {
                     const fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, { fileID: item.contentId });
-                    return UtilsAsync.getJSON(fileDataUrl);
+                    return Utils.getJSON(fileDataUrl);
                 });
                 const files = yield Promise.all(filePromises);
                 for (let file of files)
@@ -713,7 +676,7 @@ class Utils {
         const customDataFlow = function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "" });
-                const customData = (yield UtilsAsync.getJSON(customDataUrl)).data;
+                const customData = (yield Utils.getJSON(customDataUrl)).data;
                 if (customData === undefined)
                     return;
                 const complete = Utils.getOrDefault(customData.completed_assignments, DATA.courseID, new Array());
@@ -1021,9 +984,6 @@ class Main {
                     break;
                 case "count unchecked":
                     respondFunc({ count: unchecked.length });
-                    break;
-                case "update token":
-                    Utils.loadToken(respondFunc);
                     break;
                 case "jump to first unchecked":
                     let uncheckedEls = unchecked

@@ -304,31 +304,6 @@ class Exception {
 	}
 }
 
-class UtilsAsync {
-
-	static async getJSON<T>(url: string): Promise<T> {
-		return new Promise<T>((resolve, reject) => {
-			Utils.getJSON(url, resultData => {
-				resolve(resultData as T);
-			});
-		});
-	}
-
-	static async loadToken(): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
-
-			chrome.storage.sync.get(V.misc.token_key, resultData => {
-
-				const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
-				if (success) resolve(resultData[V.misc.token_key]);
-				else reject();
-
-			});
-
-		});
-	}
-}
-
 class Utils {
 
 	static format(string, ...formatArgs) {
@@ -342,48 +317,24 @@ class Utils {
 		return ""+string;
 	}
 
-	static pathFormat(string: string, scope: Object) {
-
-		if (!string.includes("{")) return string;
-
-		return string.replace(/{([^{}]+)}/g,
-			(match, p1) => {
-				if (p1.includes(".")) {
-					let val = Utils.getPathValue(scope, p1);
-					if (val !== null)
-						return val;
-				}
-				else if (scope.hasOwnProperty(p1)) {
-					return scope[p1];
-				}
-
-				return match;
-			});
-
-	}
-
 	static getOrDefault<V>(object: {}, key: string | number, def: V): V {
 		if (object === undefined || object[key] === undefined) return def;
 		else return object[key];
-	}
-
-	static getPathValue(object: Object, pathString: string) {
-		const pathParts = pathString.split(".");
-		let current = object;
-		for (let part in pathParts) {
-			part = pathParts[part];
-			if (!current.hasOwnProperty(part)) return null;
-			if (typeof current === "object")
-				current = current[part];
-		}
-		return current;
 	}
 
 	static perPage(url: string, perPage: number) {
 		return `${url}?per_page=${perPage}`;
 	}
 
-	static getJSON(url: string, callback: (data: any) => void) {
+	static async getJSON<T>(url: string): Promise<T> {
+		return new Promise<T>((resolve, reject) => {
+			Utils.getJSON_Sync(url, resultData => {
+				resolve(resultData as T);
+			});
+		});
+	}
+
+	static getJSON_Sync(url: string, callback: (data: any) => void) {
 
 		if (ACCESS_TOKEN === null)
 			throw new Error("Access token not set");
@@ -396,7 +347,7 @@ class Utils {
 					case 404:
 						throw "404 error when getting JSON";
 					case 400:
-						console.info("400 error when getting JSON was OKAY");
+						console.debug("400 error when getting JSON was OKAY");
 					// fallthrough
 					default:
 						Utils.safeCb(callback)(JSON.parse(req.responseText.replace("while(1);", "")));
@@ -438,7 +389,7 @@ class Utils {
 	static appendDataArray(url: string, values: any[], callback: (success: boolean) => any) {
 
 		// url is same for get/put
-		Utils.getJSON(url, resultData => {
+		Utils.getJSON_Sync(url, resultData => {
 			let array = resultData.data ? resultData.data.concat(values) : values;
 			Utils.putData(url, array, callback);
 		});
@@ -447,7 +398,7 @@ class Utils {
 	static subtractDataArray(url: string, values: any[], callback: (success: boolean) => any) {
 
 		// url is same for get/put
-		Utils.getJSON(url, resultData => {
+		Utils.getJSON_Sync(url, resultData => {
 			let array = resultData.data || [];
 			if (array.length === 0) {
 				Utils.safeCb(callback)(true);
@@ -463,15 +414,20 @@ class Utils {
 		else Utils.subtractDataArray(url, values, callback);
 	}
 
-	static loadToken(callback?: (success: boolean) => void) {
-		chrome.storage.sync.get(V.misc.token_key, resultData => {
-			const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
-			if (success)
-				ACCESS_TOKEN = resultData[V.misc.token_key];
+	static async loadToken(): Promise<string> {
+		return new Promise<string>((resolve, reject) => {
 
-			Utils.safeCb(callback)(success);
+			chrome.storage.sync.get(V.misc.token_key, resultData => {
+
+				const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
+				if (success) resolve(resultData[V.misc.token_key]);
+				else reject();
+
+			});
+
 		});
 	}
+
 
 	static accessTokenPrompt() {
 		const openOptions = confirm("Missing access token, press OK to open extension options");

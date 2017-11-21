@@ -1,13 +1,3 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -16,39 +6,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-var V;
-var ACCESS_TOKEN = null;
-var DATA;
-var PAGE;
-var Data = (function () {
-    function Data() {
+let V;
+let ACCESS_TOKEN = null;
+let DATA;
+let PAGE;
+class Data {
+    constructor() {
         this.modules = new Map();
         this.moduleItems = new Map();
         this.states = new Map();
@@ -56,12 +19,9 @@ var Data = (function () {
         this.navTabs = new Map();
         this.elements = { jump_button: null, toc: null };
     }
-    return Data;
-}());
-var Page = (function () {
-    function Page() {
-    }
-    Page.prototype.initialize = function () {
+}
+class Page {
+    initialize() {
         this.body = $("body");
         this.scrollingElement = $(document.scrollingElement || document.body);
         this.sidebar = $("#menu");
@@ -72,196 +32,129 @@ var Page = (function () {
         }
         if (DATA.coursePage === CanvasPage.GRADES)
             this.grades = $("#grades_summary");
-    };
-    return Page;
-}());
-var CustomCourseTab = (function () {
-    function CustomCourseTab(courseData, color) {
+    }
+}
+class CustomCourseTab {
+    constructor(courseData, color) {
         this.id = courseData.id;
         this.name = courseData.name;
         this.code = courseData.course_code;
         this.color = color;
     }
-    return CustomCourseTab;
-}());
-var NavTab = (function () {
-    function NavTab(tabData) {
+}
+class NavTab {
+    constructor(tabData) {
         this.id = tabData.id;
         this._position = null;
         this.initPosition = tabData.position;
     }
-    NavTab.prototype.setPosition = function (pos) {
+    setPosition(pos) {
         this._position = pos;
-    };
-    Object.defineProperty(NavTab.prototype, "hasCustomPosition", {
-        get: function () {
-            return this._position != null;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NavTab.prototype, "position", {
-        get: function () {
-            return this._position == null ? this.initPosition : this._position == -1 ? null : this._position;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NavTab.prototype, "hidden", {
-        get: function () {
-            return this._position == -1;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    return NavTab;
-}());
-var State = (function () {
-    function State(key, stateData, active) {
-        var _this = this;
+    }
+    get hasCustomPosition() {
+        return this._position != null;
+    }
+    get position() {
+        return this._position == null ? this.initPosition : this._position == -1 ? null : this._position;
+    }
+    get hidden() {
+        return this._position == -1;
+    }
+}
+class State {
+    constructor(key, stateData, active) {
         this.name = key;
         this.bodyClass = stateData.cssClass;
         this.onEnable = stateData.onEnable;
         this.onDisable = stateData.onDisable;
         this.active = active;
         this.onPages = [];
-        stateData.pages.forEach(function (page) {
-            var _page = CanvasPage[page.toUpperCase()];
+        stateData.pages.forEach((page) => {
+            const _page = CanvasPage[page.toUpperCase()];
             if (_page !== undefined)
-                _this.onPages.push(_page);
+                this.onPages.push(_page);
         });
     }
-    State.prototype.onChange = function (newState, vars, body) {
+    onChange(newState, vars, body) {
         if (newState)
             Utils.safeCb(this.onEnable)(vars, body);
         else
             Utils.safeCb(this.onDisable)(vars, body);
-    };
-    return State;
-}());
-var Module = (function () {
-    function Module(moduleJson) {
+    }
+}
+class Module {
+    constructor(moduleJson) {
         this.name = moduleJson.name;
         this.id = moduleJson.id;
         this.itemCount = moduleJson.items_count;
         this.items = [];
     }
-    return Module;
-}());
-var ModuleItem = (function () {
-    function ModuleItem(moduleItemJson) {
+}
+class ModuleItem {
+    constructor(moduleItemJson) {
         if (moduleItemJson)
             this.update(moduleItemJson);
     }
-    ModuleItem.fromContentId = function (contentId) {
-        var item = new ModuleItem();
+    static fromContentId(contentId) {
+        const item = new ModuleItem();
         item._contentId = contentId;
         ModuleItem.byContentId.set(contentId, item);
         return item;
-    };
-    ModuleItem.prototype.update = function (moduleItemJson) {
+    }
+    update(moduleItemJson) {
         this._id = moduleItemJson.id;
         this._name = moduleItemJson.title;
         this.moduleId = moduleItemJson.module_id;
         this._externalUrl = moduleItemJson.external_url || null;
-        var typeString = moduleItemJson.type
-            .replace(/([A-Z])/g, function (r, s) { return "_" + s; })
+        let typeString = moduleItemJson.type
+            .replace(/([A-Z])/g, (r, s) => "_" + s)
             .replace(/^_/, "").toUpperCase();
         this._type = ModuleItemType[typeString];
         if (this._type === undefined)
-            console.warn("Unknown module item type: \"" + typeString + "\"");
+            console.warn(`Unknown module item type: "${typeString}"`);
         this.checked = false;
         this.hidden = false;
         if (this._type === ModuleItemType.ASSIGNMENT)
             this.setAssignmentId(moduleItemJson.content_id);
         else
             this.assignmentId = null;
-    };
-    ModuleItem.prototype.setAssignmentId = function (id) { this.assignmentId = id; };
-    ModuleItem.prototype.setFileData = function (data) { this._fileData = data; };
-    Object.defineProperty(ModuleItem.prototype, "canvasElementId", {
-        get: function () {
-            switch (DATA.coursePage) {
-                case CanvasPage.MODULES:
-                    return "context_module_item_" + this._id;
-                case CanvasPage.GRADES:
-                    return "submission_" + this.assignmentId;
-                default:
-                    return null;
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "id", {
-        get: function () { return this._id; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "name", {
-        get: function () { return this._name; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "type", {
-        get: function () { return this._type; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "isGraded", {
-        get: function () { return this.assignmentId !== null; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "isSubHeader", {
-        get: function () { return this._type === ModuleItemType.SUB_HEADER; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "module", {
-        get: function () { return DATA.modules.get(this.moduleId); },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "externalUrl", {
-        get: function () { return this._externalUrl; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "contentId", {
-        get: function () { return this._contentId; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "checkboxElement", {
-        get: function () { return this._checkboxElement; },
-        set: function (value) {
-            if (value === null || value.length === 1)
-                this._checkboxElement = value;
-            else
-                throw "Invalid Module Item Element: " + value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "hideElement", {
-        get: function () { return this._hideElement; },
-        set: function (value) {
-            if (value === null || value.length === 1)
-                this._hideElement = value;
-            else
-                throw "Invalid Module Item Element: " + value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ModuleItem.prototype, "fileData", {
-        get: function () { return this._fileData; },
-        enumerable: true,
-        configurable: true
-    });
-    return ModuleItem;
-}());
+    }
+    setAssignmentId(id) { this.assignmentId = id; }
+    setFileData(data) { this._fileData = data; }
+    get canvasElementId() {
+        switch (DATA.coursePage) {
+            case CanvasPage.MODULES:
+                return "context_module_item_" + this._id;
+            case CanvasPage.GRADES:
+                return "submission_" + this.assignmentId;
+            default:
+                return null;
+        }
+    }
+    get id() { return this._id; }
+    get name() { return this._name; }
+    get type() { return this._type; }
+    get isGraded() { return this.assignmentId !== null; }
+    get isSubHeader() { return this._type === ModuleItemType.SUB_HEADER; }
+    get module() { return DATA.modules.get(this.moduleId); }
+    get externalUrl() { return this._externalUrl; }
+    get contentId() { return this._contentId; }
+    get checkboxElement() { return this._checkboxElement; }
+    set checkboxElement(value) {
+        if (value === null || value.length === 1)
+            this._checkboxElement = value;
+        else
+            throw "Invalid Module Item Element: " + value;
+    }
+    get hideElement() { return this._hideElement; }
+    set hideElement(value) {
+        if (value === null || value.length === 1)
+            this._hideElement = value;
+        else
+            throw "Invalid Module Item Element: " + value;
+    }
+    get fileData() { return this._fileData; }
+}
 ModuleItem.byContentId = new Map();
 var ModuleItemType;
 (function (ModuleItemType) {
@@ -291,44 +184,72 @@ var MessageType;
     MessageType[MessageType["BASIC"] = 0] = "BASIC";
     MessageType[MessageType["STATE"] = 1] = "STATE";
 })(MessageType || (MessageType = {}));
-var MessageData = (function () {
-    function MessageData(action, type) {
+class MessageData {
+    constructor(action, type) {
         this.action = action;
         this.type = type || MessageType.BASIC;
     }
-    return MessageData;
-}());
-var StateMessageData = (function (_super) {
-    __extends(StateMessageData, _super);
-    function StateMessageData(action, stateName, state) {
-        var _this = _super.call(this, action, MessageType.STATE) || this;
-        _this.stateName = stateName;
-        _this.state = state;
-        if (action === "set" && _this.state === undefined)
+}
+class StateMessageData extends MessageData {
+    constructor(action, stateName, state) {
+        super(action, MessageType.STATE);
+        this.stateName = stateName;
+        this.state = state;
+        if (action === "set" && this.state === undefined)
             throw "Invalid state message: no boolean to set state to";
-        return _this;
     }
-    return StateMessageData;
-}(MessageData));
-var Utils = (function () {
-    function Utils() {
+}
+class Exception {
+    constructor(reason, fatal) {
+        if (fatal === undefined)
+            fatal = false;
+        this.reason = reason;
+        this.fatal = fatal;
     }
-    Utils.format = function (string) {
-        var formatArgs = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            formatArgs[_i - 1] = arguments[_i];
-        }
-        var formatParams = (formatArgs.length === 1 && typeof formatArgs[0] === "object") ? formatArgs[0] : formatArgs;
-        for (var i in formatParams)
+    get isFatal() {
+        return this.fatal;
+    }
+    toString() {
+        return this.reason;
+    }
+}
+class UtilsAsync {
+    static getJSON(url) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                Utils.getJSON(url, resultData => {
+                    resolve(resultData);
+                });
+            });
+        });
+    }
+    static loadToken() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                chrome.storage.sync.get(V.misc.token_key, resultData => {
+                    const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
+                    if (success)
+                        resolve(resultData[V.misc.token_key]);
+                    else
+                        reject();
+                });
+            });
+        });
+    }
+}
+class Utils {
+    static format(string, ...formatArgs) {
+        const formatParams = (formatArgs.length === 1 && typeof formatArgs[0] === "object") ? formatArgs[0] : formatArgs;
+        for (const i in formatParams)
             string = string.replace(new RegExp("\\{" + i + "\\}", "gi"), formatParams[i]);
         return "" + string;
-    };
-    Utils.pathFormat = function (string, scope) {
+    }
+    static pathFormat(string, scope) {
         if (!string.includes("{"))
             return string;
-        return string.replace(/{([^{}]+)}/g, function (match, p1) {
+        return string.replace(/{([^{}]+)}/g, (match, p1) => {
             if (p1.includes(".")) {
-                var val = Utils.getPathValue(scope, p1);
+                let val = Utils.getPathValue(scope, p1);
                 if (val !== null)
                     return val;
             }
@@ -337,11 +258,17 @@ var Utils = (function () {
             }
             return match;
         });
-    };
-    Utils.getPathValue = function (object, pathString) {
-        var pathParts = pathString.split(".");
-        var current = object;
-        for (var part in pathParts) {
+    }
+    static getOrDefault(object, key, def) {
+        if (object === undefined || object[key] === undefined)
+            return def;
+        else
+            return object[key];
+    }
+    static getPathValue(object, pathString) {
+        const pathParts = pathString.split(".");
+        let current = object;
+        for (let part in pathParts) {
             part = pathParts[part];
             if (!current.hasOwnProperty(part))
                 return null;
@@ -349,15 +276,15 @@ var Utils = (function () {
                 current = current[part];
         }
         return current;
-    };
-    Utils.perPage = function (url, perPage) {
-        return url + "?per_page=" + perPage;
-    };
-    Utils.getJSON = function (url, callback) {
+    }
+    static perPage(url, perPage) {
+        return `${url}?per_page=${perPage}`;
+    }
+    static getJSON(url, callback) {
         if (ACCESS_TOKEN === null)
             throw new Error("Access token not set");
-        var req = new XMLHttpRequest();
-        req.onreadystatechange = function () {
+        let req = new XMLHttpRequest();
+        req.onreadystatechange = () => {
             if (req.readyState === 4) {
                 switch (req.status) {
                     case 404:
@@ -373,25 +300,14 @@ var Utils = (function () {
         req.setRequestHeader("Content-Type", "application/json");
         req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
         req.send();
-    };
-    Utils.getJSON2 = function (url) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                return [2, new Promise(function (resolve, reject) {
-                        Utils.getJSON(url, function (resultData) {
-                            resolve(resultData);
-                        });
-                    })];
-            });
-        });
-    };
-    Utils.putData = function (url, data, callback) {
-        var bodyData = { ns: V.canvas.api.namespace, data: data };
-        var action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
+    }
+    static putData(url, data, callback) {
+        let bodyData = { ns: V.canvas.api.namespace, data };
+        let action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
         if (action === "DELETE")
             delete bodyData.data;
-        var req = new XMLHttpRequest();
-        req.onreadystatechange = function () {
+        const req = new XMLHttpRequest();
+        req.onreadystatechange = () => {
             if (req.readyState === 4) {
                 Utils.safeCb(callback)(true);
             }
@@ -400,69 +316,57 @@ var Utils = (function () {
         req.setRequestHeader("Content-Type", "application/json");
         req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
         req.send(JSON.stringify(bodyData));
-    };
-    Utils.appendDataArray = function (url, values, callback) {
-        Utils.getJSON(url, function (resultData) {
-            var array = resultData.data ? resultData.data.concat(values) : values;
+    }
+    static appendDataArray(url, values, callback) {
+        Utils.getJSON(url, resultData => {
+            let array = resultData.data ? resultData.data.concat(values) : values;
             Utils.putData(url, array, callback);
         });
-    };
-    Utils.subtractDataArray = function (url, values, callback) {
-        Utils.getJSON(url, function (resultData) {
-            var array = resultData.data || [];
+    }
+    static subtractDataArray(url, values, callback) {
+        Utils.getJSON(url, resultData => {
+            let array = resultData.data || [];
             if (array.length === 0) {
                 Utils.safeCb(callback)(true);
                 return;
             }
-            array = array.filter(function (val) { return !values.includes(val); });
+            array = array.filter(val => !values.includes(val));
             Utils.putData(url, array, callback);
         });
-    };
-    Utils.editDataArray = function (url, append, values, callback) {
+    }
+    static editDataArray(url, append, values, callback) {
         if (append)
             Utils.appendDataArray(url, values, callback);
         else
             Utils.subtractDataArray(url, values, callback);
-    };
-    Utils.loadToken = function (callback) {
-        chrome.storage.sync.get(V.misc.token_key, function (resultData) {
-            var success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
+    }
+    static loadToken(callback) {
+        chrome.storage.sync.get(V.misc.token_key, resultData => {
+            const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
             if (success)
                 ACCESS_TOKEN = resultData[V.misc.token_key];
             Utils.safeCb(callback)(success);
         });
-    };
-    Utils.accessTokenPrompt = function () {
-        var openOptions = confirm("Missing access token, press OK to open extension options");
+    }
+    static accessTokenPrompt() {
+        const openOptions = confirm("Missing access token, press OK to open extension options");
         if (openOptions)
             chrome.runtime.sendMessage(new MessageData("open options"));
-    };
-    Utils.runCb = function (callbackFunction) {
+    }
+    static runCb(callbackFunction) {
         if (callbackFunction !== undefined)
             callbackFunction();
-    };
-    Utils.safeCb = function (callbackFunction) {
+    }
+    static safeCb(callbackFunction) {
         if (callbackFunction !== undefined)
             return callbackFunction;
         else
-            return (function () { });
-    };
-    return Utils;
-}());;var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var Vars;
+            return (() => { });
+    }
+};var Vars;
 (function (Vars_1) {
-    var Sass = (function () {
-        function Sass() {
-            var _this = this;
+    class Sass {
+        constructor() {
             this.prefix = "betterCanvas";
             this.cssClass = {
                 active: "active",
@@ -541,35 +445,32 @@ var Vars;
                 disable_indent_override: {
                     pages: ["modules"],
                     desc: "Disable indent overrides",
-                    onDisable: function (vars, body) {
-                        [0, 1, 2, 3, 4, 5].forEach(function (level) {
-                            return $(vars.canvas.selector.module_item, body).removeClass("indent_" + level);
-                        });
+                    onDisable: (vars, body) => {
+                        [0, 1, 2, 3, 4, 5].forEach(level => $(vars.canvas.selector.module_item, body).removeClass("indent_" + level));
                         $(vars.canvas.selector.subheader, body).addClass("indent_" + vars.ui.subheader_indent);
                         $(vars.canvas.selector.not_subheader, body).addClass("indent_" + vars.ui.main_indent);
                     },
-                    onEnable: function (vars, body) {
+                    onEnable: (vars, body) => {
                         $(vars.canvas.selector.module_item, body).each(function () {
-                            var _this = this;
-                            [0, 1, 2, 3, 4, 5].forEach(function (level) { return $(_this).removeClass("indent_" + level); });
-                            var defLevel = $(this).attr(vars.data_attr.def_indent);
+                            [0, 1, 2, 3, 4, 5].forEach(level => $(this).removeClass("indent_" + level));
+                            const defLevel = $(this).attr(vars.data_attr.def_indent);
                             $(this).addClass("indent_" + defLevel);
                         });
                     }
                 }
             };
-            var processObject = function (obj, objName) {
-                for (var key in obj) {
+            const processObject = (obj, objName) => {
+                for (const key in obj) {
                     if (!obj.hasOwnProperty(key))
                         continue;
-                    var val = obj[key];
+                    let val = obj[key];
                     if (typeof val === "object") {
                         processObject(val, key);
                     }
                     else if (typeof val === "string") {
                         if ((Sass.prefix_types.indexOf(objName) > -1 || Sass.prefix_types.indexOf(key) > -1)
                             && !key.startsWith("popup_")) {
-                            val = _this.prefix + "-" + val;
+                            val = this.prefix + "-" + val;
                         }
                         if (objName == "data_attr") {
                             val = "data-" + val;
@@ -581,14 +482,12 @@ var Vars;
             processObject(this, "root");
             this.sassJson = JSON.stringify(this);
         }
-        return Sass;
-    }());
+    }
     Sass.prefix_types = ["cssClass", "data_attr", "id"];
-    var Vars = (function (_super) {
-        __extends(Vars, _super);
-        function Vars() {
-            var _this = _super !== null && _super.apply(this, arguments) || this;
-            _this.tooltip = {
+    class Vars extends Sass {
+        constructor() {
+            super(...arguments);
+            this.tooltip = {
                 mark_complete: "Mark as completed",
                 mark_incomplete: "Mark as incomplete",
                 hide: "Hide this item",
@@ -601,27 +500,59 @@ var Vars;
                 has_submission: "Assignment has submission",
                 popup_no_unchecked: "No unchecked items to jump to"
             };
-            _this.misc = {
-                toc_background: "-webkit-linear-gradient(left, " + _this.color.toc_fill + " {percent}%, transparent {percent}%)",
+            this.misc = {
+                toc_background: `-webkit-linear-gradient(left, ${this.color.toc_fill} {percent}%, transparent {percent}%)`,
                 token_key: "accessToken"
             };
-            _this.element = {
-                checkbox: "<div style='display:none' class='" + _this.cssClass.checkbox_parent + "'>\n\t\t\t\t\t\t<input type='checkbox' " + _this.data_attr.mod_item_id + "='{item_id}'>\n\t\t\t\t\t</div>",
-                download_button: "<div style='display:none' class='" + _this.cssClass.download + "' title='" + _this.tooltip.download + "'>\n\t\t\t\t\t\t<a href=\"{file_url}\"></a>\n\t\t\t\t\t</div>",
-                url_button: "<div style='display:none' class='" + _this.cssClass.external_url + "' title='" + _this.tooltip.external_url + "'>\n\t\t\t\t\t\t<a href=\"{external_url}\" class=\"not_external\" target=\"_blank\"></a>\n\t\t\t\t\t</div>",
-                hide_button: "<div style='display:none' class='" + _this.cssClass.hide_button + "'>\n\t\t\t\t\t\t<i " + _this.data_attr.mod_item_id + "='{item_id}'></i>\n\t\t\t\t\t</div>",
-                course_link: "<li style='background-color: {tabColor}' class='menu-item ic-app-header__menu-list-item'>\n\t\t\t\t\t<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>\n\t\t\t\t\t\t<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>\n\t\t\t\t\t\t<div style='background-color: {tabColor}; border-right-color: {tabColor}'\n\t\t\t\t\t\t\t\t" + _this.data_attr.course_name + "='{name}' " + _this.data_attr.course_code + "='{code}'\n\t\t\t\t\t\t\t\tclass='menu-item__text " + _this.cssClass.course_link_text + "'></div>\n\t\t\t\t\t</a>\n\t\t\t\t</li>",
-                toc: "<div id='" + _this.id.toc + "' class='ic-app-course-menu list-view'>\n\t\t\t\t\t<div class='" + _this.cssClass.toc_title + "'>Table of Contents</div>\n\t\t\t\t\t<nav><ul></ul></nav>\n\t\t\t\t</div>",
-                toc_item: "<li>\n\t\t\t\t\t<a href='#' title='{item_name}'>\n\t\t\t\t\t\t{item_name}\n\t\t\t\t\t\t<div class='" + _this.cssClass.toc_ratio + "' " + _this.data_attr.toc_module_id + "='{item_id}'></div>\n\t\t\t\t\t</a>\n\t\t\t\t</li>",
-                jump_button: "<div id='" + _this.id.jump_button + "'>\n\t\t\t\t\t<i title='" + _this.tooltip.jump_button + "'></i>\n\t\t\t\t</div>",
-                submission_icon: "<div title='" + _this.tooltip.has_submission + "' class='" + _this.cssClass.item_icon + "'>\n\t\t\t\t\t<i class='icon-publish'></i>\n\t\t\t\t</div>",
-                popup_state_switch: "<div class=\"switch " + _this.cssClass.popup_require_page + "\">\n\t\t\t\t\t<label for=\"{name}\" class=\"mdl-switch mdl-js-switch mdl-js-ripple-effect\">\n\t\t\t\t\t\t<span class=\"mdl-switch__label\">{desc}</span>\n\t\t\t\t\t\t<input id=\"{name}\" type=\"checkbox\" class=\"mdl-switch__input\">\n\t\t\t\t\t</label>\n\t\t\t\t</div>"
+            this.element = {
+                checkbox: `<div style='display:none' class='${this.cssClass.checkbox_parent}'>
+						<input type='checkbox' ${this.data_attr.mod_item_id}='{item_id}'>
+					</div>`,
+                download_button: `<div style='display:none' class='${this.cssClass.download}' title='${this.tooltip.download}'>
+						<a href="{file_url}"></a>
+					</div>`,
+                url_button: `<div style='display:none' class='${this.cssClass.external_url}' title='${this.tooltip.external_url}'>
+						<a href="{external_url}" class="not_external" target="_blank"></a>
+					</div>`,
+                hide_button: `<div style='display:none' class='${this.cssClass.hide_button}'>
+						<i ${this.data_attr.mod_item_id}='{item_id}'></i>
+					</div>`,
+                course_link: `<li style='background-color: {tabColor}' class='menu-item ic-app-header__menu-list-item'>
+					<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>
+						<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>
+						<div style='background-color: {tabColor}; border-right-color: {tabColor}'
+								${this.data_attr.course_name}='{name}' ${this.data_attr.course_code}='{code}'
+								class='menu-item__text ${this.cssClass.course_link_text}'></div>
+					</a>
+				</li>`,
+                toc: `<div id='${this.id.toc}' class='ic-app-course-menu list-view'>
+					<div class='${this.cssClass.toc_title}'>Table of Contents</div>
+					<nav><ul></ul></nav>
+				</div>`,
+                toc_item: `<li>
+					<a href='#' title='{item_name}'>
+						{item_name}
+						<div class='${this.cssClass.toc_ratio}' ${this.data_attr.toc_module_id}='{item_id}'></div>
+					</a>
+				</li>`,
+                jump_button: `<div id='${this.id.jump_button}'>
+					<i title='${this.tooltip.jump_button}'></i>
+				</div>`,
+                submission_icon: `<div title='${this.tooltip.has_submission}' class='${this.cssClass.item_icon}'>
+					<i class='icon-publish'></i>
+				</div>`,
+                popup_state_switch: `<div class="switch ${this.cssClass.popup_require_page}">
+					<label for="{name}" class="mdl-switch mdl-js-switch mdl-js-ripple-effect">
+						<span class="mdl-switch__label">{desc}</span>
+						<input id="{name}" type="checkbox" class="mdl-switch__input">
+					</label>
+				</div>`
             };
-            _this._canvas = {
-                namespace: "com.jmariner." + _this.prefix,
+            this._canvas = {
+                namespace: `com.jmariner.${this.prefix}`,
                 root_url: "/api/v1/"
             };
-            _this.canvas = {
+            this.canvas = {
                 selector: {
                     module: "div.context_module",
                     module_item: "li.context_module_item",
@@ -631,11 +562,11 @@ var Vars;
                     nav_tabs: "ul#section-tabs"
                 },
                 api: {
-                    namespace: _this._canvas.namespace,
-                    root_url: _this._canvas.root_url,
+                    namespace: this._canvas.namespace,
+                    root_url: this._canvas.root_url,
                     per_page: 100,
                     urls: {
-                        custom_data: "users/self/custom_data{dataPath}?ns=" + _this._canvas.namespace,
+                        custom_data: `users/self/custom_data{dataPath}?ns=${this._canvas.namespace}`,
                         favorite_courses: "users/self/favorites/courses",
                         custom_colors: "users/self/colors",
                         assignments: "users/self/courses/{courseID}/assignments",
@@ -652,31 +583,28 @@ var Vars;
                     }
                 },
             };
-            return _this;
         }
-        Vars.prototype.init = function (courseID) {
-            var _this = this;
-            $.each(this.canvas.api.urls, function (key, url) {
-                _this.canvas.api.urls[key] = _this.canvas.api.root_url + Utils.format(url, { courseID: courseID });
+        init(courseID) {
+            $.each(this.canvas.api.urls, (key, url) => {
+                this.canvas.api.urls[key] = this.canvas.api.root_url + Utils.format(url, { courseID });
             });
-        };
-        return Vars;
-    }(Sass));
+        }
+    }
     Vars_1.Vars = Vars;
     Vars_1.VARS = new Vars();
     if (typeof module !== "undefined")
         module.exports = Vars_1.VARS.sassJson;
-})(Vars || (Vars = {}));;var QUERY = { active: true, currentWindow: true };
+})(Vars || (Vars = {}));;const QUERY = { active: true, currentWindow: true };
 $(function () {
     V = Vars.VARS;
-    var BODY = $("body");
-    var jumpButton = $("#" + V.id.popup_jump_button);
-    var insertionPoint = $("#" + V.id.popup_insertion_point);
+    const BODY = $("body");
+    const jumpButton = $("#" + V.id.popup_jump_button);
+    const insertionPoint = $("#" + V.id.popup_insertion_point);
     $("#" + V.id.popup_ex_name).text(chrome.runtime.getManifest().name);
     Promise.resolve()
-        .then(function () { return new Promise(function (next) {
-        var startPing = $.now();
-        sendMessage(new MessageData("ping"), function (resp) {
+        .then(() => new Promise(next => {
+        const startPing = $.now();
+        sendMessage(new MessageData("ping"), resp => {
             if (resp !== undefined) {
                 console.log("page ping", resp.pong - startPing);
                 BODY.addClass(V.cssClass.popup_connected);
@@ -686,28 +614,28 @@ $(function () {
                 BODY.addClass(V.cssClass.popup_loaded);
             }
         });
-    }); }).then(function () { return new Promise(function (next) {
-        sendMessage(new MessageData("count unchecked"), function (resp) {
+    })).then(() => new Promise(next => {
+        sendMessage(new MessageData("count unchecked"), resp => {
             if (resp !== undefined) {
                 if (resp.count === 0)
                     jumpButton.prop("disabled", true).attr("title", V.tooltip.popup_no_unchecked);
                 next();
             }
         });
-    }); }).then(function () { return new Promise(function (next) {
-        var remaining = Object.keys(V.state).length;
-        $.each(V.state, function (stateName, stateData) {
-            sendMessage(new StateMessageData("get", stateName), function (resp) {
-                var el = $(Utils.format(V.element.popup_state_switch, { name: stateName, desc: stateData.desc }));
+    })).then(() => new Promise(next => {
+        let remaining = Object.keys(V.state).length;
+        $.each(V.state, (stateName, stateData) => {
+            sendMessage(new StateMessageData("get", stateName), resp => {
+                const el = $(Utils.format(V.element.popup_state_switch, { name: stateName, desc: stateData.desc }));
                 el.insertAfter(insertionPoint);
                 componentHandler.upgradeElement(el.find("label").get(0));
-                var inputEl = el.find("input").get(0);
-                el.change(function () {
-                    var newState = inputEl.checked;
+                const inputEl = el.find("input").get(0);
+                el.change(() => {
+                    const newState = inputEl.checked;
                     setMdlChecked(inputEl, !newState);
                     inputEl.title = V.tooltip.waiting;
                     inputEl.disabled = true;
-                    sendMessage(new StateMessageData("set", stateName, newState), function (resp) {
+                    sendMessage(new StateMessageData("set", stateName, newState), resp => {
                         if (resp !== undefined) {
                             setMdlChecked(inputEl, newState);
                             inputEl.title = "";
@@ -720,17 +648,17 @@ $(function () {
                     next();
             });
         });
-        jumpButton.click(function () {
-            sendMessage(new MessageData("jump to first unchecked"), function (resp) { return window.close(); });
+        jumpButton.click(() => {
+            sendMessage(new MessageData("jump to first unchecked"), resp => window.close());
         });
-    }); }).then(function () { return new Promise(function (next) {
+    })).then(() => new Promise(next => {
         insertionPoint.remove();
         BODY.addClass(V.cssClass.popup_loaded);
         next();
-    }); });
+    }));
 });
 function sendMessage(data, callback) {
-    chrome.tabs.query(QUERY, function (tabs) { return chrome.tabs.sendMessage(tabs[0].id, data, callback); });
+    chrome.tabs.query(QUERY, tabs => chrome.tabs.sendMessage(tabs[0].id, data, callback));
 }
 function setMdlChecked(checkbox, checked) {
     $(checkbox)

@@ -147,7 +147,7 @@ namespace CanvasAPI {
 		active_states: string[];
 		completed_assignments: Map<number, number[]>;
 		hidden_assignments: Map<number, number[]>;
-		tab_positions: Map<number, string[]>;
+		tab_positions: Map<number, Map<string, number>>;
 	}
 
 	export interface Course {

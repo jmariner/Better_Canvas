@@ -5,308 +5,275 @@ import MessageSender = chrome.runtime.MessageSender;
 
 // ===== main.ts =====
 //noinspection JSUnusedGlobalSymbols
-const MAIN_FLOW: ((callback: Callback, end?: Callback) => void)[] = [
+(async function init() {
 
-	function initialize(callback) {
+	// =======================================
+	//           main initialization
+	// =======================================
 
-		DATA = new Data();
-		PAGE = new Page();
+	DATA = new Data();
+	PAGE = new Page();
 
-		DATA.extensionId = chrome.runtime.id;
-		DATA.name = chrome.runtime.getManifest().name;
+	DATA.extensionId = chrome.runtime.id;
+	DATA.name = chrome.runtime.getManifest().name;
 
-		"log debug info warn error dir".split(" ").forEach(s => {
-			const orig = console[s];
-			console[s] = orig.bind(console, `[${DATA.name}] [${s.toUpperCase()}]`);
-		});
+	for (let logType of "log debug info warn error dir".split(" ")) {
+		const orig = console[logType];
+		console[logType] = orig.bind(console, `[${DATA.name}] [${logType.toUpperCase()}]`);
+	}
 
-		// load course id and what page user is on within that course
-		const urlMatch = /courses\/(\d+)(?:\/(\w+))?.*/.exec(document.location.pathname);
-		const onCoursePage = urlMatch !== null;
-		DATA.coursePage = onCoursePage ? CanvasPage[(urlMatch[2] || "home").toUpperCase()] : null;
-		DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
-		DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
+	// load course id and what page user is on within that course
+	const urlMatch = /courses\/(\d+)(?:\/(\w+))?.*/.exec(document.location.pathname);
+	const onCoursePage = urlMatch !== null;
+	DATA.coursePage = onCoursePage ? CanvasPage[(urlMatch[2] || "home").toUpperCase()] : null;
+	DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
+	DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
 
-		if (onCoursePage)
-			console.debug(`On course #${DATA.courseID} page, at ${CanvasPage[DATA.coursePage]}`);
+	if (onCoursePage)
+		console.debug(`On course #${DATA.courseID} page, at ${CanvasPage[DATA.coursePage]}`);
 
-		// load variables
+	// begin async operations
 
-		V = Vars.VARS;
-		V.init(DATA.courseID);
+	const initStart = performance.now();
 
-		// try to load access token
-		Utils.loadToken(success => {
-			if (success) Utils.runCb(callback);
-			else Utils.accessTokenPrompt();
-		});
-	},
+	// load variables
 
-	function getCourseTabs(callback, end) {
+	V = Vars.VARS;
+	V.init(DATA.courseID);
 
-		Utils.getJSON(V.canvas.api.urls.custom_colors, (colorData: {custom_colors: Map<string, string>}) => {
+	// try to load access token
+	try {
+		ACCESS_TOKEN = await UtilsAsync.loadToken();
+	}
+	catch (e) {
+		Utils.accessTokenPrompt();
+		throw new Exception("Missing access token; must refresh", true);
+	}
 
-			Utils.getJSON(V.canvas.api.urls.favorite_courses, (resultData: CanvasAPI.Course[]) => {
-				resultData.forEach(courseData => {
-					const color = colorData.custom_colors["course_" + courseData.id];
-					DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
-				});
+	// =======================================
+	//               course tabs
+	// =======================================
 
-				// if the user is on the grades or modules page, continue with the flow
-				// otherwise, call the "end" callback
-				Utils.runCb(DATA.onMainPage ? callback : end);
+	const courseTabFlow = async function() {
 
-				// TODO consider setting up course tabs here since they don't need any other data
-				/* actually, phase out this entire MAIN_FLOW thing and use only promises with:
+		const courseColors = (
+			await UtilsAsync.getJSON<{custom_colors: Map<string, string>}>(V.canvas.api.urls.custom_colors)
+		).custom_colors;
 
-					main initialization and config files =>
-						load course tab data => place course tabs
-						load all assignments && (load modules => load module items => load custom data) =>
-							setup checkboxes and hide buttons
+		const favoriteCourses =
+			await UtilsAsync.getJSON<CanvasAPI.Course[]>(V.canvas.api.urls.favorite_courses);
 
-					arrows show dependence on the completion of the previous item(string);
-					indentation shows multiple simultaneous actions that depend on one item;
-					"&&" shows dependence on the completion of two items that start simultaneously
-				*/
-			});
-		});
+		for (let courseData of favoriteCourses) {
+			const color = courseColors["course_" + courseData.id];
+			DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
+		}
 
-	},
+	};
 
-	function getMainData(callback) {
+	// =======================================
+	//            navigation tabs
+	// =======================================
 
-		// in here, we're sending request for assignments at the same time as the one for modules then items
-		// we cannot assume that one will be quicker than the other, so keep track and continue when both are done
-		let firstDone = false;
+	const navTabFlow = async function() {
 
-		const partDone = () => {
-			if (firstDone) Utils.runCb(callback);
-			else firstDone = true;
-		};
+		const navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
+		const navTabs = await UtilsAsync.getJSON<CanvasAPI.Tab[]>(navTabUrl);
+		for (let tab of navTabs)
+			DATA.navTabs.set(tab.id, new NavTab(tab));
+
+	};
+
+	// =======================================
+	//              assignments
+	// =======================================
+
+	const assignmentFlow = async function() {
 
 		// hopefully 1000 is enough to get all in one go
 		const assignmentsUrl = Utils.perPage(V.canvas.api.urls.assignments, 1000);
+		const assignments = await UtilsAsync.getJSON<CanvasAPI.Assignment[]>(assignmentsUrl);
 
-		// get assignments
-		Utils.getJSON(assignmentsUrl, (resultData: CanvasAPI.Assignment[]) => {
+		for (let assignmentJson of assignments) {
 
-			resultData.forEach(assignmentJson => {
+			let contentId: number;
+			if (assignmentJson.quiz_id)
+				contentId = assignmentJson.quiz_id;
+			else if (assignmentJson.discussion_topic)
+				contentId = assignmentJson.discussion_topic.id;
+			else
+				contentId = assignmentJson.id;
 
-				let contentId: number;
-				if (assignmentJson.quiz_id)
-					contentId = assignmentJson.quiz_id;
-				else if (assignmentJson.discussion_topic)
-					contentId = assignmentJson.discussion_topic.id;
-				else
-					contentId = assignmentJson.id;
+			let item: ModuleItem;
+			if (ModuleItem.byContentId.has(contentId))
+				item = ModuleItem.byContentId.get(contentId);
+			else
+				item = ModuleItem.fromContentId(contentId);
 
-				let item: ModuleItem;
-				if (ModuleItem.byContentId.has(contentId))
-					item = ModuleItem.byContentId.get(contentId);
-				else
-					item = ModuleItem.fromContentId(contentId);
+			item.setAssignmentId(assignmentJson.id);
 
-				item.setAssignmentId(assignmentJson.id);
-				item.isSubmitted = typeof(assignmentJson.has_submitted_submissions) === "boolean" ?
-					assignmentJson.has_submitted_submissions : null;
-			});
-
-			// assignments done
-			partDone();
-
-		});
-
-		// begin modules -> module items -> custom data -> file information
-		new Promise(next => { // get modules
-
-			// hopefully no more than 25 modules
-			const modulesUrl = Utils.perPage(V.canvas.api.urls.modules, 25);
-
-			Utils.getJSON(modulesUrl, (resultData: CanvasAPI.Module[]) => {
-
-				resultData.forEach(moduleData => {
-					DATA.modules.set(moduleData.id, new Module(moduleData));
-				});
-
-				next();
-			});
-
-		})
-		.then(() => new Promise(next => { // get module items for each module
-
-			const moduleIDs = Array.from(DATA.modules.keys());
-			let waitingCount = moduleIDs.length;
-
-			moduleIDs.forEach(moduleID => {
-
-				const itemCount = DATA.modules.get(moduleID).itemCount;
-
-				if (itemCount === 0) {
-					if (--waitingCount === 0) next();
-					return;
-				}
-
-				const moduleItemsUrl = Utils.perPage(
-					Utils.format(V.canvas.api.urls.module_items, {moduleID}),
-					itemCount);
-
-				Utils.getJSON(moduleItemsUrl, (resultData: CanvasAPI.ModuleItem[]) => {
-
-					resultData.forEach(modItemJson => {
-
-						let item: ModuleItem;
-						let contentId = modItemJson.content_id;
-
-						if (ModuleItem.byContentId.has(contentId))
-							item = ModuleItem.byContentId.get(contentId);
-						else if (contentId)
-							item = ModuleItem.fromContentId(contentId);
-						else
-							item = new ModuleItem();
-
-						item.update(modItemJson);
-
-						DATA.moduleItems.set(modItemJson.id, item);
-						DATA.modules.get(modItemJson.module_id).items.push(item);
-					});
-
-					if (--waitingCount === 0) next();
-
-				});
-
-			});
-
-		})).then(() => new Promise(next => { // get file urls for file items
-
-			const fileItems = Array.from(DATA.moduleItems.values())
-			.filter(item => item.type == ModuleItemType.FILE);
-
-			let waitingCount = fileItems.length;
-
-			fileItems.forEach(item => {
-				const fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, {fileID: item.contentId});
-				Utils.getJSON(fileDataUrl, (resultData: CanvasAPI.File) => {
-
-					item.setFileData(resultData);
-
-					if (--waitingCount === 0) next();
-				});
-			});
-
-		}))
-		.then(() => new Promise(next => { // get navigation tabs
-
-			// should never be more than 25 tabs
-			const navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
-
-			Utils.getJSON(navTabUrl, (resultData: CanvasAPI.Tab[]) => {
-
-				resultData.forEach(tab => {
-					DATA.navTabs.set(tab.id, new NavTab(tab));
-				});
-
-				next();
-
-			});
-
-		}))
-		.then(partDone);
-
-	},
-
-
-	function getCustomData(callback) {
-		const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, {dataPath: ""});
-
-	//	const resultData = await Utils.getJSON2(customDataUrl);
-
-		Utils.getJSON(customDataUrl, (resultData: {data: CanvasAPI.CustomData}) => {
-			const customData = resultData.data;
-
-			// this happens when there was an issue getting the data or there was no data at all
-			if (customData === undefined) {
-				Utils.runCb(callback);
-				return;
-			}
-
-			// === load complete / hidden assignments ===
-
-			const complete: number[] = customData.completed_assignments ? customData.completed_assignments[DATA.courseID] : [];
-			const hidden: number[] = customData.hidden_assignments ? customData.hidden_assignments[DATA.courseID] : [];
-
-			// Map.forEach takes "function(value, key, map)"
-			DATA.moduleItems.forEach((modItem, modItemId) => {
-				modItem.checked = complete.includes(modItemId);
-				modItem.hidden = hidden.includes(modItemId);
-			});
-
-			// === load active state list ===
-
-			const activeStates: string[] = customData.active_states || [];
-
-			// load states from config
-			$.each(V.state, (name, stateData) => {
-				const stateObj = new State(name, stateData, activeStates.includes(name));
-				DATA.states.set(name, stateObj);
-			});
-
-			// === load hidden tabs ===
-
-			const tabPositions: object = customData.tab_positions ? customData.tab_positions[DATA.courseID] : [];
-
-			DATA.navTabs.forEach((navTab, tabId) => {
-				if (tabPositions[tabId] !== undefined)
-					navTab.setPosition(tabPositions[tabId]);
-			});
-
-			Utils.runCb(callback);
-		});
-
-	}
-
-];
-
-(function init() {
-
-	const start: number = $.now();
-	let lastTiming: number;
-
-	const flowComplete = function() {
-		PAGE.initialize();
-		chrome.runtime.onMessage.addListener(Main.onMessage);
-		Main.initPage();
-		console.debug(`Initialization done, took ${$.now() - start}ms`);
+		}
 	};
 
-	// recursive function to run each step
-	const runStep = function(item: number, lastItem?: number) {
+	// =======================================
+	//       modules, items, and files
+	// =======================================
 
-		if (lastItem !== undefined)
-			console.debug(`Completed init item #${lastItem+1} (${MAIN_FLOW[lastItem].name}) in ${$.now() - lastTiming}ms`);
+	const moduleItemFlow = async function() {
 
-		// if we're out of steps
-		if (item >= MAIN_FLOW.length) {
-			flowComplete();
-			return;
+		// ===== modules =====
+
+		const modulesUrl = Utils.perPage(V.canvas.api.urls.modules, 25);
+		const modules = await UtilsAsync.getJSON<CanvasAPI.Module[]>(modulesUrl);
+		for (let moduleData of modules) {
+			DATA.modules.set(moduleData.id, new Module(moduleData));
 		}
 
-		lastTiming = $.now();
+		// ===== module items =====
 
-		// run this step with a callback to run the next one and a callback to end the flow
-		MAIN_FLOW[item](
-			() => runStep(item + 1, item),
-			() => runStep(MAIN_FLOW.length, item)
-		);
+		const moduleIds = Array.from(DATA.modules.keys());
+		const itemSetPromises: Promise<CanvasAPI.ModuleItem[]>[] =
+			moduleIds.map(modId => DATA.modules.get(modId))
+				.filter(mod => mod.itemCount > 0)
+				.map(module => {
+
+					const moduleItemsUrl = Utils.perPage(
+						Utils.format(V.canvas.api.urls.module_items, {moduleID: module.id}),
+						module.itemCount);
+
+					// return the promise instead of awaiting on this so it can be used in Promise.all
+					return UtilsAsync.getJSON<CanvasAPI.ModuleItem[]>(moduleItemsUrl);
+
+				});
+
+		const moduleItemSets: CanvasAPI.ModuleItem[][] = await Promise.all(itemSetPromises);
+
+		for (let items of moduleItemSets) {
+
+			const module = DATA.modules.get(items[0].module_id);
+
+			for (let modItemJson of items) {
+
+				let item: ModuleItem;
+				let contentId = modItemJson.content_id;
+
+				if (ModuleItem.byContentId.has(contentId))
+					item = ModuleItem.byContentId.get(contentId);
+				else if (contentId)
+					item = ModuleItem.fromContentId(contentId);
+				else
+					item = new ModuleItem();
+
+				item.update(modItemJson);
+
+				DATA.moduleItems.set(modItemJson.id, item);
+				module.items.push(item);
+			}
+
+		}
+
+		// ===== file module items =====
+
+		const fileItems = Array.from(DATA.moduleItems.values())
+			.filter(item => item.type == ModuleItemType.FILE);
+
+		const filePromises: Promise<CanvasAPI.File>[] = fileItems.map(item => {
+			const fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, {fileID: item.contentId});
+			// return promise for Promise.all
+			return UtilsAsync.getJSON<CanvasAPI.File>(fileDataUrl);
+		});
+
+		const files: CanvasAPI.File[] = await Promise.all(filePromises);
+
+		for (let file of files)
+			ModuleItem.byContentId.get(file.id).setFileData(file);
+
 	};
 
-	// init by running first step
-	runStep(0);
+	// =======================================
+	//              custom data
+	// =======================================
 
-})();
+	const customDataFlow = async function() {
+
+		const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, {dataPath: ""});
+		const customData: CanvasAPI.CustomData = (
+			await UtilsAsync.getJSON<{data:CanvasAPI.CustomData}>(customDataUrl)
+		).data;
+
+		// this happens when there was an issue getting the data or there was no data at all
+		// TODO figure out what to do here
+		if (customData === undefined) return;
+
+		// ===== load complete / hidden assignments =====
+
+		const complete = Utils.getOrDefault(customData.completed_assignments, DATA.courseID, new Array<number>());
+		const hidden = Utils.getOrDefault(customData.hidden_assignments, DATA.courseID, new Array<number>());
+
+		for (let [modItemId, modItem] of DATA.moduleItems) {
+			modItem.checked = complete.includes(modItemId);
+			modItem.hidden = hidden.includes(modItemId);
+		}
+
+		// ===== load active state list =====
+
+		const activeStates: string[] = customData.active_states || [];
+
+		// load states from config
+		$.each(V.state, (name, stateData) => {
+			const stateObj = new State(name, stateData, activeStates.includes(name));
+			DATA.states.set(name, stateObj);
+		});
+
+		// ===== load hidden tabs =====
+
+		const tabPositions: {[key:string]:number} = Utils.getOrDefault(customData.tab_positions, DATA.courseID, {});
+
+		for (let [tabId, navTab] of DATA.navTabs) {
+			if (tabPositions[tabId] !== undefined)
+				navTab.setPosition(tabPositions[tabId]);
+		}
+
+	};
+
+	// =======================================
+	//         run all async tasks
+	// =======================================
+
+	const promises = [courseTabFlow(), navTabFlow()];
+
+	if (DATA.onMainPage)
+		promises.push(assignmentFlow(), moduleItemFlow());
+
+	await Promise.all(promises);
+
+	// run custom data flow after everything
+	if (DATA.onMainPage) await customDataFlow();
+
+	return performance.now() - initStart;
+
+})()
+.catch((reason: Exception | any) => {
+	// Exceptions are intentionally throw by my code
+	if (reason instanceof Exception) {
+		if (reason.isFatal) throw reason.toString();
+		else console.warn("Exception in init:", reason.toString());
+	}
+	// anything else is unknown and is a problem
+	else {
+		throw "Unknown error in init: " + reason;
+	}
+})
+.then((totalDuration: number) => {
+	console.debug(`Initialization completed in ${Math.round(totalDuration)}ms`);
+	Main.initPage();
+	chrome.runtime.onMessage.addListener(Main.onMessage);
+});
 
 class Main {
 
 	static initPage() {
+
+		PAGE.initialize();
 
 		$(window).scroll(UI.updateScrollPosition);
 		$(document).ready(UI.updateScrollPosition);
@@ -315,10 +282,6 @@ class Main {
 
 		// removing all repeated whitespace in class attributes
 		$("[class]").attr("class", (i, oldClass) => (oldClass.match(/\S+/g) || []).join(" "));
-
-		// clean up discussion post images
-		$("#discussion_subentries .discussion_entry .message.user_content p > img")
-			.css("max-width", "100%");
 
 		// clean up grade table
 		$("#grades_summary tbody")
@@ -343,16 +306,16 @@ class Main {
 		// === insert course links ===
 
 		const $insertionPoint = PAGE.sidebar.children().eq(2);
-		DATA.courseTabs.forEach((courseTab) => {
+		for (let [tabID, courseTab] of DATA.courseTabs) {
 			$insertionPoint.after(
 				Utils.format(V.element.course_link, {
 					tabColor: courseTab.color,
-					tabID: courseTab.id,
+					tabID,
 					name: courseTab.name,
 					code: courseTab.code
 				})
 			);
-		});
+		}
 
 		// === place "jump to top" button ===
 
@@ -360,14 +323,15 @@ class Main {
 			$(V.element.jump_button)
 			.find("i")
 			.click(() => {
-				if (document.body.scrollTop > 0)
+				if (PAGE.scrollingElement.prop("scrollTop") > 0)
 					$("body").animate({scrollTop: 0}, V.ui.scroll_time);
 			})
 			.end()
 			.appendTo(PAGE.main);
 
-		// ======================= course page cutoff ===============
-		// everything past this point is for course pages
+		// ==========================================================
+		//                   course page cutoff
+		//      everything below this point is for course pages
 		// ==========================================================
 		if (DATA.coursePage === null) return;
 
@@ -377,14 +341,17 @@ class Main {
 
 		// === load initial states ===
 
-		Array.from(DATA.states.values())
-			.filter(s => s.active && s.onPages.includes(DATA.coursePage))
-			.forEach(s => PAGE.body.addClass(s.bodyClass));
+		for (let [,state] of DATA.states) {
+			if (state.active && state.onPages.includes(DATA.coursePage))
+				PAGE.body.addClass(state.bodyClass)
+		}
 
 		// ==== apply course color to brand colors ====
 
-		const color = DATA.courseTabs.get(DATA.courseID).color;
-		document.documentElement.style.setProperty("--ic-brand-primary", color);
+		if (DATA.courseTabs.has(DATA.courseID)) {
+			const color = DATA.courseTabs.get(DATA.courseID).color;
+			document.documentElement.style.setProperty("--ic-brand-primary", color);
+		}
 
 		// ==== clear empty nav tabs ===
 
@@ -396,16 +363,16 @@ class Main {
 			.sort((tabA, tabB) => tabA.position - tabB.position)
 			.forEach(UI.updateNavTabPosition);
 
-		// ====================== main page cutoff ==================
-		// everything past this is only for modules/grades pages
+		// ==========================================================
+		//                    main page cutoff
+		//  everything below this is only for modules/grades pages
 		// ==========================================================
 		if (!DATA.onMainPage) return;
 
 		// === place checkboxes & hide buttons ===
 
-		Array.from(DATA.moduleItems.values()).forEach(item => {
+		for (let [item_id, item] of DATA.moduleItems) {
 
-			const item_id = item.id;
 			const mainEl = $("#"+item.canvasElementId);
 			let parentEl: JQuery;
 			let hasCheckbox: boolean;
@@ -444,7 +411,7 @@ class Main {
 				item.hideElement.show();
 			}
 
-		});
+		}
 
 		// === fix grade checkboxes since they're in the table ===
 		if (DATA.coursePage === CanvasPage.GRADES) {
@@ -469,8 +436,9 @@ class Main {
 			Main.onCheckboxChange(this as HTMLInputElement);
 		});
 
-		// ====================== modules page cutoff ==================
-		// everything past here is only on the modules page
+		// =============================================================
+		//                     modules page cutoff
+		//        everything below here is only on the modules page
 		// =============================================================
 		if (DATA.coursePage !== CanvasPage.MODULES) return;
 
@@ -478,7 +446,6 @@ class Main {
 		$(V.canvas.selector.module_items).filter((i, el) => !el.innerHTML.trim().length).html("");
 
 		// === set custom indent level ===
-
 		const disabledIndent = DATA.states.get("disable_indent_override").active;
 
 		$(V.canvas.selector.module_item).each(function() {
@@ -499,7 +466,8 @@ class Main {
 		const toc = $(V.element.toc);
 		const ul = toc.find("ul");
 
-		DATA.modules.forEach((mod, modId) => {
+		for (let [modId, mod] of DATA.modules) {
+
 			let formatted = Utils.format(V.element.toc_item, {item_name: mod.name, item_id: modId});
 			$(formatted)
 				.find("a")
@@ -514,7 +482,7 @@ class Main {
 				})
 				.end()
 				.appendTo(ul);
-		});
+		}
 
 		DATA.elements.toc = toc
 			.css("top", PAGE.left.height() + V.ui.toc_top_margin)
@@ -523,57 +491,40 @@ class Main {
 
 		Array.from(DATA.modules.values()).forEach(UI.updateModule);
 
-		// === add submission status icons ===
-
-		/* TODO this only tracks if *someone* has submitted, not always this user. need to query submissions api for this
-		Array.from(DATA.moduleItems.values())
-		//	.filter(i => i.isSubmitted)
-			.forEach(i => {
-				if (i.isSubmitted)
-					$("#"+i.canvasElementId).find(".module-item-status-icon").after(V.element.submission_icon);
-			});
-
-		*/
-
 		// === add click event for hide buttons ===
 
 		PAGE.main.on("click", `.${V.cssClass.hide_button} > i`, function() {
 			Main.onHideButtonClick($(this));
 		});
 
-		// === add quick download buttons to FILE items
+		// === add buttons to FILE and EXTERNAL_URL items ===
 
-		const modItems = Array.from(DATA.moduleItems.values());
+		for (let [,item] of DATA.moduleItems) {
 
-		modItems.filter(item => item.type == ModuleItemType.FILE)
-			.forEach(item => {
+			if (item.type == ModuleItemType.FILE) {
 				const element = Utils.format(V.element.download_button, {
 					file_url: item.fileData.url,
 					filename: item.fileData.display_name
 				});
 				$(element).insertBefore(item.checkboxElement);
-		});
+			}
 
-		$("."+V.cssClass.download).show();
-
-		// === add quick link button to EXTERNAL_URL items
-
-		modItems.filter(item => item.type == ModuleItemType.EXTERNAL_URL)
-			.forEach(item => {
+			else if (item.type === ModuleItemType.EXTERNAL_URL) {
 				const element = Utils.format(V.element.url_button, {
 					external_url: item.externalUrl
 				});
 				$(element).insertBefore(item.checkboxElement);
 
 				$("#"+item.canvasElementId).find("a.external_url_link.title")
-				.attr("href", function() { return $(this).attr("data-item-href"); })
-				.removeAttr("target rel")
-				.removeClass("external")
-				.addClass("ig-title")
-				.find(".ui-icon").remove()
-			});
+					.attr("href", function() { return $(this).attr("data-item-href"); })
+					.removeAttr("target rel")
+					.removeClass("external")
+					.addClass("ig-title")
+					.find(".ui-icon").remove()
+			}
+		}
 
-		$("."+V.cssClass.external_url).show()
+		$("."+V.cssClass.download).add("."+V.cssClass.external_url).show();
 
 	} // end initPage
 

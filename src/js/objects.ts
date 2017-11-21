@@ -285,6 +285,50 @@ class StateMessageData extends MessageData {
 	}
 }
 
+class Exception {
+	private reason: string;
+	private fatal: boolean;
+
+	constructor(reason: string, fatal?: boolean) {
+		if (fatal === undefined) fatal = false;
+		this.reason = reason;
+		this.fatal = fatal;
+	}
+
+	get isFatal() {
+		return this.fatal;
+	}
+
+	public toString() {
+		return this.reason;
+	}
+}
+
+class UtilsAsync {
+
+	static async getJSON<T>(url: string): Promise<T> {
+		return new Promise<T>((resolve, reject) => {
+			Utils.getJSON(url, resultData => {
+				resolve(resultData as T);
+			});
+		});
+	}
+
+	static async loadToken(): Promise<string> {
+		return new Promise<string>((resolve, reject) => {
+
+			chrome.storage.sync.get(V.misc.token_key, resultData => {
+
+				const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
+				if (success) resolve(resultData[V.misc.token_key]);
+				else reject();
+
+			});
+
+		});
+	}
+}
+
 class Utils {
 
 	static format(string, ...formatArgs) {
@@ -316,6 +360,11 @@ class Utils {
 				return match;
 			});
 
+	}
+
+	static getOrDefault<V>(object: {}, key: string | number, def: V): V {
+		if (object === undefined || object[key] === undefined) return def;
+		else return object[key];
 	}
 
 	static getPathValue(object: Object, pathString: string) {
@@ -360,14 +409,6 @@ class Utils {
 		req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
 
 		req.send();
-	}
-
-	static async getJSON2(url: string) {
-		return new Promise((resolve, reject) => {
-			Utils.getJSON(url, resultData => {
-				resolve(resultData);
-			});
-		});
 	}
 
 	static putData(url: string, data: any | any[], callback: (success: boolean) => any) {

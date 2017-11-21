@@ -1,18 +1,7 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 var Vars;
 (function (Vars_1) {
-    var Sass = (function () {
-        function Sass() {
-            var _this = this;
+    class Sass {
+        constructor() {
             this.prefix = "betterCanvas";
             this.cssClass = {
                 active: "active",
@@ -91,35 +80,32 @@ var Vars;
                 disable_indent_override: {
                     pages: ["modules"],
                     desc: "Disable indent overrides",
-                    onDisable: function (vars, body) {
-                        [0, 1, 2, 3, 4, 5].forEach(function (level) {
-                            return $(vars.canvas.selector.module_item, body).removeClass("indent_" + level);
-                        });
+                    onDisable: (vars, body) => {
+                        [0, 1, 2, 3, 4, 5].forEach(level => $(vars.canvas.selector.module_item, body).removeClass("indent_" + level));
                         $(vars.canvas.selector.subheader, body).addClass("indent_" + vars.ui.subheader_indent);
                         $(vars.canvas.selector.not_subheader, body).addClass("indent_" + vars.ui.main_indent);
                     },
-                    onEnable: function (vars, body) {
+                    onEnable: (vars, body) => {
                         $(vars.canvas.selector.module_item, body).each(function () {
-                            var _this = this;
-                            [0, 1, 2, 3, 4, 5].forEach(function (level) { return $(_this).removeClass("indent_" + level); });
-                            var defLevel = $(this).attr(vars.data_attr.def_indent);
+                            [0, 1, 2, 3, 4, 5].forEach(level => $(this).removeClass("indent_" + level));
+                            const defLevel = $(this).attr(vars.data_attr.def_indent);
                             $(this).addClass("indent_" + defLevel);
                         });
                     }
                 }
             };
-            var processObject = function (obj, objName) {
-                for (var key in obj) {
+            const processObject = (obj, objName) => {
+                for (const key in obj) {
                     if (!obj.hasOwnProperty(key))
                         continue;
-                    var val = obj[key];
+                    let val = obj[key];
                     if (typeof val === "object") {
                         processObject(val, key);
                     }
                     else if (typeof val === "string") {
                         if ((Sass.prefix_types.indexOf(objName) > -1 || Sass.prefix_types.indexOf(key) > -1)
                             && !key.startsWith("popup_")) {
-                            val = _this.prefix + "-" + val;
+                            val = this.prefix + "-" + val;
                         }
                         if (objName == "data_attr") {
                             val = "data-" + val;
@@ -131,14 +117,12 @@ var Vars;
             processObject(this, "root");
             this.sassJson = JSON.stringify(this);
         }
-        return Sass;
-    }());
+    }
     Sass.prefix_types = ["cssClass", "data_attr", "id"];
-    var Vars = (function (_super) {
-        __extends(Vars, _super);
-        function Vars() {
-            var _this = _super !== null && _super.apply(this, arguments) || this;
-            _this.tooltip = {
+    class Vars extends Sass {
+        constructor() {
+            super(...arguments);
+            this.tooltip = {
                 mark_complete: "Mark as completed",
                 mark_incomplete: "Mark as incomplete",
                 hide: "Hide this item",
@@ -151,27 +135,59 @@ var Vars;
                 has_submission: "Assignment has submission",
                 popup_no_unchecked: "No unchecked items to jump to"
             };
-            _this.misc = {
-                toc_background: "-webkit-linear-gradient(left, " + _this.color.toc_fill + " {percent}%, transparent {percent}%)",
+            this.misc = {
+                toc_background: `-webkit-linear-gradient(left, ${this.color.toc_fill} {percent}%, transparent {percent}%)`,
                 token_key: "accessToken"
             };
-            _this.element = {
-                checkbox: "<div style='display:none' class='" + _this.cssClass.checkbox_parent + "'>\n\t\t\t\t\t\t<input type='checkbox' " + _this.data_attr.mod_item_id + "='{item_id}'>\n\t\t\t\t\t</div>",
-                download_button: "<div style='display:none' class='" + _this.cssClass.download + "' title='" + _this.tooltip.download + "'>\n\t\t\t\t\t\t<a href=\"{file_url}\"></a>\n\t\t\t\t\t</div>",
-                url_button: "<div style='display:none' class='" + _this.cssClass.external_url + "' title='" + _this.tooltip.external_url + "'>\n\t\t\t\t\t\t<a href=\"{external_url}\" class=\"not_external\" target=\"_blank\"></a>\n\t\t\t\t\t</div>",
-                hide_button: "<div style='display:none' class='" + _this.cssClass.hide_button + "'>\n\t\t\t\t\t\t<i " + _this.data_attr.mod_item_id + "='{item_id}'></i>\n\t\t\t\t\t</div>",
-                course_link: "<li style='background-color: {tabColor}' class='menu-item ic-app-header__menu-list-item'>\n\t\t\t\t\t<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>\n\t\t\t\t\t\t<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>\n\t\t\t\t\t\t<div style='background-color: {tabColor}; border-right-color: {tabColor}'\n\t\t\t\t\t\t\t\t" + _this.data_attr.course_name + "='{name}' " + _this.data_attr.course_code + "='{code}'\n\t\t\t\t\t\t\t\tclass='menu-item__text " + _this.cssClass.course_link_text + "'></div>\n\t\t\t\t\t</a>\n\t\t\t\t</li>",
-                toc: "<div id='" + _this.id.toc + "' class='ic-app-course-menu list-view'>\n\t\t\t\t\t<div class='" + _this.cssClass.toc_title + "'>Table of Contents</div>\n\t\t\t\t\t<nav><ul></ul></nav>\n\t\t\t\t</div>",
-                toc_item: "<li>\n\t\t\t\t\t<a href='#' title='{item_name}'>\n\t\t\t\t\t\t{item_name}\n\t\t\t\t\t\t<div class='" + _this.cssClass.toc_ratio + "' " + _this.data_attr.toc_module_id + "='{item_id}'></div>\n\t\t\t\t\t</a>\n\t\t\t\t</li>",
-                jump_button: "<div id='" + _this.id.jump_button + "'>\n\t\t\t\t\t<i title='" + _this.tooltip.jump_button + "'></i>\n\t\t\t\t</div>",
-                submission_icon: "<div title='" + _this.tooltip.has_submission + "' class='" + _this.cssClass.item_icon + "'>\n\t\t\t\t\t<i class='icon-publish'></i>\n\t\t\t\t</div>",
-                popup_state_switch: "<div class=\"switch " + _this.cssClass.popup_require_page + "\">\n\t\t\t\t\t<label for=\"{name}\" class=\"mdl-switch mdl-js-switch mdl-js-ripple-effect\">\n\t\t\t\t\t\t<span class=\"mdl-switch__label\">{desc}</span>\n\t\t\t\t\t\t<input id=\"{name}\" type=\"checkbox\" class=\"mdl-switch__input\">\n\t\t\t\t\t</label>\n\t\t\t\t</div>"
+            this.element = {
+                checkbox: `<div style='display:none' class='${this.cssClass.checkbox_parent}'>
+						<input type='checkbox' ${this.data_attr.mod_item_id}='{item_id}'>
+					</div>`,
+                download_button: `<div style='display:none' class='${this.cssClass.download}' title='${this.tooltip.download}'>
+						<a href="{file_url}"></a>
+					</div>`,
+                url_button: `<div style='display:none' class='${this.cssClass.external_url}' title='${this.tooltip.external_url}'>
+						<a href="{external_url}" class="not_external" target="_blank"></a>
+					</div>`,
+                hide_button: `<div style='display:none' class='${this.cssClass.hide_button}'>
+						<i ${this.data_attr.mod_item_id}='{item_id}'></i>
+					</div>`,
+                course_link: `<li style='background-color: {tabColor}' class='menu-item ic-app-header__menu-list-item'>
+					<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>
+						<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>
+						<div style='background-color: {tabColor}; border-right-color: {tabColor}'
+								${this.data_attr.course_name}='{name}' ${this.data_attr.course_code}='{code}'
+								class='menu-item__text ${this.cssClass.course_link_text}'></div>
+					</a>
+				</li>`,
+                toc: `<div id='${this.id.toc}' class='ic-app-course-menu list-view'>
+					<div class='${this.cssClass.toc_title}'>Table of Contents</div>
+					<nav><ul></ul></nav>
+				</div>`,
+                toc_item: `<li>
+					<a href='#' title='{item_name}'>
+						{item_name}
+						<div class='${this.cssClass.toc_ratio}' ${this.data_attr.toc_module_id}='{item_id}'></div>
+					</a>
+				</li>`,
+                jump_button: `<div id='${this.id.jump_button}'>
+					<i title='${this.tooltip.jump_button}'></i>
+				</div>`,
+                submission_icon: `<div title='${this.tooltip.has_submission}' class='${this.cssClass.item_icon}'>
+					<i class='icon-publish'></i>
+				</div>`,
+                popup_state_switch: `<div class="switch ${this.cssClass.popup_require_page}">
+					<label for="{name}" class="mdl-switch mdl-js-switch mdl-js-ripple-effect">
+						<span class="mdl-switch__label">{desc}</span>
+						<input id="{name}" type="checkbox" class="mdl-switch__input">
+					</label>
+				</div>`
             };
-            _this._canvas = {
-                namespace: "com.jmariner." + _this.prefix,
+            this._canvas = {
+                namespace: `com.jmariner.${this.prefix}`,
                 root_url: "/api/v1/"
             };
-            _this.canvas = {
+            this.canvas = {
                 selector: {
                     module: "div.context_module",
                     module_item: "li.context_module_item",
@@ -181,11 +197,11 @@ var Vars;
                     nav_tabs: "ul#section-tabs"
                 },
                 api: {
-                    namespace: _this._canvas.namespace,
-                    root_url: _this._canvas.root_url,
+                    namespace: this._canvas.namespace,
+                    root_url: this._canvas.root_url,
                     per_page: 100,
                     urls: {
-                        custom_data: "users/self/custom_data{dataPath}?ns=" + _this._canvas.namespace,
+                        custom_data: `users/self/custom_data{dataPath}?ns=${this._canvas.namespace}`,
                         favorite_courses: "users/self/favorites/courses",
                         custom_colors: "users/self/colors",
                         assignments: "users/self/courses/{courseID}/assignments",
@@ -202,16 +218,13 @@ var Vars;
                     }
                 },
             };
-            return _this;
         }
-        Vars.prototype.init = function (courseID) {
-            var _this = this;
-            $.each(this.canvas.api.urls, function (key, url) {
-                _this.canvas.api.urls[key] = _this.canvas.api.root_url + Utils.format(url, { courseID: courseID });
+        init(courseID) {
+            $.each(this.canvas.api.urls, (key, url) => {
+                this.canvas.api.urls[key] = this.canvas.api.root_url + Utils.format(url, { courseID });
             });
-        };
-        return Vars;
-    }(Sass));
+        }
+    }
     Vars_1.Vars = Vars;
     Vars_1.VARS = new Vars();
     if (typeof module !== "undefined")

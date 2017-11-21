@@ -3,7 +3,7 @@
     "types": ["jquery", "chrome", "node", "node-sass"],
     "lib": ["es2016", "dom"],
     "module": "system",
-    "target": "es5",
+    "target": "es6",
     "removeComments": true,
     "sourceMap": true
   },

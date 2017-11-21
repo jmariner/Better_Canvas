@@ -486,3 +486,7 @@ div.ic-app-nav-toggle-and-crumbs {
 aside#right-side ul#question_list {
 	max-height: none !important
 }
+
+#discussion_subentries .discussion_entry .message.user_content p > img {
+	max-width: 100%;
+}

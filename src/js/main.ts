@@ -11,26 +11,30 @@ import MessageSender = chrome.runtime.MessageSender;
 	//           main initialization
 	// =======================================
 
-	DATA = new Data();
-	PAGE = new Page();
+	(function() {
 
-	DATA.extensionId = chrome.runtime.id;
-	DATA.name = chrome.runtime.getManifest().name;
+		DATA = new Data();
+		PAGE = new Page();
 
-	for (let logType of "log debug info warn error dir".split(" ")) {
-		const orig = console[logType];
-		console[logType] = orig.bind(console, `[${DATA.name}] [${logType.toUpperCase()}]`);
-	}
+		DATA.extensionId = chrome.runtime.id;
+		DATA.name = chrome.runtime.getManifest().name;
 
-	// load course id and what page user is on within that course
-	const urlMatch = /courses\/(\d+)(?:\/(\w+))?.*/.exec(document.location.pathname);
-	const onCoursePage = urlMatch !== null;
-	DATA.coursePage = onCoursePage ? CanvasPage[(urlMatch[2] || "home").toUpperCase()] : null;
-	DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
-	DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
+		for (const logType of "log debug info warn error dir".split(" ")) {
+			const orig = console[logType];
+			console[logType] = orig.bind(console, `[${DATA.name}] [${logType.toUpperCase()}]`);
+		}
 
-	if (onCoursePage)
-		console.debug(`On course #${DATA.courseID} page, at ${CanvasPage[DATA.coursePage]}`);
+		// load course id and what page user is on within that course
+		const urlMatch = /courses\/(\d+)(?:\/(\w+))?.*/.exec(document.location.pathname);
+		const onCoursePage = urlMatch !== null;
+		DATA.coursePage = onCoursePage ? CanvasPage[(urlMatch[2] || "home").toUpperCase()] : null;
+		DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
+		DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
+
+		if (onCoursePage)
+			console.debug(`On course #${DATA.courseID} page, at ${CanvasPage[DATA.coursePage]}`);
+
+	})();
 
 	// begin async operations
 
@@ -72,6 +76,7 @@ import MessageSender = chrome.runtime.MessageSender;
 
 	// =======================================
 	//            navigation tabs
+	//  requires: course page
 	// =======================================
 
 	const navTabFlow = async function() {
@@ -85,6 +90,7 @@ import MessageSender = chrome.runtime.MessageSender;
 
 	// =======================================
 	//              assignments
+	//  requires: modules or grades page
 	// =======================================
 
 	const assignmentFlow = async function() {
@@ -116,6 +122,7 @@ import MessageSender = chrome.runtime.MessageSender;
 
 	// =======================================
 	//       modules, items, and files
+	//  requires: modules or grades page
 	// =======================================
 
 	const moduleItemFlow = async function() {
@@ -191,6 +198,7 @@ import MessageSender = chrome.runtime.MessageSender;
 
 	// =======================================
 	//              custom data
+	//  requires: modules or grades page
 	// =======================================
 
 	const customDataFlow = async function() {
@@ -239,7 +247,10 @@ import MessageSender = chrome.runtime.MessageSender;
 	//         run all async tasks
 	// =======================================
 
-	const promises = [courseTabFlow(), navTabFlow()];
+	const promises = [courseTabFlow()];
+
+	if (DATA.coursePage !== null)
+		promises.push(navTabFlow());
 
 	if (DATA.onMainPage)
 		promises.push(assignmentFlow(), moduleItemFlow());
@@ -555,19 +566,21 @@ class Main {
 		Utils.editDataArray_Sync(url, state, [stateName]);
 	}
 
-	static setNavTabPosition(tab: NavTab, position: number) {
+	static async setNavTabPosition(tab: NavTab, position: number) {
 
 		const url = Utils.format(V.canvas.api.urls.custom_data, {
 			dataPath: ["", V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id].join("/")
 		});
 
-		Utils.putData_Sync(url, position, success => {
-			if (success) {
-				tab.setPosition(position);
-				UI.updateNavTabPosition(tab);
-			}
-			else throw "Tab position update failed.";
-		});
+		const success = await Utils.putData(url, position);
+
+		if (success) {
+			tab.setPosition(position);
+			UI.updateNavTabPosition(tab);
+		}
+		else {
+			throw "Tab position update failed.";
+		}
 	}
 
 	// element is the <input>

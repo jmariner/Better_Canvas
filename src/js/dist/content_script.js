@@ -282,7 +282,7 @@ class Utils {
             const existingData = (yield Utils.getJSON(url)).data || [];
             let newArray;
             if (append) {
-                newArray = existingData ? existingData.concat(values) : values;
+                newArray = existingData.concat(values);
             }
             else {
                 if (existingData.length === 0)
@@ -625,21 +625,23 @@ class Utils {
 };
 (function init() {
     return __awaiter(this, void 0, void 0, function* () {
-        DATA = new Data();
-        PAGE = new Page();
-        DATA.extensionId = chrome.runtime.id;
-        DATA.name = chrome.runtime.getManifest().name;
-        for (let logType of "log debug info warn error dir".split(" ")) {
-            const orig = console[logType];
-            console[logType] = orig.bind(console, `[${DATA.name}] [${logType.toUpperCase()}]`);
-        }
-        const urlMatch = /courses\/(\d+)(?:\/(\w+))?.*/.exec(document.location.pathname);
-        const onCoursePage = urlMatch !== null;
-        DATA.coursePage = onCoursePage ? CanvasPage[(urlMatch[2] || "home").toUpperCase()] : null;
-        DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
-        DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
-        if (onCoursePage)
-            console.debug(`On course #${DATA.courseID} page, at ${CanvasPage[DATA.coursePage]}`);
+        (function () {
+            DATA = new Data();
+            PAGE = new Page();
+            DATA.extensionId = chrome.runtime.id;
+            DATA.name = chrome.runtime.getManifest().name;
+            for (const logType of "log debug info warn error dir".split(" ")) {
+                const orig = console[logType];
+                console[logType] = orig.bind(console, `[${DATA.name}] [${logType.toUpperCase()}]`);
+            }
+            const urlMatch = /courses\/(\d+)(?:\/(\w+))?.*/.exec(document.location.pathname);
+            const onCoursePage = urlMatch !== null;
+            DATA.coursePage = onCoursePage ? CanvasPage[(urlMatch[2] || "home").toUpperCase()] : null;
+            DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
+            DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
+            if (onCoursePage)
+                console.debug(`On course #${DATA.courseID} page, at ${CanvasPage[DATA.coursePage]}`);
+        })();
         const initStart = performance.now();
         V = Vars.VARS;
         V.init(DATA.courseID);
@@ -755,7 +757,9 @@ class Utils {
                 }
             });
         };
-        const promises = [courseTabFlow(), navTabFlow()];
+        const promises = [courseTabFlow()];
+        if (DATA.coursePage !== null)
+            promises.push(navTabFlow());
         if (DATA.onMainPage)
             promises.push(assignmentFlow(), moduleItemFlow());
         yield Promise.all(promises);
@@ -969,16 +973,18 @@ class Main {
         Utils.editDataArray_Sync(url, state, [stateName]);
     }
     static setNavTabPosition(tab, position) {
-        const url = Utils.format(V.canvas.api.urls.custom_data, {
-            dataPath: ["", V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id].join("/")
-        });
-        Utils.putData_Sync(url, position, success => {
+        return __awaiter(this, void 0, void 0, function* () {
+            const url = Utils.format(V.canvas.api.urls.custom_data, {
+                dataPath: ["", V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id].join("/")
+            });
+            const success = yield Utils.putData(url, position);
             if (success) {
                 tab.setPosition(position);
                 UI.updateNavTabPosition(tab);
             }
-            else
+            else {
                 throw "Tab position update failed.";
+            }
         });
     }
     static onCheckboxChange(el) {

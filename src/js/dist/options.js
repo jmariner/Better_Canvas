@@ -282,7 +282,7 @@ class Utils {
             const existingData = (yield Utils.getJSON(url)).data || [];
             let newArray;
             if (append) {
-                newArray = existingData ? existingData.concat(values) : values;
+                newArray = existingData.concat(values);
             }
             else {
                 if (existingData.length === 0)

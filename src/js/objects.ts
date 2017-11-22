@@ -384,17 +384,18 @@ class Utils {
 	}
 
 	static async editDataArray(url: string, append: boolean, values: any[]): Promise<boolean> {
-		// url is same for get/put
+
 		const existingData: any[] = (
+			// url is same for get/put
 			await Utils.getJSON<{data:any[]}>(url)
 		).data || [];
 
 		let newArray;
 
 		if (append) {
-			newArray = existingData ? existingData.concat(values) : values;
+			newArray = existingData.concat(values);
 		}
-		else {
+		else { // subtract from data array
 			if (existingData.length === 0)
 				return true;
 			newArray = existingData.filter(val => !values.includes(val));

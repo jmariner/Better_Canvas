@@ -868,7 +868,7 @@ class Main {
             if (hasHideButton) {
                 item.hideElement =
                     $(Utils.format(V.element.hide_button, { item_id })).appendTo(parentEl);
-                UI.updateHideButton(item);
+                UI.updateHideButton_Sync(item);
                 item.hideElement.show();
             }
         }
@@ -887,7 +887,9 @@ class Main {
             });
         }
         PAGE.main.on("change", `.${V.cssClass.checkbox_parent} > input`, function () {
-            Main.onCheckboxChange(this);
+            return __awaiter(this, void 0, void 0, function* () {
+                yield Main.onCheckboxChange(this);
+            });
         });
         if (DATA.coursePage !== CanvasPage.MODULES)
             return;
@@ -925,7 +927,9 @@ class Main {
             .data("cutoff", toc.offset().top - V.ui.toc_top_margin);
         Array.from(DATA.modules.values()).forEach(UI.updateModule);
         PAGE.main.on("click", `.${V.cssClass.hide_button} > i`, function () {
-            Main.onHideButtonClick($(this));
+            return __awaiter(this, void 0, void 0, function* () {
+                yield Main.onHideButtonClick($(this));
+            });
         });
         for (let [, item] of DATA.moduleItems) {
             if (item.type == ModuleItemType.FILE) {
@@ -988,6 +992,56 @@ class Main {
         });
     }
     static onCheckboxChange(el) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const id = Number($(el).attr(V.data_attr.mod_item_id));
+            const item = DATA.moduleItems.get(id);
+            const status = el.checked;
+            const oldTitle = el.title;
+            el.checked = !status;
+            if (status === item.checked) {
+                console.error("Checkbox desync at item", item);
+                return;
+            }
+            el.disabled = true;
+            el.title = V.tooltip.waiting;
+            const url = Utils.format(V.canvas.api.urls.custom_data, {
+                dataPath: `/${V.canvas.api.data_urls.completed_assignments}/${DATA.courseID}`
+            });
+            const success = yield Utils.editDataArray(url, status, [id]);
+            el.disabled = false;
+            el.title = oldTitle;
+            if (success) {
+                item.checked = status;
+                UI.updateModule(item.module);
+                UI.updateCheckbox(item);
+                console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${el.checked ? "" : "un"}checked`);
+            }
+        });
+    }
+    static onHideButtonClick(el) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const id = Number(el.attr(V.data_attr.mod_item_id));
+            const item = DATA.moduleItems.get(id);
+            if (item.isGraded || item.hideElement.hasClass(V.cssClass.hide_disabled))
+                return;
+            item.hideElement
+                .addClass(V.cssClass.hide_disabled)
+                .find("i")
+                .attr("title", V.tooltip.waiting);
+            const newState = !item.hidden;
+            const url = Utils.format(V.canvas.api.urls.custom_data, {
+                dataPath: `/${V.canvas.api.data_urls.hidden_assignments}/${DATA.courseID}`
+            });
+            const success = yield Utils.editDataArray(url, newState, [id]);
+            if (success) {
+                item.hidden = newState;
+                yield UI.updateHideButton(item, success);
+                UI.updateModule(item.module);
+                console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
+            }
+        });
+    }
+    static onCheckboxChange_Sync(el) {
         const id = Number($(el).attr(V.data_attr.mod_item_id));
         const item = DATA.moduleItems.get(id);
         const status = el.checked;
@@ -1013,7 +1067,7 @@ class Main {
             }
         });
     }
-    static onHideButtonClick(el) {
+    static onHideButtonClick_Sync(el) {
         const id = Number(el.attr(V.data_attr.mod_item_id));
         const item = DATA.moduleItems.get(id);
         if (item.isGraded || item.hideElement.hasClass(V.cssClass.hide_disabled))
@@ -1029,7 +1083,7 @@ class Main {
         Utils.editDataArray_Sync(url, newState, [id], success => {
             if (success)
                 item.hidden = newState;
-            UI.updateHideButton(item, success, () => {
+            UI.updateHideButton_Sync(item, success, () => {
                 if (success) {
                     UI.updateModule(item.module);
                     console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
@@ -1089,7 +1143,25 @@ class UI {
             .closest(V.canvas.selector.module_item)
             .toggleClass(V.cssClass.checkbox_checked, item.checked);
     }
-    static updateHideButton(item, animate, after) {
+    static updateHideButton(item, animate) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (item.hideElement === null)
+                throw "No hide button to update";
+            const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);
+            const iEl = item.hideElement.find("i");
+            iEl.add(modItemEl).toggleClass(V.cssClass.item_hidden, item.hidden);
+            const update = done => {
+                item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
+                iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
+                if (done !== undefined)
+                    done();
+            };
+            yield new Promise(resolve => {
+                setTimeout(() => update(resolve), animate ? V.ui.fade_time : 0);
+            });
+        });
+    }
+    static updateHideButton_Sync(item, animate, after) {
         if (item.hideElement === null)
             throw "No hide button to update";
         const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);

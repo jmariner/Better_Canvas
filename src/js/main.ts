@@ -232,7 +232,7 @@ import MessageSender = chrome.runtime.MessageSender;
 			DATA.states.set(name, stateObj);
 		});
 
-		// ===== load hidden tabs =====
+		// ===== load tabs positions =====
 
 		const tabPositions: {[key:string]:number} = Utils.getOrDefault(customData.tab_positions, DATA.courseID, {});
 
@@ -418,7 +418,7 @@ class Main {
 				item.hideElement =
 					$(Utils.format(V.element.hide_button, {item_id})).appendTo(parentEl);
 
-				UI.updateHideButton(item);
+				UI.updateHideButton_Sync(item);
 				item.hideElement.show();
 			}
 
@@ -443,8 +443,8 @@ class Main {
 
 		// === add change event for checkboxes ===
 
-		PAGE.main.on("change", `.${V.cssClass.checkbox_parent} > input`, function() {
-			Main.onCheckboxChange(this as HTMLInputElement);
+		PAGE.main.on("change", `.${V.cssClass.checkbox_parent} > input`, async function() {
+			await Main.onCheckboxChange(this as HTMLInputElement);
 		});
 
 		// =============================================================
@@ -504,8 +504,8 @@ class Main {
 
 		// === add click event for hide buttons ===
 
-		PAGE.main.on("click", `.${V.cssClass.hide_button} > i`, function() {
-			Main.onHideButtonClick($(this));
+		PAGE.main.on("click", `.${V.cssClass.hide_button} > i`, async function() {
+			await Main.onHideButtonClick($(this));
 		});
 
 		// === add buttons to FILE and EXTERNAL_URL items ===
@@ -584,7 +584,78 @@ class Main {
 	}
 
 	// element is the <input>
-	static onCheckboxChange(el: HTMLInputElement) {
+	static async onCheckboxChange(el: HTMLInputElement) {
+		const id = Number($(el).attr(V.data_attr.mod_item_id));
+		const item = DATA.moduleItems.get(id);
+		const status = el.checked;
+		const oldTitle = el.title;
+
+		// reset back to previous state to allow for validation
+		el.checked = !status;
+
+		// before updating "item", check if it's already the same. if so, we have a desync
+		if (status === item.checked) {
+			console.error("Checkbox desync at item", item);
+			return;
+		}
+
+		// TODO create a better method for waiting-disable for checkbox and hide button
+		// - have a different class applied that sets the cursor to waiting mode and dims the button
+
+		// disable until we confirm we can update the data
+		el.disabled = true;
+		el.title = V.tooltip.waiting;
+
+		const url = Utils.format(V.canvas.api.urls.custom_data, {
+			dataPath: `/${V.canvas.api.data_urls.completed_assignments}/${DATA.courseID}`
+		});
+
+		const success = await Utils.editDataArray(url, status, [id]);
+
+		el.disabled = false;
+		el.title = oldTitle;
+
+		if (success) {
+			item.checked = status;
+			UI.updateModule(item.module);
+			UI.updateCheckbox(item);
+			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${el.checked?"":"un"}checked`);
+		}
+
+	}
+
+	// element is <i>
+	static async onHideButtonClick(el: JQuery) {
+		const id = Number(el.attr(V.data_attr.mod_item_id));
+		const item = DATA.moduleItems.get(id);
+
+		// cancel hiding if the item is graded or has hiding manually disabled for any other reason
+		if (item.isGraded || item.hideElement.hasClass(V.cssClass.hide_disabled)) return;
+
+		// disable until updating complete. this is undone by updateHideButton later
+		item.hideElement
+			.addClass(V.cssClass.hide_disabled)
+			.find("i")
+			.attr("title", V.tooltip.waiting);
+
+		const newState = !item.hidden;
+
+		const url = Utils.format(V.canvas.api.urls.custom_data, {
+			dataPath: `/${V.canvas.api.data_urls.hidden_assignments}/${DATA.courseID}`
+		});
+
+		const success = await Utils.editDataArray(url, newState, [id]);
+
+		if (success) {
+			item.hidden = newState;
+			await UI.updateHideButton(item, success);
+			UI.updateModule(item.module);
+			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
+		}
+	}
+
+	// element is <input>
+	static onCheckboxChange_Sync(el: HTMLInputElement) {
 		const id = Number($(el).attr(V.data_attr.mod_item_id));
 		const item = DATA.moduleItems.get(id);
 		const status = el.checked;
@@ -625,7 +696,7 @@ class Main {
 	}
 
 	// element is the <i>
-	static onHideButtonClick(el: JQuery) {
+	static onHideButtonClick_Sync(el: JQuery) {
 		const id = Number(el.attr(V.data_attr.mod_item_id));
 		const item = DATA.moduleItems.get(id);
 
@@ -645,7 +716,7 @@ class Main {
 
 		Utils.editDataArray_Sync(url, newState, [id], success => {
 			if (success) item.hidden = newState;
-			UI.updateHideButton(item, success, () => {
+			UI.updateHideButton_Sync(item, success, () => {
 				if (success) {
 					UI.updateModule(item.module);
 					console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
@@ -714,7 +785,34 @@ class UI {
 			.toggleClass(V.cssClass.checkbox_checked, item.checked);
 	}
 
-	static updateHideButton(item: ModuleItem, animate?: boolean, after?: Callback) {
+	static async updateHideButton(item: ModuleItem, animate?: boolean/*, after?: Callback*/) {
+		if (item.hideElement === null) throw "No hide button to update";
+
+		const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);
+		const iEl = item.hideElement.find("i");
+
+		// update hidden class on the <i> and <li>
+		iEl.add(modItemEl).toggleClass(V.cssClass.item_hidden, item.hidden);
+
+		const update = done => {
+			// update disable status and title, undoing waiting-disable
+			item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
+			iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
+
+			if (done !== undefined)
+				done();
+		};
+
+		await new Promise(resolve => {
+			setTimeout(
+				() => update(resolve),
+				animate ? V.ui.fade_time : 0
+			);
+		});
+
+	}
+
+	static updateHideButton_Sync(item: ModuleItem, animate?: boolean, after?: Callback) {
 		if (item.hideElement === null) throw "No hide button to update";
 
 		const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);

@@ -214,28 +214,82 @@ class Exception {
     }
 }
 class Utils {
-    static format(string, ...formatArgs) {
-        const formatParams = (formatArgs.length === 1 && typeof formatArgs[0] === "object") ? formatArgs[0] : formatArgs;
-        for (const i in formatParams)
-            string = string.replace(new RegExp("\\{" + i + "\\}", "gi"), formatParams[i]);
-        return "" + string;
+    static format(str, obj) {
+        for (const key in obj) {
+            if (obj.hasOwnProperty(key))
+                str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), obj[key]);
+        }
+        return "" + str;
     }
-    static getOrDefault(object, key, def) {
-        if (object === undefined || object[key] === undefined)
+    static getOrDefault(obj, key, def) {
+        if (obj === undefined || obj[key] === undefined)
             return def;
         else
-            return object[key];
+            return obj[key];
     }
     static perPage(url, perPage) {
         return `${url}?per_page=${perPage}`;
     }
     static getJSON(url) {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                Utils.getJSON_Sync(url, resultData => {
-                    resolve(resultData);
-                });
+            Utils.checkToken();
+            const resp = yield fetch(url, {
+                method: "GET",
+                headers: new Headers({
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + ACCESS_TOKEN
+                })
             });
+            if (resp.status === 404) {
+                throw "404 error when getting JSON";
+            }
+            else {
+                if (resp.status === 400)
+                    console.debug("400 error when getting JSON was OKAY");
+                let json = yield resp.text();
+                json = json.replace("while(1);", "");
+                return JSON.parse(json);
+            }
+        });
+    }
+    static putData(url, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            Utils.checkToken();
+            let bodyData = { ns: V.canvas.api.namespace, data };
+            let method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
+            if (method === "DELETE")
+                delete bodyData.data;
+            const ops = {
+                method,
+                headers: new Headers({
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + ACCESS_TOKEN
+                }),
+                body: JSON.stringify(bodyData)
+            };
+            const resp = yield fetch(url, ops);
+            if (!resp.ok || resp.status === 401) {
+                console.error(`Unable to ${method} data to ${url}. resp:`, JSON.stringify(resp));
+                return false;
+            }
+            else {
+                return true;
+            }
+        });
+    }
+    static editDataArray(url, append, values) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const existingData = (yield Utils.getJSON(url)).data || [];
+            let newArray;
+            if (append) {
+                newArray = existingData ? existingData.concat(values) : values;
+            }
+            else {
+                if (existingData.length === 0)
+                    return true;
+                newArray = existingData.filter(val => !values.includes(val));
+            }
+            return Utils.putData(url, newArray);
         });
     }
     static getJSON_Sync(url, callback) {
@@ -259,7 +313,7 @@ class Utils {
         req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
         req.send();
     }
-    static putData(url, data, callback) {
+    static putData_Sync(url, data, callback) {
         let bodyData = { ns: V.canvas.api.namespace, data };
         let action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
         if (action === "DELETE")
@@ -275,13 +329,13 @@ class Utils {
         req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
         req.send(JSON.stringify(bodyData));
     }
-    static appendDataArray(url, values, callback) {
+    static appendDataArray_Sync(url, values, callback) {
         Utils.getJSON_Sync(url, resultData => {
             let array = resultData.data ? resultData.data.concat(values) : values;
-            Utils.putData(url, array, callback);
+            Utils.putData_Sync(url, array, callback);
         });
     }
-    static subtractDataArray(url, values, callback) {
+    static subtractDataArray_Sync(url, values, callback) {
         Utils.getJSON_Sync(url, resultData => {
             let array = resultData.data || [];
             if (array.length === 0) {
@@ -289,14 +343,18 @@ class Utils {
                 return;
             }
             array = array.filter(val => !values.includes(val));
-            Utils.putData(url, array, callback);
+            Utils.putData_Sync(url, array, callback);
         });
     }
-    static editDataArray(url, append, values, callback) {
+    static editDataArray_Sync(url, append, values, callback) {
         if (append)
-            Utils.appendDataArray(url, values, callback);
+            Utils.appendDataArray_Sync(url, values, callback);
         else
-            Utils.subtractDataArray(url, values, callback);
+            Utils.subtractDataArray_Sync(url, values, callback);
+    }
+    static checkToken() {
+        if (ACCESS_TOKEN === null)
+            throw new Error("Access token not set");
     }
     static loadToken() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -908,13 +966,13 @@ class Main {
         stateObj.active = state;
         stateObj.onChange(state, V, PAGE.body);
         const url = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "/active_states" });
-        Utils.editDataArray(url, state, [stateName]);
+        Utils.editDataArray_Sync(url, state, [stateName]);
     }
     static setNavTabPosition(tab, position) {
         const url = Utils.format(V.canvas.api.urls.custom_data, {
             dataPath: ["", V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id].join("/")
         });
-        Utils.putData(url, position, success => {
+        Utils.putData_Sync(url, position, success => {
             if (success) {
                 tab.setPosition(position);
                 UI.updateNavTabPosition(tab);
@@ -938,7 +996,7 @@ class Main {
         const url = Utils.format(V.canvas.api.urls.custom_data, {
             dataPath: `/${V.canvas.api.data_urls.completed_assignments}/${DATA.courseID}`
         });
-        Utils.editDataArray(url, status, [id], success => {
+        Utils.editDataArray_Sync(url, status, [id], success => {
             el.disabled = false;
             el.title = oldTitle;
             if (success) {
@@ -962,7 +1020,7 @@ class Main {
         const url = Utils.format(V.canvas.api.urls.custom_data, {
             dataPath: `/${V.canvas.api.data_urls.hidden_assignments}/${DATA.courseID}`
         });
-        Utils.editDataArray(url, newState, [id], success => {
+        Utils.editDataArray_Sync(url, newState, [id], success => {
             if (success)
                 item.hidden = newState;
             UI.updateHideButton(item, success, () => {

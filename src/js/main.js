@@ -349,13 +349,13 @@ class Main {
         stateObj.active = state;
         stateObj.onChange(state, V, PAGE.body);
         const url = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "/active_states" });
-        Utils.editDataArray(url, state, [stateName]);
+        Utils.editDataArray_Sync(url, state, [stateName]);
     }
     static setNavTabPosition(tab, position) {
         const url = Utils.format(V.canvas.api.urls.custom_data, {
             dataPath: ["", V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id].join("/")
         });
-        Utils.putData(url, position, success => {
+        Utils.putData_Sync(url, position, success => {
             if (success) {
                 tab.setPosition(position);
                 UI.updateNavTabPosition(tab);
@@ -379,7 +379,7 @@ class Main {
         const url = Utils.format(V.canvas.api.urls.custom_data, {
             dataPath: `/${V.canvas.api.data_urls.completed_assignments}/${DATA.courseID}`
         });
-        Utils.editDataArray(url, status, [id], success => {
+        Utils.editDataArray_Sync(url, status, [id], success => {
             el.disabled = false;
             el.title = oldTitle;
             if (success) {
@@ -403,7 +403,7 @@ class Main {
         const url = Utils.format(V.canvas.api.urls.custom_data, {
             dataPath: `/${V.canvas.api.data_urls.hidden_assignments}/${DATA.courseID}`
         });
-        Utils.editDataArray(url, newState, [id], success => {
+        Utils.editDataArray_Sync(url, newState, [id], success => {
             if (success)
                 item.hidden = newState;
             UI.updateHideButton(item, success, () => {

@@ -306,20 +306,19 @@ class Exception {
 
 class Utils {
 
-	static format(string, ...formatArgs) {
+	static format(str: string, obj: object): string {
 
-		const formatParams: string[] | Object =
-			(formatArgs.length === 1 && typeof formatArgs[0] === "object") ? formatArgs[0] : formatArgs;
+		for (const key in obj) {
+			if (obj.hasOwnProperty(key))
+				str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), obj[key]);
+		}
 
-		for (const i in formatParams)
-			string = string.replace(new RegExp("\\{" + i + "\\}", "gi"), formatParams[i]);
-
-		return ""+string;
+		return ""+str;
 	}
 
-	static getOrDefault<V>(object: {}, key: string | number, def: V): V {
-		if (object === undefined || object[key] === undefined) return def;
-		else return object[key];
+	static getOrDefault<V>(obj: object, key: PropertyKey, def: V): V {
+		if (obj === undefined || obj[key] === undefined) return def;
+		else return obj[key];
 	}
 
 	static perPage(url: string, perPage: number) {
@@ -327,11 +326,81 @@ class Utils {
 	}
 
 	static async getJSON<T>(url: string): Promise<T> {
-		return new Promise<T>((resolve, reject) => {
-			Utils.getJSON_Sync(url, resultData => {
-				resolve(resultData as T);
-			});
-		});
+
+		Utils.checkToken();
+
+		const resp = await fetch(url, {
+			method: "GET",
+			headers: new Headers({
+				"Content-Type": "application/json",
+				"Authorization": "Bearer " + ACCESS_TOKEN
+			})
+		} as RequestInit);
+
+		if (resp.status === 404) {
+			throw "404 error when getting JSON";
+		}
+		else {
+			if (resp.status === 400)
+				console.debug("400 error when getting JSON was OKAY");
+
+			let json = await resp.text();
+			json = json.replace("while(1);","");
+
+			return JSON.parse(json);
+		}
+
+	}
+
+	static async putData(url, data: any[] | any): Promise<boolean> {
+
+		Utils.checkToken();
+
+		let bodyData = {ns: V.canvas.api.namespace, data};
+		let method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
+
+		if (method === "DELETE")
+			delete bodyData.data;
+
+		const ops = {
+			method,
+			headers: new Headers({
+				"Content-Type": "application/json",
+				"Authorization": "Bearer " + ACCESS_TOKEN
+			}),
+			body: JSON.stringify(bodyData)
+		} as RequestInit;
+
+		const resp = await fetch(url, ops);
+
+		if (!resp.ok || resp.status === 401) { // 401 unauthorized
+			console.error(`Unable to ${method} data to ${url}. resp:`, JSON.stringify(resp));
+			return false;
+		}
+		else {
+			return true;
+		}
+
+	}
+
+	static async editDataArray(url: string, append: boolean, values: any[]): Promise<boolean> {
+		// url is same for get/put
+		const existingData: any[] = (
+			await Utils.getJSON<{data:any[]}>(url)
+		).data || [];
+
+		let newArray;
+
+		if (append) {
+			newArray = existingData ? existingData.concat(values) : values;
+		}
+		else {
+			if (existingData.length === 0)
+				return true;
+			newArray = existingData.filter(val => !values.includes(val));
+		}
+
+		return Utils.putData(url, newArray);
 	}
 
 	static getJSON_Sync(url: string, callback: (data: any) => void) {
@@ -362,7 +431,7 @@ class Utils {
 		req.send();
 	}
 
-	static putData(url: string, data: any | any[], callback: (success: boolean) => any) {
+	static putData_Sync(url: string, data: any | any[], callback: (success: boolean) => any) {
 		let bodyData = {ns: V.canvas.api.namespace, data};
 		let action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
 
@@ -386,16 +455,16 @@ class Utils {
 		req.send(JSON.stringify(bodyData));
 	}
 
-	static appendDataArray(url: string, values: any[], callback: (success: boolean) => any) {
+	static appendDataArray_Sync(url: string, values: any[], callback: (success: boolean) => any) {
 
 		// url is same for get/put
 		Utils.getJSON_Sync(url, resultData => {
 			let array = resultData.data ? resultData.data.concat(values) : values;
-			Utils.putData(url, array, callback);
+			Utils.putData_Sync(url, array, callback);
 		});
 	}
 
-	static subtractDataArray(url: string, values: any[], callback: (success: boolean) => any) {
+	static subtractDataArray_Sync(url: string, values: any[], callback: (success: boolean) => any) {
 
 		// url is same for get/put
 		Utils.getJSON_Sync(url, resultData => {
@@ -405,13 +474,18 @@ class Utils {
 				return;
 			}
 			array = array.filter(val => !values.includes(val));
-			Utils.putData(url, array, callback);
+			Utils.putData_Sync(url, array, callback);
 		});
 	}
 
-	static editDataArray(url: string, append: boolean, values: any[], callback?: (success: boolean) => any) {
-		if (append) Utils.appendDataArray(url, values, callback);
-		else Utils.subtractDataArray(url, values, callback);
+	static editDataArray_Sync(url: string, append: boolean, values: any[], callback?: (success: boolean) => any) {
+		if (append) Utils.appendDataArray_Sync(url, values, callback);
+		else Utils.subtractDataArray_Sync(url, values, callback);
+	}
+
+	static checkToken(): void | never {
+		if (ACCESS_TOKEN === null)
+			throw new Error("Access token not set");
 	}
 
 	static async loadToken(): Promise<string> {
@@ -427,7 +501,6 @@ class Utils {
 
 		});
 	}
-
 
 	static accessTokenPrompt() {
 		const openOptions = confirm("Missing access token, press OK to open extension options");

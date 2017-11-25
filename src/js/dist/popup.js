@@ -594,7 +594,6 @@ $(function () {
         let remaining = Object.keys(V.state).length;
         $.each(V.state, (stateName, stateData) => {
             sendMessage(new StateMessageData("get", stateName), resp => {
-                console.debug("resp", resp);
                 const el = $(Utils.format(V.element.popup_state_switch, { name: stateName, desc: stateData.desc }));
                 el.insertAfter(insertionPoint);
                 componentHandler.upgradeElement(el.find("label").get(0));
@@ -604,9 +603,8 @@ $(function () {
                     setMdlChecked(inputEl, !newState);
                     inputEl.title = V.tooltip.waiting;
                     inputEl.disabled = true;
-                    sendMessage(new StateMessageData("set", stateName, newState), msgSuccess => {
-                        console.debug("setResp", msgSuccess);
-                        if (msgSuccess) {
+                    sendMessage(new StateMessageData("set", stateName, newState), success => {
+                        if (success) {
                             setMdlChecked(inputEl, newState);
                             inputEl.title = "";
                             inputEl.disabled = false;

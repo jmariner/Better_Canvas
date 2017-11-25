@@ -48,8 +48,6 @@ Promise.resolve()
 		$.each(V.state, (stateName, stateData) => {
 			sendMessage(new StateMessageData("get", stateName), resp => {
 
-				console.debug("resp", resp);
-
 				const el = $(Utils.format(V.element.popup_state_switch, {name: stateName, desc: stateData.desc}));
 
 				el.insertAfter(insertionPoint);
@@ -64,9 +62,8 @@ Promise.resolve()
 					inputEl.title = V.tooltip.waiting;
 					inputEl.disabled = true;
 
-					sendMessage(new StateMessageData("set", stateName, newState), msgSuccess => {
-						console.debug("setResp", msgSuccess);
-						if (msgSuccess) {
+					sendMessage(new StateMessageData("set", stateName, newState), success => {
+						if (success) {
 							setMdlChecked(inputEl, newState);
 							inputEl.title = ""; // TODO state.long_desc ?
 							inputEl.disabled = false;

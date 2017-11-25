@@ -560,8 +560,7 @@ class Main {
 		stateObj.onChange(state, V, PAGE.body);
 
 		const url = Utils.format(V.canvas.api.urls.custom_data, {dataPath: "/active_states"});
-		const success = Utils.editDataArray(url, state, [stateName]);
-		return success;
+		return Utils.editDataArray(url, state, [stateName]);
 	}
 
 	static async setNavTabPosition(tab: NavTab, position: number) {
@@ -765,7 +764,6 @@ class Main {
 			}
 			else if (data.action === "set") {
 				Main.setState(stateData.stateName, stateData.state).then(success => {
-					console.debug(success);
 					respondFunc(success);
 				});
 				return true; // this tells chrome that we want this response to be async

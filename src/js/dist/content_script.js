@@ -922,8 +922,7 @@ class Main {
             stateObj.active = state;
             stateObj.onChange(state, V, PAGE.body);
             const url = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "/active_states" });
-            const success = Utils.editDataArray(url, state, [stateName]);
-            return success;
+            return Utils.editDataArray(url, state, [stateName]);
         });
     }
     static setNavTabPosition(tab, position) {
@@ -1023,7 +1022,6 @@ class Main {
             }
             else if (data.action === "set") {
                 Main.setState(stateData.stateName, stateData.state).then(success => {
-                    console.debug(success);
                     respondFunc(success);
                 });
                 return true;

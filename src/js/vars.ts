@@ -25,10 +25,10 @@ namespace Vars {
 
 			popup_loaded: "done-loading",
 			popup_connected: "page-connected",
-			popup_require_page: "require-page",
+			popup_require_page: "require-page"
 		};
 
-		data_attr = {
+		dataAttr = {
 			toc_module_id: "toc-module-id",
 			toc_total: "toc-total",
 			toc_checked_count: "toc-checked-count",
@@ -52,7 +52,7 @@ namespace Vars {
 		color = {
 			toc_fill: "rgba(0, 255, 0, .75)",
 			toc_border: "rgb(102, 120, 135)",
-			toc_title: "var(--ic-brand-primary)", //"rgb(57, 75, 88)",
+			toc_title: "var(--ic-brand-primary)", // was "rgb(57, 75, 88)",
 			checkbox_check: "rgb(22, 160, 133)",
 			checkbox_border: "rgb(102, 120, 135)",
 			highlight_orange: "rgb(255, 152, 0)",
@@ -92,23 +92,23 @@ namespace Vars {
 				desc: "Disable indent overrides",
 				onDisable: (vars, body) => {
 					[0,1,2,3,4,5].forEach(level =>
-						$(vars.canvas.selector.module_item, body).removeClass("indent_"+level));
-					$(vars.canvas.selector.subheader, body).addClass("indent_"+vars.ui.subheader_indent);
-					$(vars.canvas.selector.not_subheader, body).addClass("indent_"+vars.ui.main_indent);
+						$(vars.canvas.selector.module_item, body).removeClass("indent_" + level));
+					$(vars.canvas.selector.subheader, body).addClass("indent_" + vars.ui.subheader_indent);
+					$(vars.canvas.selector.not_subheader, body).addClass("indent_" + vars.ui.main_indent);
 				},
 				onEnable: (vars, body) => {
 					$(vars.canvas.selector.module_item, body).each(function() {
-						[0,1,2,3,4,5].forEach(level => $(this).removeClass("indent_"+level));
+						[0,1,2,3,4,5].forEach(level => $(this).removeClass("indent_" + level));
 						const defLevel = $(this).attr(vars.data_attr.def_indent);
-						$(this).addClass("indent_"+defLevel);
+						$(this).addClass("indent_" + defLevel);
 					});
 				}
 			}
 		};
 
-		private static readonly prefix_types = ["cssClass", "data_attr", "id"];
-
 		sassJson: string;
+
+		private static readonly prefixTypes = ["cssClass", "data_attr", "id"];
 
 		constructor() {
 			const processObject = (obj, objName) => {
@@ -121,13 +121,13 @@ namespace Vars {
 					}
 					else if (typeof val === "string") {
 
-						if ((Sass.prefix_types.indexOf(objName) > -1  || Sass.prefix_types.indexOf(key) > -1)
+						if ((Sass.prefixTypes.indexOf(objName) > -1  || Sass.prefixTypes.indexOf(key) > -1)
 							&& !key.startsWith("popup_")) {
 
 							val = this.prefix + "-" + val;
 						}
 
-						if (objName == "data_attr") {
+						if (objName === "data_attr") {
 							val = "data-" + val;
 						}
 
@@ -142,7 +142,7 @@ namespace Vars {
 
 	}
 
-	export class Vars extends Sass {
+	export class Vars extends Sass { // tslint:disable-line:no-shadowed-variable
 
 		tooltip = {
 			mark_complete: "Mark as completed",
@@ -167,7 +167,7 @@ namespace Vars {
 
 			checkbox:
 					`<div style='display:none' class='${this.cssClass.checkbox_parent}'>
-						<input type='checkbox' ${this.data_attr.mod_item_id}='{item_id}'>
+						<input type='checkbox' ${this.dataAttr.mod_item_id}='{item_id}'>
 					</div>`,
 
 			download_button:
@@ -182,7 +182,7 @@ namespace Vars {
 
 			hide_button:
 					`<div style='display:none' class='${this.cssClass.hide_button}'>
-						<i ${this.data_attr.mod_item_id}='{item_id}'></i>
+						<i ${this.dataAttr.mod_item_id}='{item_id}'></i>
 					</div>`,
 
 			course_link:
@@ -190,7 +190,7 @@ namespace Vars {
 					<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>
 						<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>
 						<div style='background-color: {tabColor}; border-right-color: {tabColor}'
-								${this.data_attr.course_name}='{name}' ${this.data_attr.course_code}='{code}'
+								${this.dataAttr.course_name}='{name}' ${this.dataAttr.course_code}='{code}'
 								class='menu-item__text ${this.cssClass.course_link_text}'></div>
 					</a>
 				</li>`,
@@ -205,7 +205,7 @@ namespace Vars {
 				`<li>
 					<a href='#' title='{item_name}'>
 						{item_name}
-						<div class='${this.cssClass.toc_ratio}' ${this.data_attr.toc_module_id}='{item_id}'></div>
+						<div class='${this.cssClass.toc_ratio}' ${this.dataAttr.toc_module_id}='{item_id}'></div>
 					</a>
 				</li>`,
 
@@ -263,7 +263,7 @@ namespace Vars {
 					hidden_assignments: "hidden_assignments",
 					tab_positions: "tab_positions"
 				}
-			},
+			}
 		};
 
 		init(courseID: number) {

@@ -55,10 +55,10 @@ class NavTab {
         return this._position != null;
     }
     get position() {
-        return this._position == null ? this.initPosition : this._position == -1 ? null : this._position;
+        return this._position == null ? this.initPosition : this._position === -1 ? null : this._position;
     }
     get hidden() {
-        return this._position == -1;
+        return this._position === -1;
     }
 }
 class State {
@@ -106,7 +106,7 @@ class ModuleItem {
         this._name = moduleItemJson.title;
         this.moduleId = moduleItemJson.module_id;
         this._externalUrl = moduleItemJson.external_url || null;
-        let typeString = moduleItemJson.type
+        const typeString = moduleItemJson.type
             .replace(/([A-Z])/g, (r, s) => "_" + s)
             .replace(/^_/, "").toUpperCase();
         this._type = ModuleItemType[typeString];
@@ -144,14 +144,14 @@ class ModuleItem {
         if (value === null || value.length === 1)
             this._checkboxElement = value;
         else
-            throw "Invalid Module Item Element: " + value;
+            throw new Error("Invalid Module Item Element: " + value);
     }
     get hideElement() { return this._hideElement; }
     set hideElement(value) {
         if (value === null || value.length === 1)
             this._hideElement = value;
         else
-            throw "Invalid Module Item Element: " + value;
+            throw new Error("Invalid Module Item Element: " + value);
     }
     get fileData() { return this._fileData; }
 }
@@ -196,7 +196,7 @@ class StateMessageData extends MessageData {
         this.stateName = stateName;
         this.state = state;
         if (action === "set" && this.state === undefined)
-            throw "Invalid state message: no boolean to set state to";
+            throw new Error("Invalid state message: no boolean to set state to");
     }
 }
 class Exception {
@@ -219,7 +219,7 @@ class Utils {
             if (obj.hasOwnProperty(key))
                 str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), obj[key]);
         }
-        return "" + str;
+        return str;
     }
     static getOrDefault(obj, key, def) {
         if (obj === undefined || obj[key] === undefined)
@@ -241,7 +241,7 @@ class Utils {
                 })
             });
             if (resp.status === 404) {
-                throw "404 error when getting JSON";
+                throw new Error("404 error when getting JSON");
             }
             else {
                 if (resp.status === 400)
@@ -255,8 +255,8 @@ class Utils {
     static putData(url, data) {
         return __awaiter(this, void 0, void 0, function* () {
             Utils.checkToken();
-            let bodyData = { ns: V.canvas.api.namespace, data };
-            let method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
+            const bodyData = { ns: V.canvas.api.namespace, data };
+            const method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
             if (method === "DELETE")
                 delete bodyData.data;
             const ops = {
@@ -292,65 +292,12 @@ class Utils {
             return Utils.putData(url, newArray);
         });
     }
-    static getJSON_Sync(url, callback) {
-        if (ACCESS_TOKEN === null)
-            throw new Error("Access token not set");
-        let req = new XMLHttpRequest();
-        req.onreadystatechange = () => {
-            if (req.readyState === 4) {
-                switch (req.status) {
-                    case 404:
-                        throw "404 error when getting JSON";
-                    case 400:
-                        console.debug("400 error when getting JSON was OKAY");
-                    default:
-                        Utils.safeCb(callback)(JSON.parse(req.responseText.replace("while(1);", "")));
-                }
-            }
-        };
-        req.open("GET", url);
-        req.setRequestHeader("Content-Type", "application/json");
-        req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
-        req.send();
-    }
-    static putData_Sync(url, data, callback) {
-        let bodyData = { ns: V.canvas.api.namespace, data };
-        let action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
-        if (action === "DELETE")
-            delete bodyData.data;
-        const req = new XMLHttpRequest();
-        req.onreadystatechange = () => {
-            if (req.readyState === 4) {
-                Utils.safeCb(callback)(true);
-            }
-        };
-        req.open(action, url);
-        req.setRequestHeader("Content-Type", "application/json");
-        req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
-        req.send(JSON.stringify(bodyData));
-    }
-    static appendDataArray_Sync(url, values, callback) {
-        Utils.getJSON_Sync(url, resultData => {
-            let array = resultData.data ? resultData.data.concat(values) : values;
-            Utils.putData_Sync(url, array, callback);
+    static wait(ms) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield new Promise(resolve => {
+                setTimeout(resolve, ms);
+            });
         });
-    }
-    static subtractDataArray_Sync(url, values, callback) {
-        Utils.getJSON_Sync(url, resultData => {
-            let array = resultData.data || [];
-            if (array.length === 0) {
-                Utils.safeCb(callback)(true);
-                return;
-            }
-            array = array.filter(val => !values.includes(val));
-            Utils.putData_Sync(url, array, callback);
-        });
-    }
-    static editDataArray_Sync(url, append, values, callback) {
-        if (append)
-            Utils.appendDataArray_Sync(url, values, callback);
-        else
-            Utils.subtractDataArray_Sync(url, values, callback);
     }
     static checkToken() {
         if (ACCESS_TOKEN === null)
@@ -407,9 +354,9 @@ class Utils {
                 external_url: "url-btn",
                 popup_loaded: "done-loading",
                 popup_connected: "page-connected",
-                popup_require_page: "require-page",
+                popup_require_page: "require-page"
             };
-            this.data_attr = {
+            this.dataAttr = {
                 toc_module_id: "toc-module-id",
                 toc_total: "toc-total",
                 toc_checked_count: "toc-checked-count",
@@ -489,11 +436,11 @@ class Utils {
                         processObject(val, key);
                     }
                     else if (typeof val === "string") {
-                        if ((Sass.prefix_types.indexOf(objName) > -1 || Sass.prefix_types.indexOf(key) > -1)
+                        if ((Sass.prefixTypes.indexOf(objName) > -1 || Sass.prefixTypes.indexOf(key) > -1)
                             && !key.startsWith("popup_")) {
                             val = this.prefix + "-" + val;
                         }
-                        if (objName == "data_attr") {
+                        if (objName === "data_attr") {
                             val = "data-" + val;
                         }
                         obj[key] = val;
@@ -504,7 +451,7 @@ class Utils {
             this.sassJson = JSON.stringify(this);
         }
     }
-    Sass.prefix_types = ["cssClass", "data_attr", "id"];
+    Sass.prefixTypes = ["cssClass", "data_attr", "id"];
     class Vars extends Sass {
         constructor() {
             super(...arguments);
@@ -527,7 +474,7 @@ class Utils {
             };
             this.element = {
                 checkbox: `<div style='display:none' class='${this.cssClass.checkbox_parent}'>
-						<input type='checkbox' ${this.data_attr.mod_item_id}='{item_id}'>
+						<input type='checkbox' ${this.dataAttr.mod_item_id}='{item_id}'>
 					</div>`,
                 download_button: `<div style='display:none' class='${this.cssClass.download}' title='${this.tooltip.download}'>
 						<a href="{file_url}"></a>
@@ -536,13 +483,13 @@ class Utils {
 						<a href="{external_url}" class="not_external" target="_blank"></a>
 					</div>`,
                 hide_button: `<div style='display:none' class='${this.cssClass.hide_button}'>
-						<i ${this.data_attr.mod_item_id}='{item_id}'></i>
+						<i ${this.dataAttr.mod_item_id}='{item_id}'></i>
 					</div>`,
                 course_link: `<li style='background-color: {tabColor}' class='menu-item ic-app-header__menu-list-item'>
 					<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>
 						<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>
 						<div style='background-color: {tabColor}; border-right-color: {tabColor}'
-								${this.data_attr.course_name}='{name}' ${this.data_attr.course_code}='{code}'
+								${this.dataAttr.course_name}='{name}' ${this.dataAttr.course_code}='{code}'
 								class='menu-item__text ${this.cssClass.course_link_text}'></div>
 					</a>
 				</li>`,
@@ -553,7 +500,7 @@ class Utils {
                 toc_item: `<li>
 					<a href='#' title='{item_name}'>
 						{item_name}
-						<div class='${this.cssClass.toc_ratio}' ${this.data_attr.toc_module_id}='{item_id}'></div>
+						<div class='${this.cssClass.toc_ratio}' ${this.dataAttr.toc_module_id}='{item_id}'></div>
 					</a>
 				</li>`,
                 jump_button: `<div id='${this.id.jump_button}'>
@@ -602,7 +549,7 @@ class Utils {
                         hidden_assignments: "hidden_assignments",
                         tab_positions: "tab_positions"
                     }
-                },
+                }
             };
         }
         init(courseID) {

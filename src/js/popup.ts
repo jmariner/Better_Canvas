@@ -8,10 +8,10 @@ $(function() {
 
 V = Vars.VARS;
 const BODY = $("body");
-const jumpButton = $("#"+V.id.popup_jump_button);
-const insertionPoint = $("#"+V.id.popup_insertion_point);
+const jumpButton = $("#" + V.id.popup_jump_button);
+const insertionPoint = $("#" + V.id.popup_insertion_point);
 
-$("#"+V.id.popup_ex_name).text(chrome.runtime.getManifest().name);
+$("#" + V.id.popup_ex_name).text(chrome.runtime.getManifest().name);
 
 Promise.resolve()
 
@@ -36,7 +36,7 @@ Promise.resolve()
 		sendMessage(new MessageData("count unchecked"), resp => {
 			if (resp !== undefined) {
 				if (resp.count === 0)
-					jumpButton.prop("disabled", true).attr("title", V.tooltip.popup_no_unchecked)
+					jumpButton.prop("disabled", true).attr("title", V.tooltip.popup_no_unchecked);
 				next();
 			}
 		});
@@ -47,6 +47,8 @@ Promise.resolve()
 
 		$.each(V.state, (stateName, stateData) => {
 			sendMessage(new StateMessageData("get", stateName), resp => {
+
+				console.debug("resp", resp);
 
 				const el = $(Utils.format(V.element.popup_state_switch, {name: stateName, desc: stateData.desc}));
 
@@ -62,8 +64,9 @@ Promise.resolve()
 					inputEl.title = V.tooltip.waiting;
 					inputEl.disabled = true;
 
-					sendMessage(new StateMessageData("set", stateName, newState), resp => {
-						if (resp !== undefined) {
+					sendMessage(new StateMessageData("set", stateName, newState), msgSuccess => {
+						console.debug("setResp", msgSuccess);
+						if (msgSuccess) {
 							setMdlChecked(inputEl, newState);
 							inputEl.title = ""; // TODO state.long_desc ?
 							inputEl.disabled = false;

@@ -13,14 +13,14 @@
 // "vars" variable is set by the vars.ts import
 @function _var($type, $name) { @return map-get(map-get($vars, $type), $name); }
 
-// ===== functions for getting and using values from sass.json =====
+// ===== functions for getting and using values from vars.ts =====
 
 @function data_attr($value, $attr: true) {
 	@if $attr {
 		@return attr(#{data_attr($value, false)});
 	}
 	@else {
-		@return _var(data_attr, $value);
+		@return _var(dataAttr, $value);
 	}
 }
 

@@ -55,10 +55,10 @@ class NavTab {
         return this._position != null;
     }
     get position() {
-        return this._position == null ? this.initPosition : this._position == -1 ? null : this._position;
+        return this._position == null ? this.initPosition : this._position === -1 ? null : this._position;
     }
     get hidden() {
-        return this._position == -1;
+        return this._position === -1;
     }
 }
 class State {
@@ -106,7 +106,7 @@ class ModuleItem {
         this._name = moduleItemJson.title;
         this.moduleId = moduleItemJson.module_id;
         this._externalUrl = moduleItemJson.external_url || null;
-        let typeString = moduleItemJson.type
+        const typeString = moduleItemJson.type
             .replace(/([A-Z])/g, (r, s) => "_" + s)
             .replace(/^_/, "").toUpperCase();
         this._type = ModuleItemType[typeString];
@@ -144,14 +144,14 @@ class ModuleItem {
         if (value === null || value.length === 1)
             this._checkboxElement = value;
         else
-            throw "Invalid Module Item Element: " + value;
+            throw new Error("Invalid Module Item Element: " + value);
     }
     get hideElement() { return this._hideElement; }
     set hideElement(value) {
         if (value === null || value.length === 1)
             this._hideElement = value;
         else
-            throw "Invalid Module Item Element: " + value;
+            throw new Error("Invalid Module Item Element: " + value);
     }
     get fileData() { return this._fileData; }
 }
@@ -196,7 +196,7 @@ class StateMessageData extends MessageData {
         this.stateName = stateName;
         this.state = state;
         if (action === "set" && this.state === undefined)
-            throw "Invalid state message: no boolean to set state to";
+            throw new Error("Invalid state message: no boolean to set state to");
     }
 }
 class Exception {
@@ -219,7 +219,7 @@ class Utils {
             if (obj.hasOwnProperty(key))
                 str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), obj[key]);
         }
-        return "" + str;
+        return str;
     }
     static getOrDefault(obj, key, def) {
         if (obj === undefined || obj[key] === undefined)
@@ -241,7 +241,7 @@ class Utils {
                 })
             });
             if (resp.status === 404) {
-                throw "404 error when getting JSON";
+                throw new Error("404 error when getting JSON");
             }
             else {
                 if (resp.status === 400)
@@ -255,8 +255,8 @@ class Utils {
     static putData(url, data) {
         return __awaiter(this, void 0, void 0, function* () {
             Utils.checkToken();
-            let bodyData = { ns: V.canvas.api.namespace, data };
-            let method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
+            const bodyData = { ns: V.canvas.api.namespace, data };
+            const method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
             if (method === "DELETE")
                 delete bodyData.data;
             const ops = {
@@ -292,65 +292,12 @@ class Utils {
             return Utils.putData(url, newArray);
         });
     }
-    static getJSON_Sync(url, callback) {
-        if (ACCESS_TOKEN === null)
-            throw new Error("Access token not set");
-        let req = new XMLHttpRequest();
-        req.onreadystatechange = () => {
-            if (req.readyState === 4) {
-                switch (req.status) {
-                    case 404:
-                        throw "404 error when getting JSON";
-                    case 400:
-                        console.debug("400 error when getting JSON was OKAY");
-                    default:
-                        Utils.safeCb(callback)(JSON.parse(req.responseText.replace("while(1);", "")));
-                }
-            }
-        };
-        req.open("GET", url);
-        req.setRequestHeader("Content-Type", "application/json");
-        req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
-        req.send();
-    }
-    static putData_Sync(url, data, callback) {
-        let bodyData = { ns: V.canvas.api.namespace, data };
-        let action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
-        if (action === "DELETE")
-            delete bodyData.data;
-        const req = new XMLHttpRequest();
-        req.onreadystatechange = () => {
-            if (req.readyState === 4) {
-                Utils.safeCb(callback)(true);
-            }
-        };
-        req.open(action, url);
-        req.setRequestHeader("Content-Type", "application/json");
-        req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
-        req.send(JSON.stringify(bodyData));
-    }
-    static appendDataArray_Sync(url, values, callback) {
-        Utils.getJSON_Sync(url, resultData => {
-            let array = resultData.data ? resultData.data.concat(values) : values;
-            Utils.putData_Sync(url, array, callback);
+    static wait(ms) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield new Promise(resolve => {
+                setTimeout(resolve, ms);
+            });
         });
-    }
-    static subtractDataArray_Sync(url, values, callback) {
-        Utils.getJSON_Sync(url, resultData => {
-            let array = resultData.data || [];
-            if (array.length === 0) {
-                Utils.safeCb(callback)(true);
-                return;
-            }
-            array = array.filter(val => !values.includes(val));
-            Utils.putData_Sync(url, array, callback);
-        });
-    }
-    static editDataArray_Sync(url, append, values, callback) {
-        if (append)
-            Utils.appendDataArray_Sync(url, values, callback);
-        else
-            Utils.subtractDataArray_Sync(url, values, callback);
     }
     static checkToken() {
         if (ACCESS_TOKEN === null)
@@ -407,9 +354,9 @@ class Utils {
                 external_url: "url-btn",
                 popup_loaded: "done-loading",
                 popup_connected: "page-connected",
-                popup_require_page: "require-page",
+                popup_require_page: "require-page"
             };
-            this.data_attr = {
+            this.dataAttr = {
                 toc_module_id: "toc-module-id",
                 toc_total: "toc-total",
                 toc_checked_count: "toc-checked-count",
@@ -489,11 +436,11 @@ class Utils {
                         processObject(val, key);
                     }
                     else if (typeof val === "string") {
-                        if ((Sass.prefix_types.indexOf(objName) > -1 || Sass.prefix_types.indexOf(key) > -1)
+                        if ((Sass.prefixTypes.indexOf(objName) > -1 || Sass.prefixTypes.indexOf(key) > -1)
                             && !key.startsWith("popup_")) {
                             val = this.prefix + "-" + val;
                         }
-                        if (objName == "data_attr") {
+                        if (objName === "data_attr") {
                             val = "data-" + val;
                         }
                         obj[key] = val;
@@ -504,7 +451,7 @@ class Utils {
             this.sassJson = JSON.stringify(this);
         }
     }
-    Sass.prefix_types = ["cssClass", "data_attr", "id"];
+    Sass.prefixTypes = ["cssClass", "data_attr", "id"];
     class Vars extends Sass {
         constructor() {
             super(...arguments);
@@ -527,7 +474,7 @@ class Utils {
             };
             this.element = {
                 checkbox: `<div style='display:none' class='${this.cssClass.checkbox_parent}'>
-						<input type='checkbox' ${this.data_attr.mod_item_id}='{item_id}'>
+						<input type='checkbox' ${this.dataAttr.mod_item_id}='{item_id}'>
 					</div>`,
                 download_button: `<div style='display:none' class='${this.cssClass.download}' title='${this.tooltip.download}'>
 						<a href="{file_url}"></a>
@@ -536,13 +483,13 @@ class Utils {
 						<a href="{external_url}" class="not_external" target="_blank"></a>
 					</div>`,
                 hide_button: `<div style='display:none' class='${this.cssClass.hide_button}'>
-						<i ${this.data_attr.mod_item_id}='{item_id}'></i>
+						<i ${this.dataAttr.mod_item_id}='{item_id}'></i>
 					</div>`,
                 course_link: `<li style='background-color: {tabColor}' class='menu-item ic-app-header__menu-list-item'>
 					<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>
 						<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>
 						<div style='background-color: {tabColor}; border-right-color: {tabColor}'
-								${this.data_attr.course_name}='{name}' ${this.data_attr.course_code}='{code}'
+								${this.dataAttr.course_name}='{name}' ${this.dataAttr.course_code}='{code}'
 								class='menu-item__text ${this.cssClass.course_link_text}'></div>
 					</a>
 				</li>`,
@@ -553,7 +500,7 @@ class Utils {
                 toc_item: `<li>
 					<a href='#' title='{item_name}'>
 						{item_name}
-						<div class='${this.cssClass.toc_ratio}' ${this.data_attr.toc_module_id}='{item_id}'></div>
+						<div class='${this.cssClass.toc_ratio}' ${this.dataAttr.toc_module_id}='{item_id}'></div>
 					</a>
 				</li>`,
                 jump_button: `<div id='${this.id.jump_button}'>
@@ -602,7 +549,7 @@ class Utils {
                         hidden_assignments: "hidden_assignments",
                         tab_positions: "tab_positions"
                     }
-                },
+                }
             };
         }
         init(courseID) {
@@ -656,7 +603,7 @@ class Utils {
             return __awaiter(this, void 0, void 0, function* () {
                 const courseColors = (yield Utils.getJSON(V.canvas.api.urls.custom_colors)).custom_colors;
                 const favoriteCourses = yield Utils.getJSON(V.canvas.api.urls.favorite_courses);
-                for (let courseData of favoriteCourses) {
+                for (const courseData of favoriteCourses) {
                     const color = courseColors["course_" + courseData.id];
                     DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
                 }
@@ -666,7 +613,7 @@ class Utils {
             return __awaiter(this, void 0, void 0, function* () {
                 const navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
                 const navTabs = yield Utils.getJSON(navTabUrl);
-                for (let tab of navTabs)
+                for (const tab of navTabs)
                     DATA.navTabs.set(tab.id, new NavTab(tab));
             });
         };
@@ -674,7 +621,7 @@ class Utils {
             return __awaiter(this, void 0, void 0, function* () {
                 const assignmentsUrl = Utils.perPage(V.canvas.api.urls.assignments, 1000);
                 const assignments = yield Utils.getJSON(assignmentsUrl);
-                for (let assignmentJson of assignments) {
+                for (const assignmentJson of assignments) {
                     let contentId;
                     if (assignmentJson.quiz_id)
                         contentId = assignmentJson.quiz_id;
@@ -695,7 +642,7 @@ class Utils {
             return __awaiter(this, void 0, void 0, function* () {
                 const modulesUrl = Utils.perPage(V.canvas.api.urls.modules, 25);
                 const modules = yield Utils.getJSON(modulesUrl);
-                for (let moduleData of modules) {
+                for (const moduleData of modules) {
                     DATA.modules.set(moduleData.id, new Module(moduleData));
                 }
                 const moduleIds = Array.from(DATA.modules.keys());
@@ -706,11 +653,11 @@ class Utils {
                     return Utils.getJSON(moduleItemsUrl);
                 });
                 const moduleItemSets = yield Promise.all(itemSetPromises);
-                for (let items of moduleItemSets) {
+                for (const items of moduleItemSets) {
                     const module = DATA.modules.get(items[0].module_id);
-                    for (let modItemJson of items) {
+                    for (const modItemJson of items) {
                         let item;
-                        let contentId = modItemJson.content_id;
+                        const contentId = modItemJson.content_id;
                         if (ModuleItem.byContentId.has(contentId))
                             item = ModuleItem.byContentId.get(contentId);
                         else if (contentId)
@@ -723,13 +670,13 @@ class Utils {
                     }
                 }
                 const fileItems = Array.from(DATA.moduleItems.values())
-                    .filter(item => item.type == ModuleItemType.FILE);
+                    .filter(item => item.type === ModuleItemType.FILE);
                 const filePromises = fileItems.map(item => {
                     const fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, { fileID: item.contentId });
                     return Utils.getJSON(fileDataUrl);
                 });
                 const files = yield Promise.all(filePromises);
-                for (let file of files)
+                for (const file of files)
                     ModuleItem.byContentId.get(file.id).setFileData(file);
             });
         };
@@ -741,7 +688,7 @@ class Utils {
                     return;
                 const complete = Utils.getOrDefault(customData.completed_assignments, DATA.courseID, new Array());
                 const hidden = Utils.getOrDefault(customData.hidden_assignments, DATA.courseID, new Array());
-                for (let [modItemId, modItem] of DATA.moduleItems) {
+                for (const [modItemId, modItem] of DATA.moduleItems) {
                     modItem.checked = complete.includes(modItemId);
                     modItem.hidden = hidden.includes(modItemId);
                 }
@@ -751,7 +698,7 @@ class Utils {
                     DATA.states.set(name, stateObj);
                 });
                 const tabPositions = Utils.getOrDefault(customData.tab_positions, DATA.courseID, {});
-                for (let [tabId, navTab] of DATA.navTabs) {
+                for (const [tabId, navTab] of DATA.navTabs) {
                     if (tabPositions[tabId] !== undefined)
                         navTab.setPosition(tabPositions[tabId]);
                 }
@@ -771,12 +718,12 @@ class Utils {
     .catch((reason) => {
     if (reason instanceof Exception) {
         if (reason.isFatal)
-            throw reason.toString();
+            throw new Error(reason.toString());
         else
             console.warn("Exception in init:", reason.toString());
     }
     else {
-        throw "Unknown error in init: " + reason;
+        throw new Error("Unknown error in init: " + reason);
     }
 })
     .then((totalDuration) => {
@@ -806,7 +753,7 @@ class Main {
             .find(".menu-item__text")
             .text("All Courses");
         const $insertionPoint = PAGE.sidebar.children().eq(2);
-        for (let [tabID, courseTab] of DATA.courseTabs) {
+        for (const [tabID, courseTab] of DATA.courseTabs) {
             $insertionPoint.after(Utils.format(V.element.course_link, {
                 tabColor: courseTab.color,
                 tabID,
@@ -826,7 +773,7 @@ class Main {
         if (DATA.coursePage === null)
             return;
         $("ul#menu > li").removeClass("ic-app-header__menu-list-item--active");
-        for (let [, state] of DATA.states) {
+        for (const [, state] of DATA.states) {
             if (state.active && state.onPages.includes(DATA.coursePage))
                 PAGE.body.addClass(state.bodyClass);
         }
@@ -840,7 +787,7 @@ class Main {
             .forEach(UI.updateNavTabPosition);
         if (!DATA.onMainPage)
             return;
-        for (let [item_id, item] of DATA.moduleItems) {
+        for (const [itemId, item] of DATA.moduleItems) {
             const mainEl = $("#" + item.canvasElementId);
             let parentEl;
             let hasCheckbox;
@@ -861,14 +808,14 @@ class Main {
             }
             if (hasCheckbox) {
                 item.checkboxElement =
-                    $(Utils.format(V.element.checkbox, { item_id })).appendTo(parentEl);
+                    $(Utils.format(V.element.checkbox, { item_id: itemId })).appendTo(parentEl);
                 UI.updateCheckbox(item);
                 item.checkboxElement.show();
             }
             if (hasHideButton) {
                 item.hideElement =
-                    $(Utils.format(V.element.hide_button, { item_id })).appendTo(parentEl);
-                UI.updateHideButton_Sync(item);
+                    $(Utils.format(V.element.hide_button, { item_id: itemId })).appendTo(parentEl);
+                UI.updateItemHide(item);
                 item.hideElement.show();
             }
         }
@@ -897,7 +844,7 @@ class Main {
         const disabledIndent = DATA.states.get("disable_indent_override").active;
         $(V.canvas.selector.module_item).each(function () {
             const defIndent = [0, 1, 2, 3, 4, 5].filter(level => $(this).hasClass("indent_" + level))[0];
-            $(this).attr(V.data_attr.def_indent, defIndent);
+            $(this).attr(V.dataAttr.def_indent, defIndent);
             if (!disabledIndent)
                 $(this).removeClass("indent_" + defIndent);
         });
@@ -907,8 +854,8 @@ class Main {
         }
         const toc = $(V.element.toc);
         const ul = toc.find("ul");
-        for (let [modId, mod] of DATA.modules) {
-            let formatted = Utils.format(V.element.toc_item, { item_name: mod.name, item_id: modId });
+        for (const [modId, mod] of DATA.modules) {
+            const formatted = Utils.format(V.element.toc_item, { item_name: mod.name, item_id: modId });
             $(formatted)
                 .find("a")
                 .click(e => {
@@ -931,8 +878,8 @@ class Main {
                 yield Main.onHideButtonClick($(this));
             });
         });
-        for (let [, item] of DATA.moduleItems) {
-            if (item.type == ModuleItemType.FILE) {
+        for (const [, item] of DATA.moduleItems) {
+            if (item.type === ModuleItemType.FILE) {
                 const element = Utils.format(V.element.download_button, {
                     file_url: item.fileData.url,
                     filename: item.fileData.display_name
@@ -964,17 +911,20 @@ class Main {
         }
     }
     static setState(stateName, state) {
-        if (!DATA.states.has(stateName))
-            return;
-        const stateObj = DATA.states.get(stateName);
-        if (!stateObj.onPages.includes(DATA.coursePage))
-            return;
-        if (stateObj.bodyClass)
-            PAGE.body.toggleClass(stateObj.bodyClass, state);
-        stateObj.active = state;
-        stateObj.onChange(state, V, PAGE.body);
-        const url = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "/active_states" });
-        Utils.editDataArray_Sync(url, state, [stateName]);
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!DATA.states.has(stateName))
+                return;
+            const stateObj = DATA.states.get(stateName);
+            if (!stateObj.onPages.includes(DATA.coursePage))
+                return;
+            if (stateObj.bodyClass)
+                PAGE.body.toggleClass(stateObj.bodyClass, state);
+            stateObj.active = state;
+            stateObj.onChange(state, V, PAGE.body);
+            const url = Utils.format(V.canvas.api.urls.custom_data, { dataPath: "/active_states" });
+            const success = Utils.editDataArray(url, state, [stateName]);
+            return success;
+        });
     }
     static setNavTabPosition(tab, position) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -987,13 +937,13 @@ class Main {
                 UI.updateNavTabPosition(tab);
             }
             else {
-                throw "Tab position update failed.";
+                throw new Error("Tab position update failed.");
             }
         });
     }
     static onCheckboxChange(el) {
         return __awaiter(this, void 0, void 0, function* () {
-            const id = Number($(el).attr(V.data_attr.mod_item_id));
+            const id = Number($(el).attr(V.dataAttr.mod_item_id));
             const item = DATA.moduleItems.get(id);
             const status = el.checked;
             const oldTitle = el.title;
@@ -1014,13 +964,14 @@ class Main {
                 item.checked = status;
                 UI.updateModule(item.module);
                 UI.updateCheckbox(item);
-                console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${el.checked ? "" : "un"}checked`);
+                console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...)` +
+                    `has been ${el.checked ? "" : "un"}checked`);
             }
         });
     }
     static onHideButtonClick(el) {
         return __awaiter(this, void 0, void 0, function* () {
-            const id = Number(el.attr(V.data_attr.mod_item_id));
+            const id = Number(el.attr(V.dataAttr.mod_item_id));
             const item = DATA.moduleItems.get(id);
             if (item.isGraded || item.hideElement.hasClass(V.cssClass.hide_disabled))
                 return;
@@ -1035,67 +986,18 @@ class Main {
             const success = yield Utils.editDataArray(url, newState, [id]);
             if (success) {
                 item.hidden = newState;
-                yield UI.updateHideButton(item, success);
+                yield UI.animateItemHide(item);
                 UI.updateModule(item.module);
                 console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
             }
-        });
-    }
-    static onCheckboxChange_Sync(el) {
-        const id = Number($(el).attr(V.data_attr.mod_item_id));
-        const item = DATA.moduleItems.get(id);
-        const status = el.checked;
-        const oldTitle = el.title;
-        el.checked = !status;
-        if (status === item.checked) {
-            console.error("Checkbox desync at item", item);
-            return;
-        }
-        el.disabled = true;
-        el.title = V.tooltip.waiting;
-        const url = Utils.format(V.canvas.api.urls.custom_data, {
-            dataPath: `/${V.canvas.api.data_urls.completed_assignments}/${DATA.courseID}`
-        });
-        Utils.editDataArray_Sync(url, status, [id], success => {
-            el.disabled = false;
-            el.title = oldTitle;
-            if (success) {
-                item.checked = status;
-                UI.updateModule(item.module);
-                UI.updateCheckbox(item);
-                console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${el.checked ? "" : "un"}checked`);
-            }
-        });
-    }
-    static onHideButtonClick_Sync(el) {
-        const id = Number(el.attr(V.data_attr.mod_item_id));
-        const item = DATA.moduleItems.get(id);
-        if (item.isGraded || item.hideElement.hasClass(V.cssClass.hide_disabled))
-            return;
-        const newState = !item.hidden;
-        item.hideElement
-            .addClass(V.cssClass.hide_disabled)
-            .find("i")
-            .attr("title", V.tooltip.waiting);
-        const url = Utils.format(V.canvas.api.urls.custom_data, {
-            dataPath: `/${V.canvas.api.data_urls.hidden_assignments}/${DATA.courseID}`
-        });
-        Utils.editDataArray_Sync(url, newState, [id], success => {
-            if (success)
-                item.hidden = newState;
-            UI.updateHideButton_Sync(item, success, () => {
-                if (success) {
-                    UI.updateModule(item.module);
-                    console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
-                }
-            });
         });
     }
     static onMessage(data, source, respondFunc) {
         if (source.id !== DATA.extensionId)
             return;
         if (data.type === MessageType.BASIC) {
-            const unchecked = Array.from(DATA.moduleItems.values()).filter(i => !i.checked && !i.hidden && !i.isSubHeader);
+            const unchecked = Array.from(DATA.moduleItems.values())
+                .filter(i => !i.checked && !i.hidden && !i.isSubHeader);
             switch (data.action) {
                 case "ping":
                     respondFunc({ pong: $.now() });
@@ -1104,7 +1006,7 @@ class Main {
                     respondFunc({ count: unchecked.length });
                     break;
                 case "jump to first unchecked":
-                    let uncheckedEls = unchecked
+                    const uncheckedEls = unchecked
                         .map(i => document.getElementById(i.canvasElementId));
                     UI.scrollToElement($(uncheckedEls).first());
                     respondFunc();
@@ -1120,8 +1022,11 @@ class Main {
                 respondFunc({ state });
             }
             else if (data.action === "set") {
-                Main.setState(stateData.stateName, stateData.state);
-                respondFunc();
+                Main.setState(stateData.stateName, stateData.state).then(success => {
+                    console.debug(success);
+                    respondFunc(success);
+                });
+                return true;
             }
             else {
                 console.warn("Unknown state message in content script:", data);
@@ -1135,7 +1040,7 @@ class Main {
 class UI {
     static updateCheckbox(item) {
         if (item.checkboxElement === null)
-            throw "No checkbox to update";
+            throw new Error("No checkbox to update");
         item.checkboxElement
             .find("input")
             .prop("checked", item.checked)
@@ -1143,71 +1048,57 @@ class UI {
             .closest(V.canvas.selector.module_item)
             .toggleClass(V.cssClass.checkbox_checked, item.checked);
     }
-    static updateHideButton(item, animate) {
+    static animateItemHide(item) {
         return __awaiter(this, void 0, void 0, function* () {
             if (item.hideElement === null)
-                throw "No hide button to update";
+                throw new Error("No hide button to update");
             const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);
             const iEl = item.hideElement.find("i");
             iEl.add(modItemEl).toggleClass(V.cssClass.item_hidden, item.hidden);
-            const update = done => {
-                item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
-                iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
-                if (done !== undefined)
-                    done();
-            };
-            yield new Promise(resolve => {
-                setTimeout(() => update(resolve), animate ? V.ui.fade_time : 0);
-            });
+            yield Utils.wait(V.ui.fade_time);
+            item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
+            iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
         });
     }
-    static updateHideButton_Sync(item, animate, after) {
+    static updateItemHide(item) {
         if (item.hideElement === null)
-            throw "No hide button to update";
+            throw new Error("No hide button to update");
         const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);
         const iEl = item.hideElement.find("i");
         iEl.add(modItemEl).toggleClass(V.cssClass.item_hidden, item.hidden);
-        const update = () => {
-            item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
-            iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
-            Utils.runCb(after);
-        };
-        if (animate)
-            setTimeout(update, V.ui.fade_time);
-        else
-            update();
-    }
-    static updateTableOfContents(module) {
-        const allItems = module.items.filter(i => !i.isSubHeader && !i.hidden);
-        const totalItems = allItems.length;
-        let checkedItems, percent;
-        if (totalItems > 0) {
-            checkedItems = allItems.filter(i => i.checked).length;
-            percent = Math.round(checkedItems / totalItems * 100);
-        }
-        else {
-            checkedItems = 0;
-            percent = 0;
-        }
-        const backgroundImage = Utils.format(V.misc.toc_background, { percent });
-        DATA.elements.toc
-            .find(`[${V.data_attr.toc_module_id}='${module.id}']`)
-            .attr(V.data_attr.toc_total, totalItems)
-            .attr(V.data_attr.toc_checked_count, checkedItems)
-            .attr(V.data_attr.toc_percentage, percent)
-            .closest("li")
-            .toggleClass(V.cssClass.item_hidden, totalItems === 0)
-            .css({ backgroundImage });
+        item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
+        iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
     }
     static updateModule(module) {
-        if (DATA.elements.toc !== null)
-            UI.updateTableOfContents(module);
+        if (DATA.elements.toc !== null) {
+            const allItems = module.items.filter(i => !i.isSubHeader && !i.hidden);
+            const totalItems = allItems.length;
+            let checkedItems;
+            let percent;
+            if (totalItems > 0) {
+                checkedItems = allItems.filter(i => i.checked).length;
+                percent = Math.round(checkedItems / totalItems * 100);
+            }
+            else {
+                checkedItems = 0;
+                percent = 0;
+            }
+            const backgroundImage = Utils.format(V.misc.toc_background, { percent });
+            DATA.elements.toc
+                .find(`[${V.dataAttr.toc_module_id}='${module.id}']`)
+                .attr(V.dataAttr.toc_total, totalItems)
+                .attr(V.dataAttr.toc_checked_count, checkedItems)
+                .attr(V.dataAttr.toc_percentage, percent)
+                .closest("li")
+                .toggleClass(V.cssClass.item_hidden, totalItems === 0)
+                .css({ backgroundImage });
+        }
         const noItems = module.items.filter(i => !i.isSubHeader && !i.hidden).length === 0;
         $("#context_module_" + module.id).toggleClass(V.cssClass.item_hidden, noItems);
     }
     static updateNavTabPosition(tab) {
         if (!tab.hasCustomPosition)
-            throw "Tab has no custom position";
+            throw new Error("Tab has no custom position");
         const tabList = $(V.canvas.selector.nav_tabs);
         const tabEl = tabList.find("a." + tab.id).parent();
         if (tab.hidden)
@@ -1235,7 +1126,7 @@ class UI {
             UI.flashElement(element);
         }
         else {
-            let scrollTop = element.offset().top - V.ui.scroll_top_offset;
+            const scrollTop = element.offset().top - V.ui.scroll_top_offset;
             PAGE.scrollingElement.animate({ scrollTop }, V.ui.scroll_time, () => UI.flashElement(element));
         }
     }

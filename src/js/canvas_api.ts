@@ -50,7 +50,7 @@ namespace CanvasAPI {
 		lock_at: string;
 		unlock_at: string;
 		has_overrides: boolean;
-	//	all_dates: ???;
+	//  all_dates: ???;
 		course_id: number;
 		html_url: string;
 		submissions_download_url: string;
@@ -60,9 +60,9 @@ namespace CanvasAPI {
 		max_name_length: number;
 		turnitin_enabled: boolean;
 		vericite_enabled: boolean;
-	//	turnitin_settings: ???;
+	//  turnitin_settings: ???;
 		grade_group_students_individually: boolean;
-	//	external_tool_tag_attributes: ???;
+	//  external_tool_tag_attributes: ???;
 		peer_reviews: boolean;
 		automatic_peer_reviews: boolean;
 		peer_review_count: number;
@@ -70,7 +70,7 @@ namespace CanvasAPI {
 		intra_group_peer_reviews: boolean;
 		group_category_id: number;
 		needs_grading_count: number;
-	//	needs_grading_count_by_section: ???;
+	//  needs_grading_count_by_section: ???;
 		position: number;
 		post_to_sis: boolean;
 		integration_id: number;
@@ -84,20 +84,20 @@ namespace CanvasAPI {
 		unpublishable: boolean;
 		only_visible_to_overrides: boolean;
 		locked_for_user: boolean;
-	//	lock_info: ???;
+	//  lock_info: ???;
 		lock_explanation: string;
 		quiz_id: number;
 		anonymous_submissions: boolean;
 		discussion_topic: DiscussionTopic;
-	//	freeze_on_copy: ???;
-	//	frozen: ???;
-	//	frozen_attributes: ???;
-	//	submission: ???;
+	//  freeze_on_copy: ???;
+	//  frozen: ???;
+	//  frozen_attributes: ???;
+	//  submission: ???;
 		use_rubric_for_grading: boolean;
-	//	rubric_settings: ???;
-	//	rubric: ???;
+	//  rubric_settings: ???;
+	//  rubric: ???;
 		assignment_visibility: number[];
-	//	overrides: ???;
+	//  overrides: ???;
 		omit_from_final_grade: boolean;
 		has_submitted_submissions: boolean;
 	}
@@ -123,7 +123,7 @@ namespace CanvasAPI {
 		locked: boolean;
 		pinned: boolean;
 		locked_for_user: boolean;
-	//	lock_info: ???;
+	//  lock_info: ???;
 		lock_explanation: string;
 		user_name: string;
 		topic_children: number[];
@@ -131,13 +131,13 @@ namespace CanvasAPI {
 		podcast_url: string;
 		discussion_type: string;
 		group_category_id: number;
-		attachments: {
+		attachments: Array<{
 			"content-type": string;
 			url: string;
 			filename: string;
 			display_name: string;
-		}[];
-	//	permissions: ???;
+		}>;
+	//  permissions: ???;
 		allow_rating: boolean;
 		only_graders_can_rate: boolean;
 		sort_by_rating: boolean;
@@ -164,16 +164,16 @@ namespace CanvasAPI {
 		start_at: string;
 		end_at: string;
 		locale: string;
-	//	enrollments: ???;
+	//  enrollments: ???;
 		total_students: number;
 		calendar: {ics: string};
 		default_view: string;
 		syllabus_body: string;
 		needs_grading_count: number;
-	//	term: ???;
-	//	course_progress: ???;
+	//  term: ???;
+	//  course_progress: ???;
 		apply_assignment_group_weights: boolean;
-	//	permissions: ???;
+	//  permissions: ???;
 		is_public: boolean;
 		is_public_to_auth_users: boolean;
 		public_syllabus: boolean;
@@ -208,19 +208,19 @@ namespace CanvasAPI {
 		hidden: boolean;
 		lock_at: string;
 		locked_for_user: boolean;
-	//	lock_info: ???;
+	//  lock_info: ???;
 		lock_explanation: string;
 		hidden_for_user: boolean;
 		thumbnail_url: string;
 		mime_class: string;
-	//	media_entry_id: ???;
+	//  media_entry_id: ???;
 		preview_url: string;
 	}
 
 	export interface Submission {
 		assignment_id: number;
-	//	assignment: ???;
-	//	course: ???;
+	//  assignment: ???;
+	//  course: ???;
 		attempt: number;
 		body: string;
 		grade: string;
@@ -235,7 +235,7 @@ namespace CanvasAPI {
 		user_id: number;
 		grader_id: number;
 		graded_at: string;
-	//	user: ???;
+	//  user: ???;
 		late: boolean;
 		assignment_visible: boolean;
 		excused: boolean;

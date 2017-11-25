@@ -4,7 +4,6 @@
 import MessageSender = chrome.runtime.MessageSender;
 
 // ===== main.ts =====
-//noinspection JSUnusedGlobalSymbols
 (async function init() {
 
 	// =======================================
@@ -67,7 +66,7 @@ import MessageSender = chrome.runtime.MessageSender;
 		const favoriteCourses =
 			await Utils.getJSON<CanvasAPI.Course[]>(V.canvas.api.urls.favorite_courses);
 
-		for (let courseData of favoriteCourses) {
+		for (const courseData of favoriteCourses) {
 			const color = courseColors["course_" + courseData.id];
 			DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
 		}
@@ -83,7 +82,7 @@ import MessageSender = chrome.runtime.MessageSender;
 
 		const navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
 		const navTabs = await Utils.getJSON<CanvasAPI.Tab[]>(navTabUrl);
-		for (let tab of navTabs)
+		for (const tab of navTabs)
 			DATA.navTabs.set(tab.id, new NavTab(tab));
 
 	};
@@ -99,7 +98,7 @@ import MessageSender = chrome.runtime.MessageSender;
 		const assignmentsUrl = Utils.perPage(V.canvas.api.urls.assignments, 1000);
 		const assignments = await Utils.getJSON<CanvasAPI.Assignment[]>(assignmentsUrl);
 
-		for (let assignmentJson of assignments) {
+		for (const assignmentJson of assignments) {
 
 			let contentId: number;
 			if (assignmentJson.quiz_id)
@@ -131,14 +130,14 @@ import MessageSender = chrome.runtime.MessageSender;
 
 		const modulesUrl = Utils.perPage(V.canvas.api.urls.modules, 25);
 		const modules = await Utils.getJSON<CanvasAPI.Module[]>(modulesUrl);
-		for (let moduleData of modules) {
+		for (const moduleData of modules) {
 			DATA.modules.set(moduleData.id, new Module(moduleData));
 		}
 
 		// ===== module items =====
 
 		const moduleIds = Array.from(DATA.modules.keys());
-		const itemSetPromises: Promise<CanvasAPI.ModuleItem[]>[] =
+		const itemSetPromises: Array<Promise<CanvasAPI.ModuleItem[]>> =
 			moduleIds.map(modId => DATA.modules.get(modId))
 				.filter(mod => mod.itemCount > 0)
 				.map(module => {
@@ -154,14 +153,14 @@ import MessageSender = chrome.runtime.MessageSender;
 
 		const moduleItemSets: CanvasAPI.ModuleItem[][] = await Promise.all(itemSetPromises);
 
-		for (let items of moduleItemSets) {
+		for (const items of moduleItemSets) {
 
 			const module = DATA.modules.get(items[0].module_id);
 
-			for (let modItemJson of items) {
+			for (const modItemJson of items) {
 
 				let item: ModuleItem;
-				let contentId = modItemJson.content_id;
+				const contentId = modItemJson.content_id;
 
 				if (ModuleItem.byContentId.has(contentId))
 					item = ModuleItem.byContentId.get(contentId);
@@ -181,9 +180,9 @@ import MessageSender = chrome.runtime.MessageSender;
 		// ===== file module items =====
 
 		const fileItems = Array.from(DATA.moduleItems.values())
-			.filter(item => item.type == ModuleItemType.FILE);
+			.filter(item => item.type === ModuleItemType.FILE);
 
-		const filePromises: Promise<CanvasAPI.File>[] = fileItems.map(item => {
+		const filePromises: Array<Promise<CanvasAPI.File>> = fileItems.map(item => {
 			const fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, {fileID: item.contentId});
 			// return promise for Promise.all
 			return Utils.getJSON<CanvasAPI.File>(fileDataUrl);
@@ -191,7 +190,7 @@ import MessageSender = chrome.runtime.MessageSender;
 
 		const files: CanvasAPI.File[] = await Promise.all(filePromises);
 
-		for (let file of files)
+		for (const file of files)
 			ModuleItem.byContentId.get(file.id).setFileData(file);
 
 	};
@@ -205,7 +204,7 @@ import MessageSender = chrome.runtime.MessageSender;
 
 		const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, {dataPath: ""});
 		const customData: CanvasAPI.CustomData = (
-			await Utils.getJSON<{data:CanvasAPI.CustomData}>(customDataUrl)
+			await Utils.getJSON<{data: CanvasAPI.CustomData}>(customDataUrl)
 		).data;
 
 		// this happens when there was an issue getting the data or there was no data at all
@@ -217,7 +216,7 @@ import MessageSender = chrome.runtime.MessageSender;
 		const complete = Utils.getOrDefault(customData.completed_assignments, DATA.courseID, new Array<number>());
 		const hidden = Utils.getOrDefault(customData.hidden_assignments, DATA.courseID, new Array<number>());
 
-		for (let [modItemId, modItem] of DATA.moduleItems) {
+		for (const [modItemId, modItem] of DATA.moduleItems) {
 			modItem.checked = complete.includes(modItemId);
 			modItem.hidden = hidden.includes(modItemId);
 		}
@@ -234,9 +233,9 @@ import MessageSender = chrome.runtime.MessageSender;
 
 		// ===== load tabs positions =====
 
-		const tabPositions: {[key:string]:number} = Utils.getOrDefault(customData.tab_positions, DATA.courseID, {});
+		const tabPositions: {[key: string]: number} = Utils.getOrDefault(customData.tab_positions, DATA.courseID, {});
 
-		for (let [tabId, navTab] of DATA.navTabs) {
+		for (const [tabId, navTab] of DATA.navTabs) {
 			if (tabPositions[tabId] !== undefined)
 				navTab.setPosition(tabPositions[tabId]);
 		}
@@ -266,12 +265,11 @@ import MessageSender = chrome.runtime.MessageSender;
 .catch((reason: Exception | any) => {
 	// Exceptions are intentionally throw by my code
 	if (reason instanceof Exception) {
-		if (reason.isFatal) throw reason.toString();
+		if (reason.isFatal) throw new Error(reason.toString());
 		else console.warn("Exception in init:", reason.toString());
 	}
-	// anything else is unknown and is a problem
-	else {
-		throw "Unknown error in init: " + reason;
+	else { // anything else is unknown and is a problem
+		throw new Error("Unknown error in init: " + reason);
 	}
 })
 .then((totalDuration: number) => {
@@ -317,7 +315,7 @@ class Main {
 		// === insert course links ===
 
 		const $insertionPoint = PAGE.sidebar.children().eq(2);
-		for (let [tabID, courseTab] of DATA.courseTabs) {
+		for (const [tabID, courseTab] of DATA.courseTabs) {
 			$insertionPoint.after(
 				Utils.format(V.element.course_link, {
 					tabColor: courseTab.color,
@@ -352,9 +350,9 @@ class Main {
 
 		// === load initial states ===
 
-		for (let [,state] of DATA.states) {
+		for (const [, state] of DATA.states) {
 			if (state.active && state.onPages.includes(DATA.coursePage))
-				PAGE.body.addClass(state.bodyClass)
+				PAGE.body.addClass(state.bodyClass);
 		}
 
 		// ==== apply course color to brand colors ====
@@ -382,9 +380,9 @@ class Main {
 
 		// === place checkboxes & hide buttons ===
 
-		for (let [item_id, item] of DATA.moduleItems) {
+		for (const [itemId, item] of DATA.moduleItems) {
 
-			const mainEl = $("#"+item.canvasElementId);
+			const mainEl = $("#" + item.canvasElementId);
 			let parentEl: JQuery;
 			let hasCheckbox: boolean;
 			let hasHideButton: boolean;
@@ -409,16 +407,16 @@ class Main {
 
 			if (hasCheckbox) {
 				item.checkboxElement =
-					$(Utils.format(V.element.checkbox, {item_id})).appendTo(parentEl);
+					$(Utils.format(V.element.checkbox, {item_id: itemId})).appendTo(parentEl);
 
 				UI.updateCheckbox(item);
 				item.checkboxElement.show();
 			}
 			if (hasHideButton) {
 				item.hideElement =
-					$(Utils.format(V.element.hide_button, {item_id})).appendTo(parentEl);
+					$(Utils.format(V.element.hide_button, {item_id: itemId})).appendTo(parentEl);
 
-				UI.updateHideButton_Sync(item);
+				UI.updateItemHide(item);
 				item.hideElement.show();
 			}
 
@@ -461,15 +459,15 @@ class Main {
 
 		$(V.canvas.selector.module_item).each(function() {
 			const defIndent =
-				[0,1,2,3,4,5].filter(level => $(this).hasClass("indent_"+level))[0];
-			$(this).attr(V.data_attr.def_indent, defIndent);
+				[0,1,2,3,4,5].filter(level => $(this).hasClass("indent_" + level))[0];
+			$(this).attr(V.dataAttr.def_indent, defIndent);
 			if (!disabledIndent)
-				$(this).removeClass("indent_"+defIndent);
+				$(this).removeClass("indent_" + defIndent);
 		});
 
 		if (!disabledIndent) {
-			$(V.canvas.selector.subheader).addClass("indent_"+V.ui.subheader_indent);
-			$(V.canvas.selector.not_subheader).addClass("indent_"+V.ui.main_indent);
+			$(V.canvas.selector.subheader).addClass("indent_" + V.ui.subheader_indent);
+			$(V.canvas.selector.not_subheader).addClass("indent_" + V.ui.main_indent);
 		}
 
 		// === place and populate the table of contents ===
@@ -477,9 +475,9 @@ class Main {
 		const toc = $(V.element.toc);
 		const ul = toc.find("ul");
 
-		for (let [modId, mod] of DATA.modules) {
+		for (const [modId, mod] of DATA.modules) {
 
-			let formatted = Utils.format(V.element.toc_item, {item_name: mod.name, item_id: modId});
+			const formatted = Utils.format(V.element.toc_item, {item_name: mod.name, item_id: modId});
 			$(formatted)
 				.find("a")
 				.click(e => {
@@ -510,32 +508,31 @@ class Main {
 
 		// === add buttons to FILE and EXTERNAL_URL items ===
 
-		for (let [,item] of DATA.moduleItems) {
+		for (const [, item] of DATA.moduleItems) {
 
-			if (item.type == ModuleItemType.FILE) {
+			if (item.type === ModuleItemType.FILE) {
 				const element = Utils.format(V.element.download_button, {
 					file_url: item.fileData.url,
 					filename: item.fileData.display_name
 				});
 				$(element).insertBefore(item.checkboxElement);
 			}
-
 			else if (item.type === ModuleItemType.EXTERNAL_URL) {
 				const element = Utils.format(V.element.url_button, {
 					external_url: item.externalUrl
 				});
 				$(element).insertBefore(item.checkboxElement);
 
-				$("#"+item.canvasElementId).find("a.external_url_link.title")
+				$("#" + item.canvasElementId).find("a.external_url_link.title")
 					.attr("href", function() { return $(this).attr("data-item-href"); })
 					.removeAttr("target rel")
 					.removeClass("external")
 					.addClass("ig-title")
-					.find(".ui-icon").remove()
+					.find(".ui-icon").remove();
 			}
 		}
 
-		$("."+V.cssClass.download).add("."+V.cssClass.external_url).show();
+		$("." + V.cssClass.download).add("." + V.cssClass.external_url).show();
 
 	} // end initPage
 
@@ -549,7 +546,7 @@ class Main {
 		}
 	}
 
-	static setState(stateName: string, state: boolean) {
+	static async setState(stateName: string, state: boolean) {
 		if (!DATA.states.has(stateName)) return;
 
 		const stateObj = DATA.states.get(stateName);
@@ -563,7 +560,8 @@ class Main {
 		stateObj.onChange(state, V, PAGE.body);
 
 		const url = Utils.format(V.canvas.api.urls.custom_data, {dataPath: "/active_states"});
-		Utils.editDataArray_Sync(url, state, [stateName]);
+		const success = Utils.editDataArray(url, state, [stateName]);
+		return success;
 	}
 
 	static async setNavTabPosition(tab: NavTab, position: number) {
@@ -579,13 +577,13 @@ class Main {
 			UI.updateNavTabPosition(tab);
 		}
 		else {
-			throw "Tab position update failed.";
+			throw new Error("Tab position update failed.");
 		}
 	}
 
 	// element is the <input>
 	static async onCheckboxChange(el: HTMLInputElement) {
-		const id = Number($(el).attr(V.data_attr.mod_item_id));
+		const id = Number($(el).attr(V.dataAttr.mod_item_id));
 		const item = DATA.moduleItems.get(id);
 		const status = el.checked;
 		const oldTitle = el.title;
@@ -619,14 +617,15 @@ class Main {
 			item.checked = status;
 			UI.updateModule(item.module);
 			UI.updateCheckbox(item);
-			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${el.checked?"":"un"}checked`);
+			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...)` +
+				`has been ${el.checked ? "" : "un"}checked`);
 		}
 
 	}
 
 	// element is <i>
 	static async onHideButtonClick(el: JQuery) {
-		const id = Number(el.attr(V.data_attr.mod_item_id));
+		const id = Number(el.attr(V.dataAttr.mod_item_id));
 		const item = DATA.moduleItems.get(id);
 
 		// cancel hiding if the item is graded or has hiding manually disabled for any other reason
@@ -648,12 +647,13 @@ class Main {
 
 		if (success) {
 			item.hidden = newState;
-			await UI.updateHideButton(item, success);
+			await UI.animateItemHide(item);
 			UI.updateModule(item.module);
 			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
 		}
 	}
 
+/*
 	// element is <input>
 	static onCheckboxChange_Sync(el: HTMLInputElement) {
 		const id = Number($(el).attr(V.data_attr.mod_item_id));
@@ -716,7 +716,7 @@ class Main {
 
 		Utils.editDataArray_Sync(url, newState, [id], success => {
 			if (success) item.hidden = newState;
-			UI.updateHideButton_Sync(item, success, () => {
+			UI.updateItemHide(item, success, () => {
 				if (success) {
 					UI.updateModule(item.module);
 					console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
@@ -726,13 +726,17 @@ class Main {
 		});
 
 	}
+	*/
 
 	static onMessage(data: MessageData, source: MessageSender, respondFunc: (data?: any) => void) {
 
 		if (source.id !== DATA.extensionId) return;
 
 		if (data.type === MessageType.BASIC) {
-			const unchecked = Array.from(DATA.moduleItems.values()).filter(i=>!i.checked && !i.hidden && !i.isSubHeader);
+
+			const unchecked = Array.from(DATA.moduleItems.values())
+				.filter(i => !i.checked && !i.hidden && !i.isSubHeader);
+
 			switch (data.action) {
 				case "ping":
 					respondFunc({pong: $.now()});
@@ -740,11 +744,11 @@ class Main {
 				case "count unchecked":
 					respondFunc({count: unchecked.length});
 					break;
-			//	case "update token":
-			//		Utils.loadToken(respondFunc);
-			//		break;
+			/*	case "update token":
+					Utils.loadToken(respondFunc);
+					break;*/
 				case "jump to first unchecked":
-					let uncheckedEls = unchecked
+					const uncheckedEls = unchecked
 						.map(i => document.getElementById(i.canvasElementId));
 					UI.scrollToElement($(uncheckedEls).first());
 					respondFunc();
@@ -760,8 +764,11 @@ class Main {
 				respondFunc({state});
 			}
 			else if (data.action === "set") {
-				Main.setState(stateData.stateName, stateData.state);
-				respondFunc();
+				Main.setState(stateData.stateName, stateData.state).then(success => {
+					console.debug(success);
+					respondFunc(success);
+				});
+				return true; // this tells chrome that we want this response to be async
 			}
 			else {
 				console.warn("Unknown state message in content script:", data);
@@ -776,7 +783,7 @@ class Main {
 class UI {
 
 	static updateCheckbox(item: ModuleItem) {
-		if (item.checkboxElement === null) throw "No checkbox to update";
+		if (item.checkboxElement === null) throw new Error("No checkbox to update");
 		item.checkboxElement
 			.find("input")
 			.prop("checked", item.checked)
@@ -785,8 +792,8 @@ class UI {
 			.toggleClass(V.cssClass.checkbox_checked, item.checked);
 	}
 
-	static async updateHideButton(item: ModuleItem, animate?: boolean/*, after?: Callback*/) {
-		if (item.hideElement === null) throw "No hide button to update";
+	static async animateItemHide(item: ModuleItem) {
+		if (item.hideElement === null) throw new Error("No hide button to update");
 
 		const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);
 		const iEl = item.hideElement.find("i");
@@ -794,26 +801,18 @@ class UI {
 		// update hidden class on the <i> and <li>
 		iEl.add(modItemEl).toggleClass(V.cssClass.item_hidden, item.hidden);
 
-		const update = done => {
-			// update disable status and title, undoing waiting-disable
-			item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
-			iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
+		await Utils.wait(V.ui.fade_time);
 
-			if (done !== undefined)
-				done();
-		};
-
-		await new Promise(resolve => {
-			setTimeout(
-				() => update(resolve),
-				animate ? V.ui.fade_time : 0
-			);
-		});
+		// update disable status and title, undoing waiting-disable
+		item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
+		iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
 
 	}
 
-	static updateHideButton_Sync(item: ModuleItem, animate?: boolean, after?: Callback) {
-		if (item.hideElement === null) throw "No hide button to update";
+	// TODO merge this and the above function to avoid duplicate code
+	// right now, they are split because one is async
+	static updateItemHide(item: ModuleItem) {
+		if (item.hideElement === null) throw new Error("No hide button to update");
 
 		const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);
 		const iEl = item.hideElement.find("i");
@@ -821,68 +820,59 @@ class UI {
 		// update hidden class on the <i> and <li>
 		iEl.add(modItemEl).toggleClass(V.cssClass.item_hidden, item.hidden);
 
-		const update = () => {
-			// update disable status and title, undoing waiting-disable
-			item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
-			iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
+		// update disable status and title, undoing waiting-disable
+		item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
+		iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
 
-			Utils.runCb(after);
-		};
-
-		if (animate) setTimeout(update, V.ui.fade_time);
-		else update();
-
-	}
-
-	private static updateTableOfContents(module?: Module) {
-		const allItems = module.items.filter(i => !i.isSubHeader && !i.hidden);
-		const totalItems = allItems.length;
-
-		let checkedItems, percent;
-
-		if (totalItems > 0) {
-			checkedItems = allItems.filter(i => i.checked).length;
-			percent = Math.round(checkedItems / totalItems * 100);
-		}
-		else {
-			checkedItems = 0;
-			percent = 0;
-		}
-
-		const backgroundImage = Utils.format(V.misc.toc_background, {percent});
-
-		DATA.elements.toc
-			.find(`[${V.data_attr.toc_module_id}='${module.id}']`)
-			.attr(V.data_attr.toc_total, totalItems)
-			.attr(V.data_attr.toc_checked_count, checkedItems)
-			.attr(V.data_attr.toc_percentage, percent)
-			.closest("li")
-			.toggleClass(V.cssClass.item_hidden, totalItems === 0)
-			.css({backgroundImage});
 	}
 
 	static updateModule(module: Module) {
 
-		if (DATA.elements.toc !== null)
-			UI.updateTableOfContents(module);
+		if (DATA.elements.toc !== null) {
+			const allItems = module.items.filter(i => !i.isSubHeader && !i.hidden);
+			const totalItems = allItems.length;
+
+			let checkedItems: number;
+			let percent: number;
+
+			if (totalItems > 0) {
+				checkedItems = allItems.filter(i => i.checked).length;
+				percent = Math.round(checkedItems / totalItems * 100);
+			}
+			else {
+				checkedItems = 0;
+				percent = 0;
+			}
+
+			const backgroundImage = Utils.format(V.misc.toc_background, {percent});
+
+			DATA.elements.toc
+				.find(`[${V.dataAttr.toc_module_id}='${module.id}']`)
+				.attr(V.dataAttr.toc_total, totalItems)
+				.attr(V.dataAttr.toc_checked_count, checkedItems)
+				.attr(V.dataAttr.toc_percentage, percent)
+				.closest("li")
+				.toggleClass(V.cssClass.item_hidden, totalItems === 0)
+				.css({backgroundImage});
+		}
 
 		// if no visible items in this module, hide the entire module
 		const noItems = module.items.filter(i => !i.isSubHeader && !i.hidden).length === 0;
-		$("#context_module_"+module.id).toggleClass(V.cssClass.item_hidden, noItems);
+		$("#context_module_" + module.id).toggleClass(V.cssClass.item_hidden, noItems);
 
 	}
 
 	static updateNavTabPosition(tab: NavTab) {
 
-		if (!tab.hasCustomPosition) throw "Tab has no custom position";
+		if (!tab.hasCustomPosition) throw new Error("Tab has no custom position");
 
 		const tabList = $(V.canvas.selector.nav_tabs);
-		const tabEl = tabList.find("a."+tab.id).parent();
+		const tabEl = tabList.find("a." + tab.id).parent();
 
 		if (tab.hidden)
 			tabEl.hide();
 		else
-			tabEl.show().detach().insertBefore(tabList.children().eq(tab.position-1));
+			tabEl.show().detach().insertBefore(tabList.children().eq(tab.position - 1));
 	}
 
 	static updateScrollPosition() {
@@ -915,7 +905,7 @@ class UI {
 			UI.flashElement(element);
 		}
 		else { // if not, scroll to it
-			let scrollTop = element.offset().top - V.ui.scroll_top_offset;
+			const scrollTop = element.offset().top - V.ui.scroll_top_offset;
 			PAGE.scrollingElement.animate({scrollTop},
 				V.ui.scroll_time,
 				() => UI.flashElement(element));

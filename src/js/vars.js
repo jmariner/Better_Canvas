@@ -21,9 +21,9 @@ var Vars;
                 external_url: "url-btn",
                 popup_loaded: "done-loading",
                 popup_connected: "page-connected",
-                popup_require_page: "require-page",
+                popup_require_page: "require-page"
             };
-            this.data_attr = {
+            this.dataAttr = {
                 toc_module_id: "toc-module-id",
                 toc_total: "toc-total",
                 toc_checked_count: "toc-checked-count",
@@ -103,11 +103,11 @@ var Vars;
                         processObject(val, key);
                     }
                     else if (typeof val === "string") {
-                        if ((Sass.prefix_types.indexOf(objName) > -1 || Sass.prefix_types.indexOf(key) > -1)
+                        if ((Sass.prefixTypes.indexOf(objName) > -1 || Sass.prefixTypes.indexOf(key) > -1)
                             && !key.startsWith("popup_")) {
                             val = this.prefix + "-" + val;
                         }
-                        if (objName == "data_attr") {
+                        if (objName === "data_attr") {
                             val = "data-" + val;
                         }
                         obj[key] = val;
@@ -118,7 +118,7 @@ var Vars;
             this.sassJson = JSON.stringify(this);
         }
     }
-    Sass.prefix_types = ["cssClass", "data_attr", "id"];
+    Sass.prefixTypes = ["cssClass", "data_attr", "id"];
     class Vars extends Sass {
         constructor() {
             super(...arguments);
@@ -141,7 +141,7 @@ var Vars;
             };
             this.element = {
                 checkbox: `<div style='display:none' class='${this.cssClass.checkbox_parent}'>
-						<input type='checkbox' ${this.data_attr.mod_item_id}='{item_id}'>
+						<input type='checkbox' ${this.dataAttr.mod_item_id}='{item_id}'>
 					</div>`,
                 download_button: `<div style='display:none' class='${this.cssClass.download}' title='${this.tooltip.download}'>
 						<a href="{file_url}"></a>
@@ -150,13 +150,13 @@ var Vars;
 						<a href="{external_url}" class="not_external" target="_blank"></a>
 					</div>`,
                 hide_button: `<div style='display:none' class='${this.cssClass.hide_button}'>
-						<i ${this.data_attr.mod_item_id}='{item_id}'></i>
+						<i ${this.dataAttr.mod_item_id}='{item_id}'></i>
 					</div>`,
                 course_link: `<li style='background-color: {tabColor}' class='menu-item ic-app-header__menu-list-item'>
 					<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>
 						<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>
 						<div style='background-color: {tabColor}; border-right-color: {tabColor}'
-								${this.data_attr.course_name}='{name}' ${this.data_attr.course_code}='{code}'
+								${this.dataAttr.course_name}='{name}' ${this.dataAttr.course_code}='{code}'
 								class='menu-item__text ${this.cssClass.course_link_text}'></div>
 					</a>
 				</li>`,
@@ -167,7 +167,7 @@ var Vars;
                 toc_item: `<li>
 					<a href='#' title='{item_name}'>
 						{item_name}
-						<div class='${this.cssClass.toc_ratio}' ${this.data_attr.toc_module_id}='{item_id}'></div>
+						<div class='${this.cssClass.toc_ratio}' ${this.dataAttr.toc_module_id}='{item_id}'></div>
 					</a>
 				</li>`,
                 jump_button: `<div id='${this.id.jump_button}'>
@@ -216,7 +216,7 @@ var Vars;
                         hidden_assignments: "hidden_assignments",
                         tab_positions: "tab_positions"
                     }
-                },
+                }
             };
         }
         init(courseID) {

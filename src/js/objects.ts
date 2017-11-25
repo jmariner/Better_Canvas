@@ -93,11 +93,11 @@ class NavTab {
 	}
 
 	get position(): number {
-		return this._position == null ? this.initPosition : this._position == -1 ? null : this._position;
+		return this._position == null ? this.initPosition : this._position === -1 ? null : this._position;
 	}
 
 	get hidden(): boolean {
-		return this._position == -1;
+		return this._position === -1;
 	}
 }
 
@@ -167,15 +167,15 @@ class ModuleItem {
 
 	public static readonly byContentId = new Map<number, ModuleItem>();
 
+	constructor(moduleItemJson?: CanvasAPI.ModuleItem) {
+		if (moduleItemJson) this.update(moduleItemJson);
+	}
+
 	public static fromContentId(contentId: number): ModuleItem {
 		const item = new ModuleItem();
 		item._contentId = contentId;
 		ModuleItem.byContentId.set(contentId, item);
 		return item;
-	}
-
-	constructor(moduleItemJson?: CanvasAPI.ModuleItem) {
-		if (moduleItemJson) this.update(moduleItemJson);
 	}
 
 	public update(moduleItemJson: CanvasAPI.ModuleItem) {
@@ -184,8 +184,8 @@ class ModuleItem {
 		this.moduleId = moduleItemJson.module_id;
 		this._externalUrl = moduleItemJson.external_url || null;
 
-		let typeString: string = moduleItemJson.type
-			.replace(/([A-Z])/g, (r, s) => "_"+s)
+		const typeString: string = moduleItemJson.type
+			.replace(/([A-Z])/g, (r, s) => "_" + s)
 			.replace(/^_/, "").toUpperCase();
 
 		this._type = ModuleItemType[typeString];
@@ -230,7 +230,7 @@ class ModuleItem {
 		if (value === null || value.length === 1)
 			this._checkboxElement = value;
 		else
-			throw "Invalid Module Item Element: " + value;
+			throw new Error("Invalid Module Item Element: " + value);
 	}
 
 	get hideElement(): JQuery { return this._hideElement; }
@@ -238,7 +238,7 @@ class ModuleItem {
 		if (value === null || value.length === 1)
 			this._hideElement = value;
 		else
-			throw "Invalid Module Item Element: " + value;
+			throw new Error("Invalid Module Item Element: " + value);
 	}
 
 	get fileData(): CanvasAPI.File { return this._fileData; }
@@ -281,7 +281,7 @@ class StateMessageData extends MessageData {
 		this.state = state;
 
 		if (action === "set" && this.state === undefined)
-			throw "Invalid state message: no boolean to set state to";
+			throw new Error("Invalid state message: no boolean to set state to");
 	}
 }
 
@@ -313,10 +313,10 @@ class Utils {
 				str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), obj[key]);
 		}
 
-		return ""+str;
+		return str;
 	}
 
-	static getOrDefault<V>(obj: object, key: PropertyKey, def: V): V {
+	static getOrDefault<T>(obj: object, key: PropertyKey, def: T): T {
 		if (obj === undefined || obj[key] === undefined) return def;
 		else return obj[key];
 	}
@@ -338,14 +338,14 @@ class Utils {
 		} as RequestInit);
 
 		if (resp.status === 404) {
-			throw "404 error when getting JSON";
+			throw new Error("404 error when getting JSON");
 		}
 		else {
 			if (resp.status === 400)
 				console.debug("400 error when getting JSON was OKAY");
 
 			let json = await resp.text();
-			json = json.replace("while(1);","");
+			json = json.replace("while(1);", "");
 
 			return JSON.parse(json);
 		}
@@ -356,8 +356,8 @@ class Utils {
 
 		Utils.checkToken();
 
-		let bodyData = {ns: V.canvas.api.namespace, data};
-		let method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
+		const bodyData = {ns: V.canvas.api.namespace, data};
+		const method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
 
 		if (method === "DELETE")
 			delete bodyData.data;
@@ -387,7 +387,7 @@ class Utils {
 
 		const existingData: any[] = (
 			// url is same for get/put
-			await Utils.getJSON<{data:any[]}>(url)
+			await Utils.getJSON<{data: any[]}>(url)
 		).data || [];
 
 		let newArray;
@@ -404,18 +404,19 @@ class Utils {
 		return Utils.putData(url, newArray);
 	}
 
+/*
 	static getJSON_Sync(url: string, callback: (data: any) => void) {
 
 		if (ACCESS_TOKEN === null)
 			throw new Error("Access token not set");
 
-		let req = new XMLHttpRequest();
+		const req = new XMLHttpRequest();
 
 		req.onreadystatechange = () => {
 			if (req.readyState === 4) {
 				switch (req.status) {
 					case 404:
-						throw "404 error when getting JSON";
+						throw new Error("404 error when getting JSON");
 					case 400:
 						console.debug("400 error when getting JSON was OKAY");
 					// fallthrough
@@ -433,8 +434,8 @@ class Utils {
 	}
 
 	static putData_Sync(url: string, data: any | any[], callback: (success: boolean) => any) {
-		let bodyData = {ns: V.canvas.api.namespace, data};
-		let action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
+		const bodyData = {ns: V.canvas.api.namespace, data};
+		const action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
 
 		if (action === "DELETE")
 			delete bodyData.data;
@@ -460,7 +461,7 @@ class Utils {
 
 		// url is same for get/put
 		Utils.getJSON_Sync(url, resultData => {
-			let array = resultData.data ? resultData.data.concat(values) : values;
+			const array = resultData.data ? resultData.data.concat(values) : values;
 			Utils.putData_Sync(url, array, callback);
 		});
 	}
@@ -482,6 +483,13 @@ class Utils {
 	static editDataArray_Sync(url: string, append: boolean, values: any[], callback?: (success: boolean) => any) {
 		if (append) Utils.appendDataArray_Sync(url, values, callback);
 		else Utils.subtractDataArray_Sync(url, values, callback);
+	}
+*/
+
+	static async wait(ms: number) {
+		await new Promise(resolve => {
+			setTimeout(resolve, ms);
+		});
 	}
 
 	static checkToken(): void | never {
@@ -518,7 +526,7 @@ class Utils {
 		if (callbackFunction !== undefined)
 			return callbackFunction;
 		else
-			return (() => {}) as F;
+			return (() => {}) as F; // tslint:disable-line:no-empty
 	}
 
 }

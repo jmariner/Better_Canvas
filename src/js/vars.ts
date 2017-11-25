@@ -108,22 +108,21 @@ namespace Vars {
 
 		sassJson: string;
 
-		private static readonly prefixTypes = ["cssClass", "dataAttr", "id"];
+		private static readonly prefixTypes = new Set(["cssClass", "dataAttr", "id"]);
 
 		constructor() {
 			const processObject = (obj, objName) => {
 				for (const key in obj) {
 					if (!obj.hasOwnProperty(key)) continue;
 
-					let val = obj[key];
+					let val: object | string = obj[key];
 					if (typeof val === "object") {
 						processObject(val, key);
 					}
 					else if (typeof val === "string") {
 
-						if ((Sass.prefixTypes.indexOf(objName) > -1  || Sass.prefixTypes.indexOf(key) > -1)
-							&& !key.startsWith("popup_")) {
-
+						const types = Sass.prefixTypes;
+						if (!key.startsWith("popup_") && (types.has(objName) || types.has(key))) {
 							val = this.prefix + "-" + val;
 						}
 
@@ -132,6 +131,9 @@ namespace Vars {
 						}
 
 						obj[key] = val;
+					}
+					else {
+						throw new Error(`Unknown value type for key ${key} in object ${JSON.stringify(obj)}`);
 					}
 				}
 			};

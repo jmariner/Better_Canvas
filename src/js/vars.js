@@ -103,8 +103,8 @@ var Vars;
                         processObject(val, key);
                     }
                     else if (typeof val === "string") {
-                        if ((Sass.prefixTypes.indexOf(objName) > -1 || Sass.prefixTypes.indexOf(key) > -1)
-                            && !key.startsWith("popup_")) {
+                        const types = Sass.prefixTypes;
+                        if (!key.startsWith("popup_") && (types.has(objName) || types.has(key))) {
                             val = this.prefix + "-" + val;
                         }
                         if (objName === "dataAttr") {
@@ -112,13 +112,16 @@ var Vars;
                         }
                         obj[key] = val;
                     }
+                    else {
+                        throw new Error(`Unknown value type for key ${key} in object ${JSON.stringify(obj)}`);
+                    }
                 }
             };
             processObject(this, "root");
             this.sassJson = JSON.stringify(this);
         }
     }
-    Sass.prefixTypes = ["cssClass", "dataAttr", "id"];
+    Sass.prefixTypes = new Set(["cssClass", "dataAttr", "id"]);
     class Vars extends Sass {
         constructor() {
             super(...arguments);

@@ -107,7 +107,7 @@ var Vars;
                             && !key.startsWith("popup_")) {
                             val = this.prefix + "-" + val;
                         }
-                        if (objName === "data_attr") {
+                        if (objName === "dataAttr") {
                             val = "data-" + val;
                         }
                         obj[key] = val;
@@ -118,7 +118,7 @@ var Vars;
             this.sassJson = JSON.stringify(this);
         }
     }
-    Sass.prefixTypes = ["cssClass", "data_attr", "id"];
+    Sass.prefixTypes = ["cssClass", "dataAttr", "id"];
     class Vars extends Sass {
         constructor() {
             super(...arguments);

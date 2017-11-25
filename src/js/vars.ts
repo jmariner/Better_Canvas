@@ -108,7 +108,7 @@ namespace Vars {
 
 		sassJson: string;
 
-		private static readonly prefixTypes = ["cssClass", "data_attr", "id"];
+		private static readonly prefixTypes = ["cssClass", "dataAttr", "id"];
 
 		constructor() {
 			const processObject = (obj, objName) => {
@@ -127,7 +127,7 @@ namespace Vars {
 							val = this.prefix + "-" + val;
 						}
 
-						if (objName === "data_attr") {
+						if (objName === "dataAttr") {
 							val = "data-" + val;
 						}
 

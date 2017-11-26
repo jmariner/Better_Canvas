@@ -17,14 +17,16 @@ module.exports = {
 		filename: "[name].js"
 	},
 	module: {
-		loaders: [{
-			exclude: /node_modules/,
-			test: /\.tsx?$/,
-			loader: "ts-loader"
-		}]
+		rules: [
+			{
+				test: /\.ts$/,
+				use: [ "ts-loader" ],
+				exclude: /node_modules/
+			}
+		]
 	},
 	resolve: {
-		extensions: [".ts", ".tsx", ".js"]
+		extensions: [".ts", ".js"]
 	},
 	plugins: [
 		new CleanWebpackPlugin(

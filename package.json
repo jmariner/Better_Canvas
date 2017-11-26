@@ -1,6 +1,10 @@
 {
   "name": "Better_Canvas",
-  "version": "3.0",
+  "version": "3.0.0",
+  "scripts": {
+    "build": "./node_modules/.bin/webpack",
+    "watch": "./node_modules/.bin/webpack -w"
+  },
   "devDependencies": {
     "@types/node": "^7.0.32",
     "@types/node-sass": "^3.10.32",

@@ -24,6 +24,17 @@ export default class Utils {
 		return `${url}?per_page=${perPage}`;
 	}
 
+	static formatUrl(url: string, formatObj?: {perPage?: number, [key: string]: any}) {
+
+		if (formatObj !== undefined) {
+			if (formatObj.perPage !== undefined)
+				url = Utils.perPage(url, formatObj.perPage);
+			url = Utils.format(url, formatObj);
+		}
+
+		return V.canvas.api.root_url + url;
+	}
+
 	static async getJSON<T>(url: string): Promise<T> {
 
 		Utils.checkToken();

@@ -39,7 +39,7 @@ import * as CanvasAPI from "./canvas_api";
 
 	// load variables
 
-	V.init(DATA.courseID);
+	// TODO improve variable loading
 
 	// try to load access token
 	try {
@@ -56,12 +56,14 @@ import * as CanvasAPI from "./canvas_api";
 
 	const courseTabFlow = async function() {
 
+		const colorsUrl = Utils.formatUrl(V.canvas.api.urls.custom_colors);
 		const courseColors = (
-			await Utils.getJSON<{custom_colors: Map<string, string>}>(V.canvas.api.urls.custom_colors)
+			await Utils.getJSON<{custom_colors: Map<string, string>}>(colorsUrl)
 		).custom_colors;
 
+		const favoritesUrl = Utils.formatUrl(V.canvas.api.urls.favorite_courses);
 		const favoriteCourses =
-			await Utils.getJSON<CanvasAPI.Course[]>(V.canvas.api.urls.favorite_courses);
+			await Utils.getJSON<CanvasAPI.Course[]>(favoritesUrl);
 
 		for (const courseData of favoriteCourses) {
 			const color = courseColors["course_" + courseData.id];
@@ -77,8 +79,12 @@ import * as CanvasAPI from "./canvas_api";
 
 	const navTabFlow = async function() {
 
-		const navTabUrl = Utils.perPage(V.canvas.api.urls.navigation_tabs, 25);
+		const navTabUrl = Utils.formatUrl(V.canvas.api.urls.navigation_tabs, {
+			perPage: 25,
+			courseID: DATA.courseID
+		});
 		const navTabs = await Utils.getJSON<CanvasAPI.Tab[]>(navTabUrl);
+
 		for (const tab of navTabs)
 			DATA.navTabs.set(tab.id, new NavTab(tab));
 
@@ -92,7 +98,10 @@ import * as CanvasAPI from "./canvas_api";
 	const assignmentFlow = async function() {
 
 		// hopefully 1000 is enough to get all in one go
-		const assignmentsUrl = Utils.perPage(V.canvas.api.urls.assignments, 1000);
+		const assignmentsUrl = Utils.formatUrl(V.canvas.api.urls.assignments, {
+			perPage: 1000,
+			courseID: DATA.courseID
+		});
 		const assignments = await Utils.getJSON<CanvasAPI.Assignment[]>(assignmentsUrl);
 
 		for (const assignmentJson of assignments) {
@@ -125,7 +134,10 @@ import * as CanvasAPI from "./canvas_api";
 
 		// ===== modules =====
 
-		const modulesUrl = Utils.perPage(V.canvas.api.urls.modules, 25);
+		const modulesUrl = Utils.formatUrl(V.canvas.api.urls.modules, {
+			perPage: 25,
+			courseID: DATA.courseID
+		});
 		const modules = await Utils.getJSON<CanvasAPI.Module[]>(modulesUrl);
 		for (const moduleData of modules) {
 			DATA.modules.set(moduleData.id, new Module(moduleData));
@@ -140,7 +152,10 @@ import * as CanvasAPI from "./canvas_api";
 				.map(module => {
 
 					const moduleItemsUrl = Utils.perPage(
-						Utils.format(V.canvas.api.urls.module_items, {moduleID: module.id}),
+						Utils.formatUrl(V.canvas.api.urls.module_items, {
+							moduleID: module.id,
+							courseID: DATA.courseID
+						}),
 						module.itemCount);
 
 					// return the promise instead of awaiting on this so it can be used in Promise.all
@@ -180,7 +195,10 @@ import * as CanvasAPI from "./canvas_api";
 			.filter(item => item.type === ModuleItemType.FILE);
 
 		const filePromises: Array<Promise<CanvasAPI.File>> = fileItems.map(item => {
-			const fileDataUrl = Utils.format(V.canvas.api.urls.file_direct, {fileID: item.contentId});
+			const fileDataUrl = Utils.formatUrl(V.canvas.api.urls.file_direct, {
+				fileID: item.contentId,
+				courseID: DATA.courseID
+			});
 			// return promise for Promise.all
 			return Utils.getJSON<CanvasAPI.File>(fileDataUrl);
 		});
@@ -199,7 +217,7 @@ import * as CanvasAPI from "./canvas_api";
 
 	const customDataFlow = async function() {
 
-		const customDataUrl = Utils.format(V.canvas.api.urls.custom_data, {dataPath: ""});
+		const customDataUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {dataPath: ""});
 		const customData: CanvasAPI.CustomData = (
 			await Utils.getJSON<{data: CanvasAPI.CustomData}>(customDataUrl)
 		).data;
@@ -572,13 +590,15 @@ class Main {
 		stateObj.active = state;
 		stateObj.onChange(state);
 
-		const url = Utils.format(V.canvas.api.urls.custom_data, {dataPath: "/active_states"});
+		const url = Utils.formatUrl(V.canvas.api.urls.custom_data, {
+			dataPath: "/" + V.canvas.api.data_urls.active_states
+		});
 		return Utils.editDataArray(url, state, [stateName]);
 	}
 
 	static async setNavTabPosition(tab: NavTab, position: number) {
 
-		const url = Utils.format(V.canvas.api.urls.custom_data, {
+		const url = Utils.formatUrl(V.canvas.api.urls.custom_data, {
 			dataPath: ["", V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id].join("/")
 		});
 
@@ -616,8 +636,8 @@ class Main {
 		el.disabled = true;
 		el.title = V.tooltip.waiting;
 
-		const url = Utils.format(V.canvas.api.urls.custom_data, {
-			dataPath: `/${V.canvas.api.data_urls.completed_assignments}/${DATA.courseID}`
+		const url = Utils.formatUrl(V.canvas.api.urls.custom_data, {
+			dataPath: ["", V.canvas.api.data_urls.completed_assignments, DATA.courseID].join("/")
 		});
 
 		const success = await Utils.editDataArray(url, status, [id]);
@@ -651,8 +671,8 @@ class Main {
 
 		const newState = !item.hidden;
 
-		const url = Utils.format(V.canvas.api.urls.custom_data, {
-			dataPath: `/${V.canvas.api.data_urls.hidden_assignments}/${DATA.courseID}`
+		const url = Utils.formatUrl(V.canvas.api.urls.custom_data, {
+			dataPath: ["", V.canvas.api.data_urls.hidden_assignments, DATA.courseID].join("/")
 		});
 
 		const success = await Utils.editDataArray(url, newState, [id]);

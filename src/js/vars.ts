@@ -93,34 +93,46 @@ class SassVars {
 
 	sassJson: string;
 
-	private static readonly prefixTypes = ["cssClass", "dataAttr", "id"];
+	private static readonly meta = {
+		dataPrefixType: "dataAttr",
+		prefixTypes: ["cssClass", "dataAttr", "id"],
+		prefixExclude: ["popup_.+"]
+	};
 
 	constructor() {
 
-		const types = new Set(SassVars.prefixTypes);
+		const types = new Set(SassVars.meta.prefixTypes);
 
-		const processObject = (obj, objName) => {
+		const processObject = (obj: object, objName: string) => {
+
 			for (const key in obj) {
 				if (!obj.hasOwnProperty(key)) continue;
 
-				let val: object | string = obj[key];
+				let val: object | string | number = obj[key];
+
 				if (typeof val === "object") {
+
 					processObject(val, key);
+
 				}
 				else if (typeof val === "string") {
 
-					if (!key.startsWith("popup_") && (types.has(objName) || types.has(key))) {
-						val = this.prefix + "-" + val;
-					}
+					const excluded = SassVars.meta.prefixExclude
+						.map(str => new RegExp("^" + str + "$"))
+						.some(regex => regex.test(key));
 
-					if (objName === "dataAttr") {
+					if (!excluded && (types.has(objName) || types.has(key)))
+						val = this.prefix + "-" + val;
+
+					if (objName === SassVars.meta.dataPrefixType)
 						val = "data-" + val;
-					}
 
 					obj[key] = val;
 				}
 			}
+
 		};
+
 		processObject(this, "root");
 
 		this.sassJson = JSON.stringify(this);
@@ -215,10 +227,7 @@ class Vars extends SassVars {
 	};
 
 	// separated for use in template strings below
-	private _canvas = {
-		namespace: `com.jmariner.${this.prefix}`,
-		root_url: "/api/v1/"
-	};
+	private _canvasNamespace = `com.jmariner.${this.prefix}`;
 
 	canvas = {
 		selector: {
@@ -230,11 +239,11 @@ class Vars extends SassVars {
 			nav_tabs: "ul#section-tabs"
 		},
 		api: {
-			namespace: this._canvas.namespace,
-			root_url: this._canvas.root_url,
+			namespace: this._canvasNamespace,
+			root_url: "/api/v1/",
 			per_page: 100,
 			urls: {
-				custom_data: `users/self/custom_data{dataPath}?ns=${this._canvas.namespace}`,
+				custom_data: `users/self/custom_data{dataPath}?ns=${this._canvasNamespace}`,
 				favorite_courses: "users/self/favorites/courses",
 				custom_colors: "users/self/colors",
 				assignments: "users/self/courses/{courseID}/assignments",
@@ -251,12 +260,6 @@ class Vars extends SassVars {
 			}
 		}
 	};
-
-	init(courseID: number) {
-		$.each(this.canvas.api.urls, (key, url) => {
-			this.canvas.api.urls[key] = this.canvas.api.root_url + Utils.format(url, {courseID});
-		});
-	}
 }
 
 const VARS = new Vars();

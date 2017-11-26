@@ -87,20 +87,7 @@ class SassVars {
 		},
 		disable_indent_override: {
 			pages: ["modules"],
-			desc: "Disable indent overrides",
-			onDisable: (vars, body) => {
-				[0,1,2,3,4,5].forEach(level =>
-					$(vars.canvas.selector.module_item, body).removeClass("indent_" + level));
-				$(vars.canvas.selector.subheader, body).addClass("indent_" + vars.ui.subheader_indent);
-				$(vars.canvas.selector.not_subheader, body).addClass("indent_" + vars.ui.main_indent);
-			},
-			onEnable: (vars, body) => {
-				$(vars.canvas.selector.module_item, body).each(function() {
-					[0,1,2,3,4,5].forEach(level => $(this).removeClass("indent_" + level));
-					const defLevel = $(this).attr(vars.data_attr.def_indent);
-					$(this).addClass("indent_" + defLevel);
-				});
-			}
+			desc: "Disable indent overrides"
 		}
 	};
 

@@ -98,19 +98,17 @@ export class NavTab {
 
 export class State {
 	private name: string;
-	private onEnable: (vars: any, body: JQuery) => void;
-	private onDisable: (vars: any, body: JQuery) => void;
 
 	readonly bodyClass: string;
 	readonly onPages: CanvasPage[];
 
 	public active: boolean;
+	public onEnable: () => void;
+	public onDisable: () => void;
 
 	constructor(key, stateData, active) {
 		this.name = key;
 		this.bodyClass = stateData.cssClass;
-		this.onEnable = stateData.onEnable;
-		this.onDisable = stateData.onDisable;
 		this.active = active;
 		this.onPages = [];
 
@@ -121,9 +119,9 @@ export class State {
 		});
 	}
 
-	onChange(newState: boolean, vars, body: JQuery) {
-		if (newState) Utils.safeCb(this.onEnable)(vars, body);
-		else Utils.safeCb(this.onDisable)(vars, body);
+	onChange(newState: boolean) {
+		if (newState && this.onEnable instanceof Function) this.onEnable();
+		else if (this.onDisable instanceof Function) this.onDisable();
 	}
 
 }

@@ -452,8 +452,23 @@ class Main {
 		// === clean up empty modules ===
 		$(V.canvas.selector.module_items).filter((i, el) => !el.innerHTML.trim().length).html("");
 
-		// === set custom indent level ===
-		const disabledIndent = DATA.states.get("disable_indent_override").active;
+		// === setup and apply custom indents ===
+
+		const disabledIndentState = DATA.states.get("disable_indent_override");
+		const disabledIndent = disabledIndentState.active;
+
+		disabledIndentState.onEnable = () => {
+			$(V.canvas.selector.module_item).each(function() {
+				[0,1,2,3,4,5].forEach(level => $(this).removeClass("indent_" + level));
+				const defLevel = $(this).attr(V.dataAttr.def_indent);
+				$(this).addClass("indent_" + defLevel);
+			});
+		};
+		disabledIndentState.onDisable = () => {
+			[0,1,2,3,4,5].forEach(level => $(V.canvas.selector.module_item).removeClass("indent_" + level));
+			$(V.canvas.selector.subheader).addClass("indent_" + V.ui.subheader_indent);
+			$(V.canvas.selector.not_subheader).addClass("indent_" + V.ui.main_indent);
+		};
 
 		$(V.canvas.selector.module_item).each(function() {
 			const defIndent =
@@ -555,7 +570,7 @@ class Main {
 			PAGE.body.toggleClass(stateObj.bodyClass, state);
 
 		stateObj.active = state;
-		stateObj.onChange(state, V, PAGE.body);
+		stateObj.onChange(state);
 
 		const url = Utils.format(V.canvas.api.urls.custom_data, {dataPath: "/active_states"});
 		return Utils.editDataArray(url, state, [stateName]);

@@ -4,8 +4,6 @@ let ACCESS_TOKEN: string = null;
 let DATA: Data;
 let PAGE: Page;
 
-type Callback = () => void;
-
 class Data {
 	coursePage: CanvasPage;
 	courseID: number;
@@ -246,17 +244,14 @@ class ModuleItem {
 }
 
 enum ModuleItemType {
-	//noinspection JSUnusedGlobalSymbols
 	ASSIGNMENT, SUB_HEADER, DISCUSSION, QUIZ, PAGE, FILE, EXTERNAL_URL, EXTERNAL_TOOL
 }
 
 enum CanvasPage {
-	//noinspection JSUnusedGlobalSymbols
 	MODULES, GRADES, HOME, USERS, GROUPS, COLLABORATIONS, DISCUSSION_TOPICS, EXTERNAL_TOOLS, ASSIGNMENTS
 }
 
 enum MessageType {
-	//noinspection JSUnusedGlobalSymbols
 	BASIC, STATE
 }
 
@@ -404,88 +399,6 @@ class Utils {
 		return Utils.putData(url, newArray);
 	}
 
-/*
-	static getJSON_Sync(url: string, callback: (data: any) => void) {
-
-		if (ACCESS_TOKEN === null)
-			throw new Error("Access token not set");
-
-		const req = new XMLHttpRequest();
-
-		req.onreadystatechange = () => {
-			if (req.readyState === 4) {
-				switch (req.status) {
-					case 404:
-						throw new Error("404 error when getting JSON");
-					case 400:
-						console.debug("400 error when getting JSON was OKAY");
-					// fallthrough
-					default:
-						Utils.safeCb(callback)(JSON.parse(req.responseText.replace("while(1);", "")));
-				}
-			}
-		};
-
-		req.open("GET", url);
-		req.setRequestHeader("Content-Type", "application/json");
-		req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
-
-		req.send();
-	}
-
-	static putData_Sync(url: string, data: any | any[], callback: (success: boolean) => any) {
-		const bodyData = {ns: V.canvas.api.namespace, data};
-		const action = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
-
-		if (action === "DELETE")
-			delete bodyData.data;
-
-		const req = new XMLHttpRequest();
-
-		req.onreadystatechange = () => {
-			if (req.readyState === 4) {
-
-				// TODO determine what's not a success
-				Utils.safeCb(callback)(true);
-
-			}
-		};
-
-		req.open(action, url);
-		req.setRequestHeader("Content-Type", "application/json");
-		req.setRequestHeader("Authorization", "Bearer " + ACCESS_TOKEN);
-		req.send(JSON.stringify(bodyData));
-	}
-
-	static appendDataArray_Sync(url: string, values: any[], callback: (success: boolean) => any) {
-
-		// url is same for get/put
-		Utils.getJSON_Sync(url, resultData => {
-			const array = resultData.data ? resultData.data.concat(values) : values;
-			Utils.putData_Sync(url, array, callback);
-		});
-	}
-
-	static subtractDataArray_Sync(url: string, values: any[], callback: (success: boolean) => any) {
-
-		// url is same for get/put
-		Utils.getJSON_Sync(url, resultData => {
-			let array = resultData.data || [];
-			if (array.length === 0) {
-				Utils.safeCb(callback)(true);
-				return;
-			}
-			array = array.filter(val => !values.includes(val));
-			Utils.putData_Sync(url, array, callback);
-		});
-	}
-
-	static editDataArray_Sync(url: string, append: boolean, values: any[], callback?: (success: boolean) => any) {
-		if (append) Utils.appendDataArray_Sync(url, values, callback);
-		else Utils.subtractDataArray_Sync(url, values, callback);
-	}
-*/
-
 	static async wait(ms: number) {
 		await new Promise(resolve => {
 			setTimeout(resolve, ms);
@@ -517,7 +430,7 @@ class Utils {
 			chrome.runtime.sendMessage(new MessageData("open options"));
 	}
 
-	static runCb(callbackFunction: Callback) {
+	static runCb(callbackFunction: () => void) {
 		if (callbackFunction !== undefined)
 			callbackFunction();
 	}

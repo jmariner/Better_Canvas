@@ -815,7 +815,7 @@ class Main {
             if (hasHideButton) {
                 item.hideElement =
                     $(Utils.format(V.element.hide_button, { item_id: itemId })).appendTo(parentEl);
-                UI.updateItemHide(item);
+                UI.updateItemHide(item, true);
                 item.hideElement.show();
             }
         }
@@ -985,7 +985,7 @@ class Main {
             const success = yield Utils.editDataArray(url, newState, [id]);
             if (success) {
                 item.hidden = newState;
-                yield UI.animateItemHide(item);
+                yield UI.updateItemHide(item);
                 UI.updateModule(item.module);
                 console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
             }
@@ -1046,26 +1046,18 @@ class UI {
             .closest(V.canvas.selector.module_item)
             .toggleClass(V.cssClass.checkbox_checked, item.checked);
     }
-    static animateItemHide(item) {
+    static updateItemHide(item, instant) {
         return __awaiter(this, void 0, void 0, function* () {
             if (item.hideElement === null)
                 throw new Error("No hide button to update");
             const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);
             const iEl = item.hideElement.find("i");
             iEl.add(modItemEl).toggleClass(V.cssClass.item_hidden, item.hidden);
-            yield Utils.wait(V.ui.fade_time);
+            if (!instant)
+                yield Utils.wait(V.ui.fade_time);
             item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
             iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
         });
-    }
-    static updateItemHide(item) {
-        if (item.hideElement === null)
-            throw new Error("No hide button to update");
-        const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);
-        const iEl = item.hideElement.find("i");
-        iEl.add(modItemEl).toggleClass(V.cssClass.item_hidden, item.hidden);
-        item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
-        iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
     }
     static updateModule(module) {
         if (DATA.elements.toc !== null) {

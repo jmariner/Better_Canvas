@@ -416,7 +416,8 @@ class Main {
 				item.hideElement =
 					$(Utils.format(V.element.hide_button, {item_id: itemId})).appendTo(parentEl);
 
-				UI.updateItemHide(item);
+				// this function is async, but with second argument 'true', it updates instantly
+				UI.updateItemHide(item, true);
 				item.hideElement.show();
 			}
 
@@ -646,86 +647,11 @@ class Main {
 
 		if (success) {
 			item.hidden = newState;
-			await UI.animateItemHide(item);
+			await UI.updateItemHide(item);
 			UI.updateModule(item.module);
 			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
 		}
 	}
-
-/*
-	// element is <input>
-	static onCheckboxChange_Sync(el: HTMLInputElement) {
-		const id = Number($(el).attr(V.data_attr.mod_item_id));
-		const item = DATA.moduleItems.get(id);
-		const status = el.checked;
-		const oldTitle = el.title;
-
-		// reset back to previous state to allow for validation
-		el.checked = !status;
-
-		// before updating "item", so if it's already the same, we have a desync
-		if (status === item.checked) {
-			console.error("Checkbox desync at item", item);
-			return;
-		}
-
-		// TODO create a better method for waiting-disable for checkbox and hide button
-		// - have a different class applied that sets the cursor to waiting mode and dims the button
-
-		// disable until we confirm we can update the data
-		el.disabled = true;
-		el.title = V.tooltip.waiting;
-
-		const url = Utils.format(V.canvas.api.urls.custom_data, {
-			dataPath: `/${V.canvas.api.data_urls.completed_assignments}/${DATA.courseID}`
-		});
-
-		Utils.editDataArray_Sync(url, status, [id], success => {
-			el.disabled = false;
-			el.title = oldTitle;
-
-			if (success) {
-				item.checked = status;
-				UI.updateModule(item.module);
-				UI.updateCheckbox(item);
-				console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${el.checked?"":"un"}checked`);
-			}
-		});
-
-	}
-
-	// element is the <i>
-	static onHideButtonClick_Sync(el: JQuery) {
-		const id = Number(el.attr(V.data_attr.mod_item_id));
-		const item = DATA.moduleItems.get(id);
-
-		if (item.isGraded || item.hideElement.hasClass(V.cssClass.hide_disabled)) return;
-
-		const newState = !item.hidden;
-
-		// disable until updating complete. this is undone by updateHideButton later
-		item.hideElement
-			.addClass(V.cssClass.hide_disabled)
-			.find("i")
-			.attr("title", V.tooltip.waiting);
-
-		const url = Utils.format(V.canvas.api.urls.custom_data, {
-			dataPath: `/${V.canvas.api.data_urls.hidden_assignments}/${DATA.courseID}`
-		});
-
-		Utils.editDataArray_Sync(url, newState, [id], success => {
-			if (success) item.hidden = newState;
-			UI.updateItemHide(item, success, () => {
-				if (success) {
-					UI.updateModule(item.module);
-					console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
-				}
-			});
-
-		});
-
-	}
-	*/
 
 	static onMessage(data: MessageData, source: MessageSender, respondFunc: (data?: any) => void) {
 
@@ -790,7 +716,7 @@ class UI {
 			.toggleClass(V.cssClass.checkbox_checked, item.checked);
 	}
 
-	static async animateItemHide(item: ModuleItem) {
+	static async updateItemHide(item: ModuleItem, instant?: boolean) {
 		if (item.hideElement === null) throw new Error("No hide button to update");
 
 		const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);
@@ -799,24 +725,7 @@ class UI {
 		// update hidden class on the <i> and <li>
 		iEl.add(modItemEl).toggleClass(V.cssClass.item_hidden, item.hidden);
 
-		await Utils.wait(V.ui.fade_time);
-
-		// update disable status and title, undoing waiting-disable
-		item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
-		iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
-
-	}
-
-	// TODO merge this and the above function to avoid duplicate code
-	// right now, they are split because one is async
-	static updateItemHide(item: ModuleItem) {
-		if (item.hideElement === null) throw new Error("No hide button to update");
-
-		const modItemEl = item.hideElement.closest(V.canvas.selector.module_item);
-		const iEl = item.hideElement.find("i");
-
-		// update hidden class on the <i> and <li>
-		iEl.add(modItemEl).toggleClass(V.cssClass.item_hidden, item.hidden);
+		if (!instant) await Utils.wait(V.ui.fade_time);
 
 		// update disable status and title, undoing waiting-disable
 		item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);

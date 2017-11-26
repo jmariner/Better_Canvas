@@ -1,8 +1,5 @@
-// ===== objects.ts =====
-let V: Vars.Vars;
-let ACCESS_TOKEN: string = null;
-let DATA: Data;
-let PAGE: Page;
+import Utils from "./utils";
+import * as CanvasAPI from "./canvas_api";
 
 class Data {
 	coursePage: CanvasPage;
@@ -56,7 +53,7 @@ class Page {
 	}
 }
 
-class CustomCourseTab {
+export class CustomCourseTab {
 	readonly id: number;
 	readonly name: string;
 	readonly code: string;
@@ -71,7 +68,7 @@ class CustomCourseTab {
 
 }
 
-class NavTab {
+export class NavTab {
 	readonly id: string;
 	private readonly initPosition: number;
 	private _position: number;
@@ -99,7 +96,7 @@ class NavTab {
 	}
 }
 
-class State {
+export class State {
 	private name: string;
 	private onEnable: (vars: any, body: JQuery) => void;
 	private onDisable: (vars: any, body: JQuery) => void;
@@ -131,7 +128,7 @@ class State {
 
 }
 
-class Module {
+export class Module {
 	readonly name: string;
 	readonly id: number;
 	readonly itemCount: number;
@@ -146,7 +143,7 @@ class Module {
 
 }
 
-class ModuleItem {
+export class ModuleItem {
 	private _id: number;
 	private _name: string;
 	private moduleId: number;
@@ -243,19 +240,19 @@ class ModuleItem {
 
 }
 
-enum ModuleItemType {
+export enum ModuleItemType {
 	ASSIGNMENT, SUB_HEADER, DISCUSSION, QUIZ, PAGE, FILE, EXTERNAL_URL, EXTERNAL_TOOL
 }
 
-enum CanvasPage {
+export enum CanvasPage {
 	MODULES, GRADES, HOME, USERS, GROUPS, COLLABORATIONS, DISCUSSION_TOPICS, EXTERNAL_TOOLS, ASSIGNMENTS
 }
 
-enum MessageType {
+export enum MessageType {
 	BASIC, STATE
 }
 
-class MessageData {
+export class MessageData {
 	action: string;
 	type: MessageType;
 
@@ -265,7 +262,7 @@ class MessageData {
 	}
 }
 
-class StateMessageData extends MessageData {
+export class StateMessageData extends MessageData {
 	stateName: string;
 	state: boolean;
 
@@ -280,7 +277,7 @@ class StateMessageData extends MessageData {
 	}
 }
 
-class Exception {
+export class Exception {
 	private reason: string;
 	private fatal: boolean;
 
@@ -299,147 +296,5 @@ class Exception {
 	}
 }
 
-class Utils {
-
-	static format(str: string, obj: object): string {
-
-		for (const key in obj) {
-			if (obj.hasOwnProperty(key))
-				str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), obj[key]);
-		}
-
-		return str;
-	}
-
-	static getOrDefault<T>(obj: object, key: PropertyKey, def: T): T {
-		if (obj === undefined || obj[key] === undefined) return def;
-		else return obj[key];
-	}
-
-	static perPage(url: string, perPage: number) {
-		return `${url}?per_page=${perPage}`;
-	}
-
-	static async getJSON<T>(url: string): Promise<T> {
-
-		Utils.checkToken();
-
-		const resp = await fetch(url, {
-			method: "GET",
-			headers: new Headers({
-				"Content-Type": "application/json",
-				"Authorization": "Bearer " + ACCESS_TOKEN
-			})
-		} as RequestInit);
-
-		if (resp.status === 404) {
-			throw new Error("404 error when getting JSON");
-		}
-		else {
-			if (resp.status === 400)
-				console.debug("400 error when getting JSON was OKAY");
-
-			let json = await resp.text();
-			json = json.replace("while(1);", "");
-
-			return JSON.parse(json);
-		}
-
-	}
-
-	static async putData(url, data: any[] | any): Promise<boolean> {
-
-		Utils.checkToken();
-
-		const bodyData = {ns: V.canvas.api.namespace, data};
-		const method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
-
-		if (method === "DELETE")
-			delete bodyData.data;
-
-		const ops = {
-			method,
-			headers: new Headers({
-				"Content-Type": "application/json",
-				"Authorization": "Bearer " + ACCESS_TOKEN
-			}),
-			body: JSON.stringify(bodyData)
-		} as RequestInit;
-
-		const resp = await fetch(url, ops);
-
-		if (!resp.ok || resp.status === 401) { // 401 unauthorized
-			console.error(`Unable to ${method} data to ${url}. resp:`, JSON.stringify(resp));
-			return false;
-		}
-		else {
-			return true;
-		}
-
-	}
-
-	static async editDataArray(url: string, append: boolean, values: any[]): Promise<boolean> {
-
-		const existingData: any[] = (
-			// url is same for get/put
-			await Utils.getJSON<{data: any[]}>(url)
-		).data || [];
-
-		let newArray;
-
-		if (append) {
-			newArray = existingData.concat(values);
-		}
-		else { // subtract from data array
-			if (existingData.length === 0)
-				return true;
-			newArray = existingData.filter(val => !values.includes(val));
-		}
-
-		return Utils.putData(url, newArray);
-	}
-
-	static async wait(ms: number) {
-		await new Promise(resolve => {
-			setTimeout(resolve, ms);
-		});
-	}
-
-	static checkToken(): void | never {
-		if (ACCESS_TOKEN === null)
-			throw new Error("Access token not set");
-	}
-
-	static async loadToken(): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
-
-			chrome.storage.sync.get(V.misc.token_key, resultData => {
-
-				const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
-				if (success) resolve(resultData[V.misc.token_key]);
-				else reject();
-
-			});
-
-		});
-	}
-
-	static accessTokenPrompt() {
-		const openOptions = confirm("Missing access token, press OK to open extension options");
-		if (openOptions) // TODO send tab ID with this message?
-			chrome.runtime.sendMessage(new MessageData("open options"));
-	}
-
-	static runCb(callbackFunction: () => void) {
-		if (callbackFunction !== undefined)
-			callbackFunction();
-	}
-
-	static safeCb<F extends ((...args) => void)>(callbackFunction: F | undefined): F {
-		if (callbackFunction !== undefined)
-			return callbackFunction;
-		else
-			return (() => {}) as F; // tslint:disable-line:no-empty
-	}
-
-}
+export const DATA = new Data();
+export const PAGE = new Page();

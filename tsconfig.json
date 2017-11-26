@@ -2,7 +2,7 @@
   "compilerOptions": {
     "types": ["jquery", "chrome", "node", "node-sass"],
     "lib": ["es2016", "dom"],
-    "module": "system",
+    "module": "es6",
     "target": "es6",
     "removeComments": true,
     "sourceMap": true

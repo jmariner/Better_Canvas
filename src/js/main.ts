@@ -1,9 +1,10 @@
-/// <reference path="objects.ts" />
-/// <reference path="canvas_api.ts" />
-/// <reference path="vars.ts" />
-import MessageSender = chrome.runtime.MessageSender;
+import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
+	State, Module, ModuleItem, MessageData,  StateMessageData,
+	CanvasPage, MessageType, ModuleItemType } from "./objects";
+import Utils from "./utils";
+import { V } from "./vars";
+import * as CanvasAPI from "./canvas_api";
 
-// ===== main.ts =====
 (async function init() {
 
 	// =======================================
@@ -11,9 +12,6 @@ import MessageSender = chrome.runtime.MessageSender;
 	// =======================================
 
 	(function() {
-
-		DATA = new Data();
-		PAGE = new Page();
 
 		DATA.extensionId = chrome.runtime.id;
 		DATA.name = chrome.runtime.getManifest().name;
@@ -41,12 +39,11 @@ import MessageSender = chrome.runtime.MessageSender;
 
 	// load variables
 
-	V = Vars.VARS;
 	V.init(DATA.courseID);
 
 	// try to load access token
 	try {
-		ACCESS_TOKEN = await Utils.loadToken();
+		await Utils.loadToken();
 	}
 	catch (e) {
 		Utils.accessTokenPrompt();
@@ -653,7 +650,7 @@ class Main {
 		}
 	}
 
-	static onMessage(data: MessageData, source: MessageSender, respondFunc: (data?: any) => void) {
+	static onMessage(data: MessageData, source: chrome.runtime.MessageSender, respondFunc: (data?: any) => void) {
 
 		if (source.id !== DATA.extensionId) return;
 

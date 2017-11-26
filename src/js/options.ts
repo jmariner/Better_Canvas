@@ -1,7 +1,5 @@
-/// <reference path="objects.ts" />
-/// <reference path="vars.ts" />
+import { V } from "./vars";
 
-V = Vars.VARS;
 $(function() {
 
 	const tokenEl = $("#token");

@@ -4,7 +4,8 @@ const fs = require("fs");
 const noop = ()=>{};
 
 require("ts-node").register({
-	disableWarnings: true
+	disableWarnings: true,
+	target: "es5"
 });
 
 const dir = __dirname + "/src/css/";
@@ -12,7 +13,6 @@ fs.readdir(dir, (e, files) => {
 	if (e) return;
 	files.map(f => {
 		const fileMatch = f.match(/^([^_][^/\\]+)\.scss$/);
-	//	console.log(f, fileMatch);
 		return fileMatch ? fileMatch[1] : null;
 	}).filter(f => f !== null).forEach(render);
 });
@@ -52,12 +52,12 @@ function typeScriptImporter(url, prev) {
 
 	const parseValue = value => {
 		if (Array.isArray(value)) {
-			return `(${value.map(v => parseValue(v)).join(',')})`;
+			return `(${value.map(v => parseValue(v)).join(",")})`;
 		}
 		else if (typeof value === "object") {
 			return `(${Object.keys(value)
 				.map(key => `${key}: ${parseValue(value[key])}`)
-				.join(',')})`;
+				.join(",")})`;
 		}
 		else {
 			return value;
@@ -65,7 +65,8 @@ function typeScriptImporter(url, prev) {
 	};
 
 	try {
-		const contents = `$${name}: ${parseValue(JSON.parse(require(file)))}`;
+		let contents = require(file); // .sassJson;
+		contents = `$${name}: ${parseValue(JSON.parse(contents))}`;
 
 		if (process.argv[2] === "-v")
 			console.log(contents.replace(/,([^,]+):/g, ",\n$1"));

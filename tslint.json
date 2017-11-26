@@ -48,10 +48,7 @@
     	"arrow-parens": false,
     	"max-classes-per-file": false,
     	"object-literal-sort-keys": false,
-
-    	// TODO use namespaces and imports correctly so these can be enabled
-    	"no-reference": false,
-    	"no-namespace": false
+        "ordered-imports": false
     },
     "rulesDirectory": []
 }

@@ -1,12 +1,12 @@
-/// <reference path="objects.ts" />
-/// <reference path="vars.ts" />
+import { V } from "./vars";
+import Utils from "./utils";
+import { MessageData, StateMessageData } from "./objects";
 
 declare const componentHandler;
 const QUERY = {active: true, currentWindow: true};
 
 $(function() {
 
-V = Vars.VARS;
 const BODY = $("body");
 const jumpButton = $("#" + V.id.popup_jump_button);
 const insertionPoint = $("#" + V.id.popup_insertion_point);

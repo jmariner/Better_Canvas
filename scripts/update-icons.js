@@ -1,6 +1,8 @@
 const download = require("download");
 const fs = require("fs");
+const path = require("path");
 
+const dirRoot = path.dirname(require.main.filename);
 const filePath = "src/css/";
 const fileName = "_canvas_icons.scss";
 fs.rename(filePath+fileName, filePath+fileName+".old", ()=>{});

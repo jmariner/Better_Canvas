@@ -1,3 +1,0 @@
-@font-face{font-family:'Roboto';font-style:normal;font-weight:400;src:url("/fonts/Roboto-Regular.ttf")}body{width:250px;margin:0;padding:0;font:16px "Roboto", sans-serif}body:not(.done-loading){display:none}body:not(.page-connected)>div.require-page,body.page-connected>#page-missing-error{display:none}body>div{display:block;margin-bottom:1em}body>div.title{padding:.75em .5em;border-bottom:1px solid black;display:flex;flex-direction:row;justify-content:flex-start;align-items:center}body>div.title>div.title-text{flex-grow:2;font-size:20px}body>div.title>div.title-icon{flex-grow:1}body>div.button,body>div.title,body>div#page-missing-error{text-align:center}body>div.switch{padding-left:16px}body label.mdl-switch{width:auto}
-
-/*# sourceMappingURL=popup.min.css.map */

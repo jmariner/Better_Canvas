@@ -3,14 +3,14 @@
     "types": ["jquery", "chrome", "node", "node-sass"],
     "lib": ["es2016", "dom"],
     "module": "es6",
-    "target": "es6",
+    "target": "es2015",
     "removeComments": true,
     "sourceMap": true
   },
   "files": [
-    "src/js/main.ts",
-    "src/js/popup.ts",
-    "src/js/options.ts"
+    "src/ts/main.ts",
+    "src/ts/popup.ts",
+    "src/ts/options.ts"
   ],
   "compileOnSave": false,
   "exclude": [

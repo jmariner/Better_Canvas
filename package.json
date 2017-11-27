@@ -2,8 +2,11 @@
   "name": "Better_Canvas",
   "version": "3.0.0",
   "scripts": {
-    "build": "./node_modules/.bin/webpack",
-    "watch": "./node_modules/.bin/webpack -w"
+    "webpack:build": "webpack",
+    "webpack:watch": "webpack -w",
+    "scss:build": "node scripts/scss-compile.js",
+    "scss:icons": "node scripts/update-icons.js",
+    "build": "npm run webpack:build && npm run scss:build"
   },
   "devDependencies": {
     "@types/node": "^7.0.32",

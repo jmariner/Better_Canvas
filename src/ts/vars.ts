@@ -89,7 +89,7 @@ class SassVars {
 		}
 	};
 
-	sassJson: string;
+	sassExports: SassVars;
 
 	private static readonly meta = {
 		dataPrefixType: "dataAttr",
@@ -133,7 +133,7 @@ class SassVars {
 
 		processObject(this, "root");
 
-		this.sassJson = JSON.stringify(this);
+		this.sassExports = Object.assign({}, this);
 	}
 
 }
@@ -262,4 +262,4 @@ class Vars extends SassVars {
 
 const VARS = new Vars();
 export const V = VARS;
-export default VARS.sassJson;
+export default VARS.sassExports;

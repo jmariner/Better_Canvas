@@ -4,11 +4,9 @@
 		{
 			"path": ".",
 			"file_exclude_patterns": [
-				"src/js/*.js",
 				"package-lock.json"
 			],
 			"folder_exclude_patterns": [
-				"src/js/dist/",
 				"node_modules"
 			]
 		}

@@ -8,9 +8,9 @@ function _path(pathString) {
 module.exports = {
 	devtool: 'inline-source-map',
 	entry: {
-		popup: _path("src/js/popup.ts"),
-		options: _path("src/js/options.ts"),
-		content_script: _path("src/js/main.ts")
+		popup: _path("src/ts/popup.ts"),
+		options: _path("src/ts/options.ts"),
+		content_script: _path("src/ts/main.ts")
 	},
 	output: {
 		path: _path("dist/js"),

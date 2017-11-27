@@ -4,10 +4,10 @@
   "version": "3.0",
 
   "icons": {
-    "16": "img/icon16.png",
-    "32": "img/icon32.png",
-    "48": "img/icon48.png",
-    "128": "img/icon128.png"
+    "16": "dist/img/icon16.png",
+    "32": "dist/img/icon32.png",
+    "48": "dist/img/icon48.png",
+    "128": "dist/img/icon128.png"
   },
 
   "permissions": [
@@ -35,9 +35,9 @@
   "content_scripts": [
     {
       "matches": ["https://ecpi.instructure.com/*"],
-      "css": ["src/css/style.min.css"],
+      "css": ["dist/css/style.min.css"],
       "js": [
-        "lib/jquery.min.js",
+        "dist/lib/jquery.min.js",
         "dist/js/content_script.js"
       ]
     }

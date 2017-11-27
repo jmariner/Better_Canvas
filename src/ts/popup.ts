@@ -37,6 +37,7 @@ Promise.resolve()
 			if (resp !== undefined) {
 				if (resp.count === 0)
 					jumpButton.prop("disabled", true).attr("title", V.tooltip.popup_no_unchecked);
+				jumpButton.parent().show();
 				next();
 			}
 		});

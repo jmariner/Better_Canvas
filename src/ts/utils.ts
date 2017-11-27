@@ -1,160 +1,144 @@
 import { V } from "./vars";
 import { MessageData } from "./objects";
 
-export default class Utils {
+let ACCESS_TOKEN: string;
 
-	private static ACCESS_TOKEN: string;
+function checkToken(): void | never {
+	if (ACCESS_TOKEN === null)
+		throw new Error("Access token not set");
+}
 
-	static format(str: string, obj: object): string {
+function perPage(url: string, itemsPerPage: number) {
+	return `${url}?per_page=${itemsPerPage}`;
+}
 
-		for (const key in obj) {
-			if (obj.hasOwnProperty(key))
-				str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), obj[key]);
-		}
+export function format(str: string, obj: object): string {
 
-		return str;
+	for (const key in obj) {
+		if (obj.hasOwnProperty(key))
+			str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), obj[key]);
 	}
 
-	static getOrDefault<T>(obj: object, key: PropertyKey, def: T): T {
-		if (obj === undefined || obj[key] === undefined) return def;
-		else return obj[key];
+	return str;
+}
+
+export function getOrDefault<T>(obj: object, key: PropertyKey, def: T): T {
+	if (obj === undefined || obj[key] === undefined) return def;
+	else return obj[key];
+}
+
+export function formatUrl(url: string, formatObj?: {perPage?: number, [key: string]: any}) {
+
+	if (formatObj !== undefined) {
+		if (formatObj.perPage !== undefined)
+			url = perPage(url, formatObj.perPage);
+		url = format(url, formatObj);
 	}
 
-	static perPage(url: string, perPage: number) {
-		return `${url}?per_page=${perPage}`;
+	return V.canvas.api.root_url + url;
+}
+
+export async function getJSON<T>(url: string): Promise<T> {
+
+	checkToken();
+
+	const resp = await fetch(url, {
+		method: "GET",
+		headers: new Headers({
+			"Content-Type": "application/json",
+			"Authorization": "Bearer " + ACCESS_TOKEN
+		})
+	} as RequestInit);
+
+	if (resp.status === 404) {
+		throw new Error("404 error when getting JSON");
+	}
+	else {
+		if (resp.status === 400)
+			console.debug("400 error when getting JSON was OKAY");
+
+		let json = await resp.text();
+		json = json.replace("while(1);", "");
+
+		return JSON.parse(json);
 	}
 
-	static formatUrl(url: string, formatObj?: {perPage?: number, [key: string]: any}) {
+}
 
-		if (formatObj !== undefined) {
-			if (formatObj.perPage !== undefined)
-				url = Utils.perPage(url, formatObj.perPage);
-			url = Utils.format(url, formatObj);
-		}
+export async function putData(url, data: any[] | any): Promise<boolean> {
 
-		return V.canvas.api.root_url + url;
+	checkToken();
+
+	const bodyData = {ns: V.canvas.api.namespace, data};
+	const method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
+
+	if (method === "DELETE")
+		delete bodyData.data;
+
+	const ops = {
+		method,
+		headers: new Headers({
+			"Content-Type": "application/json",
+			"Authorization": "Bearer " + ACCESS_TOKEN
+		}),
+		body: JSON.stringify(bodyData)
+	} as RequestInit;
+
+	const resp = await fetch(url, ops);
+
+	if (!resp.ok || resp.status === 401) { // 401 unauthorized
+		console.error(`Unable to ${method} data to ${url}. resp:`, JSON.stringify(resp));
+		return false;
+	}
+	else {
+		return true;
 	}
 
-	static async getJSON<T>(url: string): Promise<T> {
+}
 
-		Utils.checkToken();
+export async function editDataArray(url: string, append: boolean, values: any[]): Promise<boolean> {
 
-		const resp = await fetch(url, {
-			method: "GET",
-			headers: new Headers({
-				"Content-Type": "application/json",
-				"Authorization": "Bearer " + Utils.ACCESS_TOKEN
-			})
-		} as RequestInit);
+	const existingData: any[] = (
+		// url is same for get/put
+		await getJSON<{data: any[]}>(url)
+	).data || [];
 
-		if (resp.status === 404) {
-			throw new Error("404 error when getting JSON");
-		}
-		else {
-			if (resp.status === 400)
-				console.debug("400 error when getting JSON was OKAY");
+	let newArray;
 
-			let json = await resp.text();
-			json = json.replace("while(1);", "");
-
-			return JSON.parse(json);
-		}
-
+	if (append) {
+		newArray = existingData.concat(values);
 	}
-
-	static async putData(url, data: any[] | any): Promise<boolean> {
-
-		Utils.checkToken();
-
-		const bodyData = {ns: V.canvas.api.namespace, data};
-		const method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
-
-		if (method === "DELETE")
-			delete bodyData.data;
-
-		const ops = {
-			method,
-			headers: new Headers({
-				"Content-Type": "application/json",
-				"Authorization": "Bearer " + Utils.ACCESS_TOKEN
-			}),
-			body: JSON.stringify(bodyData)
-		} as RequestInit;
-
-		const resp = await fetch(url, ops);
-
-		if (!resp.ok || resp.status === 401) { // 401 unauthorized
-			console.error(`Unable to ${method} data to ${url}. resp:`, JSON.stringify(resp));
-			return false;
-		}
-		else {
+	else { // subtract from data array
+		if (existingData.length === 0)
 			return true;
-		}
-
+		newArray = existingData.filter(val => !values.includes(val));
 	}
 
-	static async editDataArray(url: string, append: boolean, values: any[]): Promise<boolean> {
+	return putData(url, newArray);
+}
 
-		const existingData: any[] = (
-			// url is same for get/put
-			await Utils.getJSON<{data: any[]}>(url)
-		).data || [];
+export async function wait(ms: number) {
+	await new Promise(resolve => {
+		setTimeout(resolve, ms);
+	});
+}
 
-		let newArray;
+export async function loadToken() {
+	ACCESS_TOKEN = await new Promise<string>((resolve, reject) => {
 
-		if (append) {
-			newArray = existingData.concat(values);
-		}
-		else { // subtract from data array
-			if (existingData.length === 0)
-				return true;
-			newArray = existingData.filter(val => !values.includes(val));
-		}
+		chrome.storage.sync.get(V.misc.token_key, resultData => {
 
-		return Utils.putData(url, newArray);
-	}
-
-	static async wait(ms: number) {
-		await new Promise(resolve => {
-			setTimeout(resolve, ms);
-		});
-	}
-
-	static checkToken(): void | never {
-		if (Utils.ACCESS_TOKEN === null)
-			throw new Error("Access token not set");
-	}
-
-	static async loadToken() {
-		Utils.ACCESS_TOKEN = await new Promise<string>((resolve, reject) => {
-
-			chrome.storage.sync.get(V.misc.token_key, resultData => {
-
-				const success = Utils.ACCESS_TOKEN !== null || resultData[V.misc.token_key];
-				if (success) resolve(resultData[V.misc.token_key]);
-				else reject();
-
-			});
+			const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
+			if (success) resolve(resultData[V.misc.token_key]);
+			else reject();
 
 		});
-	}
 
-	static accessTokenPrompt() {
-		const openOptions = confirm("Missing access token, press OK to open extension options");
-		if (openOptions) // TODO send tab ID with this message?
-			chrome.runtime.sendMessage(new MessageData("open options"));
-	}
+	});
+}
 
-	static runCb(callbackFunction: () => void) {
-		if (callbackFunction !== undefined)
-			callbackFunction();
-	}
-
-	static safeCb<F extends ((...args) => void)>(callbackFunction: F | undefined): F {
-		if (callbackFunction !== undefined)
-			return callbackFunction;
-		else
-			return (() => {}) as F; // tslint:disable-line:no-empty
-	}
-
+export function accessTokenPrompt() {
+	const openOptions = confirm("Missing access token, press OK to open extension options");
+	if (openOptions) // TODO send tab ID with this message?
+		chrome.runtime.sendMessage(new MessageData("open options"));
 }

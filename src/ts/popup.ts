@@ -1,5 +1,5 @@
 import { V } from "./vars";
-import Utils from "./utils";
+import { format } from "./utils";
 import { MessageData, StateMessageData } from "./objects";
 
 declare const componentHandler;
@@ -49,7 +49,7 @@ Promise.resolve()
 		$.each(V.state, (stateName, stateData) => {
 			sendMessage(new StateMessageData("get", stateName), resp => {
 
-				const el = $(Utils.format(V.element.popup_state_switch, {name: stateName, desc: stateData.desc}));
+				const el = $(format(V.element.popup_state_switch, {name: stateName, desc: stateData.desc}));
 
 				el.insertAfter(insertionPoint);
 				componentHandler.upgradeElement(el.find("label").get(0));

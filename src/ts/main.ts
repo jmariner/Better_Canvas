@@ -1,7 +1,7 @@
 import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 	State, Module, ModuleItem, MessageData,  StateMessageData,
 	CanvasPage, MessageType, ModuleItemType } from "./objects";
-import Utils from "./utils";
+import * as Utils from "./utils";
 import { V } from "./vars";
 import * as CanvasAPI from "./canvas_api";
 
@@ -151,12 +151,11 @@ import * as CanvasAPI from "./canvas_api";
 				.filter(mod => mod.itemCount > 0)
 				.map(module => {
 
-					const moduleItemsUrl = Utils.perPage(
-						Utils.formatUrl(V.canvas.api.urls.module_items, {
-							moduleID: module.id,
-							courseID: DATA.courseID
-						}),
-						module.itemCount);
+					const moduleItemsUrl = Utils.formatUrl(V.canvas.api.urls.module_items, {
+						moduleID: module.id,
+						courseID: DATA.courseID,
+						perPage: module.itemCount
+					});
 
 					// return the promise instead of awaiting on this so it can be used in Promise.all
 					return Utils.getJSON<CanvasAPI.ModuleItem[]>(moduleItemsUrl);

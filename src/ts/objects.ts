@@ -1,4 +1,3 @@
-import Utils from "./utils";
 import * as CanvasAPI from "./canvas_api";
 
 class Data {

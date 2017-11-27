@@ -28,9 +28,12 @@ module.exports = {
 	resolve: {
 		extensions: [".ts", ".js"]
 	},
+	resolveLoader: {
+		modules: [_path("scripts/"), "node_modules"]
+	},
 	plugins: [
 		new CleanWebpackPlugin(
-			["dist/js"],
+			["dist/js/", "dist/css/*"],
 			{
 				exclude: ["background.js"]
 			}

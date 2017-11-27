@@ -1,6 +1,5 @@
 {
-	"folders":
-	[
+	"folders": [
 		{
 			"path": ".",
 			"file_exclude_patterns": [
@@ -8,6 +7,23 @@
 			],
 			"folder_exclude_patterns": [
 				"node_modules"
+			]
+		}
+	],
+	"build_systems": [
+		{
+			"name": "npm",
+			"shell_cmd": "npm run build",
+			"working_dir": "$project_path",
+			"variants": [
+				{
+					"name": "webpack",
+					"shell_cmd": "npm run webpack:build"
+				},
+				{
+					"name": "scss",
+					"shell_cmd": "npm run scss:build"
+				}
 			]
 		}
 	]

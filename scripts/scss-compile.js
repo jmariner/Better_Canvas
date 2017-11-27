@@ -12,12 +12,28 @@ const tsc = path.resolve(baseDir, "node_modules/typescript/lib/tsc.js");
 // TODO this is left as a reminder for future improvement
 const tsImportCache = new Map(); // file path => data
 
-fs.readdir(inputDir, (e, files) => {
-	if (e) return;
-	files.map(file => {
+(async function() {
+
+	if (!fs.existsSync(outDir)) {
+		const err = await new Promise(done => fs.mkdir(outDir, done));
+		if (err) throw err;
+	}
+
+	const files = await new Promise((resolve, reject) => {
+		fs.readdir(inputDir, (e, files) => {
+			if (e) reject(e);
+			else resolve(files);
+		});
+	});
+
+	for (const file of files) {
 		const fileMatch = file.match(/^([^_][^/\\]+)\.scss$/);
-		return fileMatch ? fileMatch[1] : null;
-	}).filter(file => file !== null).forEach(render);
+		if (fileMatch)
+			render(fileMatch[1]);
+	}
+
+})().catch(err => {
+	console.error(err);
 });
 
 function render(fileName) {

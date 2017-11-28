@@ -1,4 +1,5 @@
 const path = require("path");
+const merge = require("webpack-merge");
 const CleanWebpackPlugin = require("clean-webpack-plugin");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
@@ -6,7 +7,7 @@ function _path(pathString) {
 	return path.join(__dirname, pathString);
 }
 
-module.exports.common = {
+const commonConfig = {
 	entry: {
 		"popup": _path("src/ts/popup.ts"),
 		"options": _path("src/ts/options.ts"),
@@ -33,9 +34,17 @@ module.exports.common = {
 		modules: [_path("scripts/"), "node_modules"]
 	},
 	plugins: [
-		new CleanWebpackPlugin(["dist/js/*", "dist/css/*"]),
+		new CleanWebpackPlugin(["dist/js/*", "dist/css/*"], { verbose: false }),
 		new ExtractTextPlugin("css/[name].css")
-	]
+	],
+	stats: {
+		modules: false,
+		hash: false
+	}
 };
 
-module.exports._path = _path;
+module.exports = function(setupMergeConfig) {
+	return merge(commonConfig, setupMergeConfig(
+		_path, { ExtractTextPlugin }
+	));
+};

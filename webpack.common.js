@@ -34,7 +34,7 @@ const commonConfig = {
 		modules: [_path("scripts/"), "node_modules"]
 	},
 	plugins: [
-		new CleanWebpackPlugin(["dist/js/*", "dist/css/*"], { verbose: false }),
+		new CleanWebpackPlugin(["dist/js/*.js", "dist/css/*.css"], { verbose: false }),
 		new ExtractTextPlugin("css/[name].css")
 	],
 	stats: {

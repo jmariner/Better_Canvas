@@ -1,15 +1,11 @@
 const path = require("path");
 const CleanWebpackPlugin = require("clean-webpack-plugin");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 function _path(pathString) {
 	return path.join(__dirname, pathString);
 }
 
-const PROD = process.env.NODE_ENV === "production";
-
-module.exports = {
-	devtool: PROD ? 'inline-source-map' : false,
+module.exports.common = {
 	entry: {
 		"popup": _path("src/ts/popup.ts"),
 		"options": _path("src/ts/options.ts"),
@@ -26,17 +22,6 @@ module.exports = {
 				test: /\.ts$/,
 				use: [ "ts-loader" ],
 				exclude: /node_modules/
-			},
-			{
-				test: /\.scss/,
-				use: ExtractTextPlugin.extract({
-					use: {
-						loader: "scss-custom-loader",
-						options: {
-							destDir: _path("dist/css")
-						}
-					}
-				})
 			}
 		]
 	},
@@ -47,9 +32,8 @@ module.exports = {
 		modules: [_path("scripts/"), "node_modules"]
 	},
 	plugins: [
-		new CleanWebpackPlugin(
-			["dist/js/*", "dist/css/*"]
-		),
-		new ExtractTextPlugin("css/[name].min.css")
+		new CleanWebpackPlugin(["dist/js/*", "dist/css/*"])
 	]
-}
+};
+
+module.exports._path = _path;

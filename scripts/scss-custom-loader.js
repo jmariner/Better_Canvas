@@ -6,6 +6,8 @@ const sass = require("node-sass");
 const baseDir = path.resolve(__dirname, "..");
 const tsc = path.resolve(baseDir, "node_modules/typescript/lib/tsc.js");
 
+const tsFileCache = new Map(); // file => file data
+
 function exportWrap(exp) {
 	return "module.exports = `" + exp + "`;";
 }
@@ -13,17 +15,20 @@ function exportWrap(exp) {
 module.exports = function (contents) {
 
 	const callback = this.async();
+	const { compress } = this.query;
 
 	const sourceFolder = this.context;
 //	const targetFolder = this.query.destDir;
 //	const filename = path.basename(this.resourcePath, ".scss");
 //	const outFile = path.resolve(targetFolder, filename + ".css");
 
+	// TODO fix source maps here
+
 	sass.render({
 		data: contents,
 		includePaths: [sourceFolder],
 	//	outFile,
-		outputStyle: "compressed",
+		outputStyle: compress ? "compressed" : "nested",
 	//	sourceMap: true,
 		importer: function(url, prev, done){ typeScriptImporter(url, prev).then(done); }
 	}, (error, result) => {
@@ -40,6 +45,9 @@ module.exports = function (contents) {
 }
 
 async function loadTypeScriptFile(file) {
+
+	if (tsFileCache.has(file))
+		return tsFileCache.get(file);
 
 	const outDir = path.resolve(__dirname);
 
@@ -66,6 +74,8 @@ async function loadTypeScriptFile(file) {
 		if (deleteError !== null)
 			console.warn(`Error when trying to delete temp file: ${deleteError}`);
 	}
+
+	tsFileCache.set(file, data);
 
 	return data;
 

@@ -2,9 +2,9 @@
   "name": "Better_Canvas",
   "version": "3.0.0",
   "scripts": {
-    "build": "webpack",
+    "build": "webpack --config webpack.dev.js",
+    "prod": "webpack --config webpack.prod.js",
     "watch": "webpack -w",
-    "prod": "webpack --define process.env.NODE_ENV='production'",
     "icons": "node scripts/update-icons.js"
   },
   "devDependencies": {
@@ -22,7 +22,8 @@
     "ts-loader": "^3.1.1",
     "ts-node": "^3.1.0",
     "typescript": "^2.3.4",
-    "webpack": "^3.8.1"
+    "webpack": "^3.8.1",
+    "webpack-merge": "^4.1.1"
   },
   "dependencies": {
     "@types/chrome": "0.0.47",

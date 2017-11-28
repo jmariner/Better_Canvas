@@ -1,7 +1,7 @@
 import { V } from "./vars";
 import { MessageData } from "./objects";
 
-let ACCESS_TOKEN: string;
+let ACCESS_TOKEN: string = null;
 
 function checkToken(): void | never {
 	if (ACCESS_TOKEN === null)

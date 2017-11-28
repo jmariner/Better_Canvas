@@ -544,7 +544,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 
 
-let ACCESS_TOKEN;
+let ACCESS_TOKEN = null;
 function checkToken() {
     if (ACCESS_TOKEN === null)
         throw new Error("Access token not set");

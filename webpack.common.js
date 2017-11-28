@@ -1,5 +1,6 @@
 const path = require("path");
 const CleanWebpackPlugin = require("clean-webpack-plugin");
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 function _path(pathString) {
 	return path.join(__dirname, pathString);
@@ -32,7 +33,8 @@ module.exports.common = {
 		modules: [_path("scripts/"), "node_modules"]
 	},
 	plugins: [
-		new CleanWebpackPlugin(["dist/js/*", "dist/css/*"])
+		new CleanWebpackPlugin(["dist/js/*", "dist/css/*"]),
+		new ExtractTextPlugin("css/[name].css")
 	]
 };
 

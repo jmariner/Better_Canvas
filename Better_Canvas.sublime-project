@@ -29,6 +29,10 @@
 				{
 					"name": "icons",
 					"shell_cmd": "npm run icons"
+				},
+				{
+					"name": "update",
+					"shell_cmd": "npm run update"
 				}
 			]
 		}

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "typeRoots": ["src/ts/typings", "node_modules/@types"],
-    "types": ["jquery", "chrome", "node", "node-sass", "custom"],
+    "types": ["jquery", "chrome", "custom"],
     "lib": ["es2016", "dom"],
     "module": "es6",
     "target": "es2015",

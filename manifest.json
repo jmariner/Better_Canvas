@@ -35,7 +35,7 @@
   "content_scripts": [
     {
       "matches": ["https://ecpi.instructure.com/*"],
-      "css": ["dist/css/style.min.css"],
+      "css": ["dist/css/content_script.min.css"],
       "js": [
         "dist/lib/jquery.min.js",
         "dist/js/content_script.js"

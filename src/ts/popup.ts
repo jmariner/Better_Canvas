@@ -1,6 +1,7 @@
 import { V } from "./vars";
 import { format } from "./utils";
 import { MessageData, StateMessageData } from "./objects";
+import "../scss/popup.scss";
 
 declare const componentHandler;
 const QUERY = {active: true, currentWindow: true};

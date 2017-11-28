@@ -2,17 +2,17 @@
   "name": "Better_Canvas",
   "version": "3.0.0",
   "scripts": {
-    "webpack:build": "webpack",
-    "webpack:watch": "webpack -w",
-    "scss:build": "node scripts/scss-compile.js",
-    "scss:icons": "node scripts/update-icons.js",
-    "build": "npm run webpack:build && npm run scss:build"
+    "build": "webpack",
+    "watch": "webpack -w",
+    "prod": "webpack --define process.env.NODE_ENV='production'",
+    "icons": "node scripts/update-icons.js"
   },
   "devDependencies": {
     "@types/node": "^7.0.32",
     "@types/node-sass": "^3.10.32",
     "clean-webpack-plugin": "^0.1.17",
     "download": "^6.2.5",
+    "extract-text-webpack-plugin": "^3.0.2",
     "grunt": "~1.0.1",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-watch": "^1.0.0",

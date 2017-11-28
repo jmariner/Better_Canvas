@@ -4,6 +4,7 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 import * as Utils from "./utils";
 import { V } from "./vars";
 import * as CanvasAPI from "./canvas_api";
+import "../scss/style.scss";
 
 (async function init() {
 

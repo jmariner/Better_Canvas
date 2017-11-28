@@ -12,17 +12,22 @@
 	],
 	"build_systems": [
 		{
-			"name": "npm",
+			"name": "webpack",
 			"shell_cmd": "npm run build",
 			"working_dir": "$project_path",
+
 			"variants": [
 				{
-					"name": "webpack",
-					"shell_cmd": "npm run webpack:build"
+					"name": "production",
+					"shell_cmd": "npm run prod"
 				},
 				{
-					"name": "scss",
-					"shell_cmd": "npm run scss:build"
+					"name": "watch",
+					"shell_cmd": "npm run watch"
+				},
+				{
+					"name": "icons",
+					"shell_cmd": "npm run icons"
 				}
 			]
 		}

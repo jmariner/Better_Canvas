@@ -1,10 +1,10 @@
 const path = require("path");
 const fs = require("fs");
-const { fork } = require("child_process");
+const _eval = require("eval");
 const sass = require("node-sass");
+const ts = require("typescript");
 
 const baseDir = path.resolve(__dirname, "..");
-const tsc = path.resolve(baseDir, "node_modules/typescript/lib/tsc.js");
 
 const tsFileCache = new Map(); // file => file data
 
@@ -44,43 +44,6 @@ module.exports = function (contents) {
 
 }
 
-async function loadTypeScriptFile(file) {
-
-	if (tsFileCache.has(file))
-		return tsFileCache.get(file);
-
-	const outDir = path.resolve(__dirname);
-
-	const tscProcess = fork(tsc, [
-		"--lib", "es2016,dom",
-		"--module", "commonjs",
-		"--target", "es2015",
-		"--outDir", outDir,
-		file
-	]);
-
-	const exitCode = await new Promise(done => tscProcess.on("exit", done));
-
-	const baseName = path.basename(file, ".ts");
-	const resultFile = path.resolve(outDir, baseName + ".js");
-
-	if (exitCode !== 0)
-		throw `Nonzero exit code ${exitCode} when compiling typescript`;
-
-	const data = require(resultFile)["default"];
-
-	if (fs.existsSync(resultFile)) {
-		const deleteError = await new Promise(done => fs.unlink(resultFile, done));
-		if (deleteError !== null)
-			console.warn(`Error when trying to delete temp file: ${deleteError}`);
-	}
-
-	tsFileCache.set(file, data);
-
-	return data;
-
-}
-
 async function typeScriptImporter(url, prev) {
 
 	if (path.extname(url) !== ".ts") return null;
@@ -113,5 +76,30 @@ async function typeScriptImporter(url, prev) {
 	catch (e) {
 		return new Error(`SASS Importer: Problem when parsing typescript -> json -> sass.\nFile: ${file}\nError: ${e}`);
 	}
+
+}
+
+async function loadTypeScriptFile(file) {
+
+	if (tsFileCache.has(file))
+		return tsFileCache.get(file);
+
+	const tsSource = fs.readFileSync(file, { encoding: "utf8" });
+
+	// this is sorta unstable. keep track of changes:
+	// https://github.com/Microsoft/TypeScript/wiki/API-Breaking-Changes
+	const result = ts.transpileModule(tsSource, {
+		compilerOptions: {
+			module: ts.ModuleKind.CommonJS,
+			lib: ["es2016", "dom"],
+			target: ts.ScriptTarget.ES2015
+		}
+	});
+
+	const exportedContent = _eval(result.outputText)["default"];
+
+	tsFileCache.set(file, exportedContent);
+
+	return exportedContent;
 
 }

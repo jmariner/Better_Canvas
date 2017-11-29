@@ -96,9 +96,9 @@ export class NavTab {
 }
 
 export class State {
-	private name: string;
-
+	readonly name: string;
 	readonly bodyClass: string;
+	readonly desc: string;
 	readonly onPages: CanvasPage[];
 
 	public active: boolean;
@@ -108,6 +108,7 @@ export class State {
 	constructor(key, stateData, active) {
 		this.name = key;
 		this.bodyClass = stateData.cssClass;
+		this.desc = stateData.desc;
 		this.active = active;
 		this.onPages = [];
 

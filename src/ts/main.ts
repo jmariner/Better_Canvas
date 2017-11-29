@@ -717,8 +717,7 @@ class Main {
 		else if (data.type === MessageType.STATE) {
 			const stateData = data as StateMessageData;
 			if (data.action === "get") {
-				const state = Main.getState(stateData.stateName);
-				respondFunc({state});
+				respondFunc(DATA.states.get(stateData.stateName));
 			}
 			else if (data.action === "set") {
 				Main.setState(stateData.stateName, stateData.state).then(success => {

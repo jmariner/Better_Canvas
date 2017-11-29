@@ -1,101 +1,107 @@
 import { V } from "./vars";
 import { format } from "./utils";
-import { MessageData, StateMessageData } from "./objects";
+import { MessageData, StateMessageData, State } from "./objects";
 import "../scss/popup.scss";
 
 declare const componentHandler;
-const QUERY = {active: true, currentWindow: true};
 
-$(function() {
+$(async function() {
 
-const BODY = $("body");
-const jumpButton = $("#" + V.id.popup_jump_button);
-const insertionPoint = $("#" + V.id.popup_insertion_point);
+	const BODY = $("body");
+	const jumpButton = $("#" + V.id.popup_jump_button);
+	const insertionPoint = $("#" + V.id.popup_insertion_point);
 
-$("#" + V.id.popup_ex_name).text(chrome.runtime.getManifest().name);
+	$("#" + V.id.popup_ex_name).text(chrome.runtime.getManifest().name);
 
-Promise.resolve()
+	// ============================
+	//           page ping
+	//  only continue if connected
+	// ============================
 
-	.then(() => new Promise(next => {
+	const startPing = $.now();
+	const pingResp = await sendMessage(new MessageData("ping"));
 
-		const startPing = $.now();
-
-		sendMessage(new MessageData("ping"), resp => {
-			if (resp !== undefined) {
-				console.log("page ping", resp.pong - startPing);
-
-				BODY.addClass(V.cssClass.popup_connected);
-				next();
-			}
-			else {
-				BODY.addClass(V.cssClass.popup_loaded);
-			}
-		});
-
-	})).then(() => new Promise(next => {
-
-		sendMessage(new MessageData("count unchecked"), resp => {
-			if (resp !== undefined) {
-				if (resp.count === 0)
-					jumpButton.prop("disabled", true).attr("title", V.tooltip.popup_no_unchecked);
-				jumpButton.parent().show();
-				next();
-			}
-		});
-
-	})).then(() => new Promise(next => {
-
-		let remaining = Object.keys(V.state).length;
-
-		$.each(V.state, (stateName, stateData) => {
-			sendMessage(new StateMessageData("get", stateName), resp => {
-
-				const el = $(format(V.element.popup_state_switch, {name: stateName, desc: stateData.desc}));
-
-				el.insertAfter(insertionPoint);
-				componentHandler.upgradeElement(el.find("label").get(0));
-
-				const inputEl = el.find("input").get(0) as HTMLInputElement;
-
-				el.change(() => {
-					const newState = inputEl.checked;
-
-					setMdlChecked(inputEl, !newState);
-					inputEl.title = V.tooltip.waiting;
-					inputEl.disabled = true;
-
-					sendMessage(new StateMessageData("set", stateName, newState), success => {
-						if (success) {
-							setMdlChecked(inputEl, newState);
-							inputEl.title = ""; // TODO state.long_desc ?
-							inputEl.disabled = false;
-						}
-					});
-				});
-
-				setMdlChecked(inputEl, resp.state);
-
-				if (--remaining === 0) next();
-
-			});
-		});
-
-		jumpButton.click(() => {
-			sendMessage(new MessageData("jump to first unchecked"), resp => window.close());
-		});
-
-	})).then(() => new Promise(next => {
-
-		insertionPoint.remove();
+	if (pingResp !== undefined) {
+		console.log("page ping", pingResp.pong - startPing);
+		BODY.addClass(V.cssClass.popup_connected);
+	}
+	else {
 		BODY.addClass(V.cssClass.popup_loaded);
-		next();
+		return;
+	}
 
-	}));
+	// ============================
+	//        count unchecked
+	//  show/enable jump button
+	// ============================
+
+	const uncheckedResp = await	sendMessage(new MessageData("count unchecked"));
+
+	if (uncheckedResp !== undefined) {
+		if (uncheckedResp.count === 0)
+			jumpButton.prop("disabled", true).attr("title", V.tooltip.popup_no_unchecked);
+
+		jumpButton.parent().show();
+	}
+
+	// ============================
+	//           states
+	// generate and update switches
+	// ============================
+
+	const statePromises: Promise<State>[] =
+		Object.keys(V.state).map(stateName => sendMessage(new StateMessageData("get", stateName)));
+
+	const states: State[] = await Promise.all(statePromises);
+
+	for (const state of states) {
+
+		const el = $(format(V.element.popup_state_switch, {name: state.name, desc: state.desc}));
+
+		el.insertAfter(insertionPoint);
+		componentHandler.upgradeElement(el.find("label").get(0));
+
+		const inputEl = el.find("input").get(0) as HTMLInputElement;
+
+		el.change(async function() {
+			const newState = inputEl.checked;
+
+			setMdlChecked(inputEl, !newState);
+			inputEl.title = V.tooltip.waiting;
+			inputEl.disabled = true;
+
+			const setSuccess = sendMessage(new StateMessageData("set", state.name, newState));
+
+			if (setSuccess) {
+				setMdlChecked(inputEl, newState);
+				inputEl.title = ""; // TODO state.long_desc ?
+				inputEl.disabled = false;
+			}
+		});
+
+		setMdlChecked(inputEl, state.active);
+	}
+
+	// ============================
+	//        jump button
+	//    init click handler
+	// ============================
+
+	jumpButton.click(async function() {
+		await sendMessage(new MessageData("jump to first unchecked"));
+		window.close();
+	});
+
+	// === finalization ===
+
+	insertionPoint.remove();
+	BODY.addClass(V.cssClass.popup_loaded);
 
 });
 
-function sendMessage(data: MessageData, callback?: (response: any) => void) {
-	chrome.tabs.query(QUERY, tabs => chrome.tabs.sendMessage(tabs[0].id, data, callback));
+async function sendMessage(data: MessageData): Promise<any> {
+	const activeTabs = await chrome.tabs.query({active: true, currentWindow: true});
+	return chrome.tabs.sendMessage(activeTabs[0].id, data);
 }
 
 function setMdlChecked(checkbox: HTMLInputElement, checked: boolean) {

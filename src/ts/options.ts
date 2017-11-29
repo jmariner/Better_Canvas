@@ -1,30 +1,75 @@
 import { V } from "./vars";
+import { testToken } from "./utils";
 
-$(function() {
+$(async function() {
 
-	const tokenEl = $("#token");
-	const statusEl = $("#status");
-	const saveEl = $("#save");
+	const [tokenEl, statusEl, nameEl, saveEl, closeEl] =
+		[$("#token"), $("#status"),	$("#name"),	$("#save"),	$("#close")];
 
-	chrome.storage.sync.get(V.misc.token_key, data => {
-		if (data[V.misc.token_key])
-			tokenEl.val(data[V.misc.token_key]);
+	const KEY = V.misc.token_key;
+
+	const getResp: {[key: string]: string} = await chrome.storage.sync.get(KEY);
+
+	if (getResp[KEY]) {
+		tokenEl.val(getResp[KEY]);
+		tokenEl.parent().focus().addClass("is-dirty");
+	}
+	else {
+		saveEl.attr("disabled", "");
+	}
+
+	tokenEl.on("input", function() {
+		const empty = (tokenEl.val() as string).length === 0;
+		saveEl.attr("disabled", empty ? "" : null);
 	});
 
-	saveEl.click(() => {
-		const token = tokenEl.val();
+	saveEl.click(async function() {
+		const token = tokenEl.val() as string;
 
-		chrome.storage.sync.set({
-			[V.misc.token_key]: token
-		}, () => {
-			if (chrome.runtime.lastError === undefined) {
-				statusEl.text("Access token saved");
-				setTimeout(window.close, 500);
+		// disable close button until done
+		closeEl.attr("disabled", "");
 
-				// TODO update the current canvas pages with the access token
+		print("Testing token...");
 
-			}
-		});
+		const testData = await testToken(token);
+
+		if (testData !== null) {
+			nameEl.text("Welcome, " + testData.name);
+			print("Token test passed. Saving token...");
+		}
+		else {
+			error("Token test failed. Please check that the token is correct and is still activated.");
+			closeEl.attr("disabled", null);
+			return;
+		}
+
+		try {
+			await chrome.storage.sync.set({ [KEY]: token });
+		}
+		catch (e) {
+			error("Unable to save token to Chrome sync storage.");
+			closeEl.attr("disabled", null);
+			throw new Error("Failed to save token to storage.");
+		}
+
+		closeEl.attr("disabled", null);
+
+		print("Access token saved.");
+
+		// TODO update the current canvas pages with the access token
+		// for this, add a button "Return to Canvas" that switches back to the Canvas tab
+		// don't think it's possible to also close the extensions page while doing this, though
 	});
+
+	closeEl.click(() => window.close());
+
+	function print(text: string) {
+		statusEl.removeClass("error").text(text);
+	}
+
+	function error(text: string) {
+		statusEl.addClass("error").text(text);
+		nameEl.html("&nbsp");
+	}
 
 });

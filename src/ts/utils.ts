@@ -12,6 +12,13 @@ function perPage(url: string, itemsPerPage: number) {
 	return `${url}?per_page=${itemsPerPage}`;
 }
 
+async function parseJSONResponse(resp: Response) {
+	let json = await resp.text();
+	json = json.replace("while(1);", "");
+
+	return JSON.parse(json);
+}
+
 export function format(str: string, obj: object): string {
 
 	for (const key in obj) {
@@ -51,16 +58,16 @@ export async function getJSON<T>(url: string): Promise<T> {
 	} as RequestInit);
 
 	if (resp.status === 404) {
-		throw new Error("404 error when getting JSON");
+		throw new Error("HTTP 404 error when getting JSON");
+	}
+	else if (resp.status === 401) {
+		throw new Error("HTTP 401: access token invalid");
 	}
 	else {
 		if (resp.status === 400)
 			console.debug("400 error when getting JSON was OKAY");
 
-		let json = await resp.text();
-		json = json.replace("while(1);", "");
-
-		return JSON.parse(json);
+		return parseJSONResponse(resp);
 	}
 
 }
@@ -115,6 +122,34 @@ export async function editDataArray(url: string, append: boolean, values: any[])
 	}
 
 	return putData(url, newArray);
+}
+
+export async function testToken(token: string): Promise<{name: string} | null> {
+
+	let resp;
+	let error = false;
+
+	try {
+		resp = await fetch(V.canvas.api.absolute_url + "users/self", {
+			method: "GET",
+			headers: new Headers({
+				"Content-Type": "application/json",
+				"Authorization": "Bearer " + token
+			})
+		} as RequestInit);
+
+		if (resp.status === 401) // unauthorized
+			return null;
+		else if (!resp.ok)
+			error = true;
+		else
+			return parseJSONResponse(resp);
+	} catch(e) {
+		error = true;
+	}
+
+	if (error)
+		throw new Error("Problem occurred when testing access token.");
 }
 
 export async function wait(ms: number) {

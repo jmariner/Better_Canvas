@@ -238,6 +238,7 @@ class Vars extends SassVars {
 		},
 		api: {
 			namespace: this._canvasNamespace,
+			absolute_url: "https://ecpi.instructure.com/api/v1/",
 			root_url: "/api/v1/",
 			per_page: 100,
 			urls: {

@@ -1,4 +1,4 @@
-/// <reference path="chrome-extension-async.d.ts" />
+/// <reference path="lib/chrome-extension-async.d.ts" />
 
 // === custom types ===
 

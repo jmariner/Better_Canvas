@@ -40,10 +40,6 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 
 	const initStart = performance.now();
 
-	// load variables
-
-	// TODO improve variable loading
-
 	// try to load access token
 	try {
 		await Utils.loadToken();
@@ -350,7 +346,7 @@ class Main {
 			.find("i")
 			.click(() => {
 				if (PAGE.scrollingElement.prop("scrollTop") > 0)
-					$("body").animate({scrollTop: 0}, V.ui.scroll_time);
+					PAGE.scrollingElement.animate({scrollTop: 0}, V.ui.scroll_time);
 			})
 			.end()
 			.appendTo(PAGE.main);
@@ -651,7 +647,7 @@ class Main {
 			item.checked = status;
 			UI.updateModule(item.module);
 			UI.updateCheckbox(item);
-			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...)` +
+			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) ` +
 				`has been ${el.checked ? "" : "un"}checked`);
 		}
 

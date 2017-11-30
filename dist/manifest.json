@@ -37,7 +37,7 @@
       "matches": ["https://ecpi.instructure.com/*"],
       "css": ["css/content_script.css"],
       "js": [
-        "lib/jquery.min.js",
+        "js/common.js",
         "js/content_script.js"
       ]
     }

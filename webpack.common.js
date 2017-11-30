@@ -1,4 +1,5 @@
 const path = require("path");
+const webpack = require("webpack");
 const merge = require("webpack-merge");
 const CleanWebpackPlugin = require("clean-webpack-plugin");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
@@ -35,7 +36,11 @@ const commonConfig = {
 	},
 	plugins: [
 		new CleanWebpackPlugin(["dist/js/*.js", "dist/css/*.css"], { verbose: false }),
-		new ExtractTextPlugin("css/[name].css")
+		new ExtractTextPlugin("css/[name].css"),
+		new webpack.optimize.CommonsChunkPlugin({
+			name: "common",
+			minChunks: 2
+		})
 	],
 	stats: {
 		modules: false,

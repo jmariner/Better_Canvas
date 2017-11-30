@@ -23,6 +23,14 @@
 					"shell_cmd": "npm run prod"
 				},
 				{
+					"name": "production: verbose",
+					"shell_cmd": "npm run prod -- --verbose"
+				},
+				{
+					"name": "development: verbose",
+					"shell_cmd": "npm run build -- --verbose"
+				},
+				{
 					"name": "watch",
 					"shell_cmd": "npm run watch"
 				},

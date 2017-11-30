@@ -1,7 +1,11 @@
+import $ from "../lib/jquery";
+import "../lib/material";
+import "../lib/chrome-extension-async";
+import "../scss/popup.scss";
+
 import { V } from "./vars";
 import { format } from "./utils";
 import { MessageData, StateMessageData, State } from "./objects";
-import "../scss/popup.scss";
 
 declare const componentHandler;
 

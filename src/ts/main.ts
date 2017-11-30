@@ -303,16 +303,11 @@ class Main {
 		// =============== misc global init stuff ============================
 
 		// removing all repeated whitespace in class attributes
-		$("[class]").attr("class", (i, oldClass) => (oldClass.match(/\S+/g) || []).join(" "));
-
-		// clean up grade table
-		$("#grades_summary tbody")
-		.find("tr.group_total, tr.final_grade")
-		.find("td.points_possible").attr("colspan", "3").css("text-align", "center").end()
-		.find("td.details, td.status").remove();
+		PAGE.body.find("[class]")
+			.attr("class", (i, oldClass) => (oldClass.match(/\S+/g) || []).join(" "));
 
 		// make the course button take you to "all courses" and change the text to say so
-		const origCourseNav = $("#global_nav_courses_link");
+		const origCourseNav = PAGE.sidebar.find("#global_nav_courses_link");
 		const newCourseNav = $("<a>")
 			.attr("href", "/courses")
 			.addClass("ic-app-header__menu-list-link")
@@ -325,11 +320,10 @@ class Main {
 			.find(".menu-item__text")
 			.text("All Courses");
 
-		// === insert course links ===
+		// === insert individual course links after the all courses link ===
 
-		const $insertionPoint = PAGE.sidebar.children().eq(2);
 		for (const [tabID, courseTab] of DATA.courseTabs) {
-			$insertionPoint.after(
+			newCourseNav.after(
 				Utils.format(V.element.course_link, {
 					tabColor: courseTab.color,
 					tabID,
@@ -359,7 +353,7 @@ class Main {
 
 		// ==== clear the active menu tab since we're using custom tabs ====
 
-		$("ul#menu > li").removeClass("ic-app-header__menu-list-item--active");
+		PAGE.sidebar.find("li").removeClass("ic-app-header__menu-list-item--active");
 
 		// === load initial states ===
 
@@ -377,7 +371,7 @@ class Main {
 
 		// ==== clear empty nav tabs ===
 
-		$(V.canvas.selector.nav_tabs).find("li:empty").remove();
+		PAGE.left.find(V.canvas.selector.nav_tabs).find("li:empty").remove();
 
 		// ==== apply the custom nav tab positions ===
 
@@ -395,7 +389,7 @@ class Main {
 
 		for (const [itemId, item] of DATA.moduleItems) {
 
-			const mainEl = $("#" + item.canvasElementId);
+			const mainEl = PAGE.id(item.canvasElementId);
 			let parentEl: JQuery;
 			let hasCheckbox: boolean;
 			let hasHideButton: boolean;
@@ -436,21 +430,27 @@ class Main {
 
 		}
 
-		// === fix grade checkboxes since they're in the table ===
 		if (DATA.coursePage === CanvasPage.GRADES) {
+
 			PAGE.grades
+			// fix grade checkboxes since they're in the table
 				.find("td[colspan='5']")
-				.attr("colspan", 6)
-				.end().find("> thead > tr")
-				.prepend($("<th>")
-					.attr("scope", "col")
-					.append("<i class='icon-check'></i>")
-				)
-				.end().find("tr.student_assignment")
-				.prepend(function() {
-					return $(this).has("td:first-child").length === 0 ?
-						$("<td>").addClass(V.cssClass.checkbox_td) : undefined;
-				});
+					.attr("colspan", 6).end()
+				.find("> thead > tr")
+					.prepend($("<th>")
+						.attr("scope", "col")
+						.append("<i class='icon-check'></i>")
+					).end()
+				.find("tr.student_assignment")
+					.prepend(function() {
+						return $(this).has("td:first-child").length === 0 ?
+							$("<td>").addClass(V.cssClass.checkbox_td) : undefined;
+					}).end()
+			// also improve spacing since some things are normally cut off
+				.find("tbody").find("tr.group_total, tr.final_grade")
+				.find("td.points_possible")
+					.attr("colspan", "3").css("text-align", "center").end()
+				.find("td.details, td.status").remove();
 		}
 
 		// === add change event for checkboxes ===
@@ -466,27 +466,37 @@ class Main {
 		if (DATA.coursePage !== CanvasPage.MODULES) return;
 
 		// === clean up empty modules ===
-		$(V.canvas.selector.module_items).filter((i, el) => !el.innerHTML.trim().length).html("");
+		PAGE.main.find(V.canvas.selector.module_items)
+			.filter((i, el) => !el.innerHTML.trim().length)
+			.html("");
 
 		// === setup and apply custom indents ===
+		// TODO this could be better
 
 		const disabledIndentState = DATA.states.get("disable_indent_override");
 		const disabledIndent = disabledIndentState.active;
 
 		disabledIndentState.onEnable = () => {
-			$(V.canvas.selector.module_item).each(function() {
+			PAGE.main.find(V.canvas.selector.module_item).each(function() {
 				[0,1,2,3,4,5].forEach(level => $(this).removeClass("indent_" + level));
 				const defLevel = $(this).attr(V.dataAttr.def_indent);
 				$(this).addClass("indent_" + defLevel);
 			});
 		};
+
 		disabledIndentState.onDisable = () => {
-			[0,1,2,3,4,5].forEach(level => $(V.canvas.selector.module_item).removeClass("indent_" + level));
-			$(V.canvas.selector.subheader).addClass("indent_" + V.ui.subheader_indent);
-			$(V.canvas.selector.not_subheader).addClass("indent_" + V.ui.main_indent);
+			[0,1,2,3,4,5].forEach(level =>
+				PAGE.main.find(V.canvas.selector.module_item
+			).removeClass("indent_" + level));
+
+			PAGE.main.find(V.canvas.selector.subheader)
+				.addClass("indent_" + V.ui.subheader_indent);
+
+			PAGE.main.find(V.canvas.selector.not_subheader)
+				.addClass("indent_" + V.ui.main_indent);
 		};
 
-		$(V.canvas.selector.module_item).each(function() {
+		PAGE.main.find(V.canvas.selector.module_item).each(function() {
 			const defIndent =
 				[0,1,2,3,4,5].filter(level => $(this).hasClass("indent_" + level))[0];
 			$(this).attr(V.dataAttr.def_indent, defIndent);
@@ -495,8 +505,8 @@ class Main {
 		});
 
 		if (!disabledIndent) {
-			$(V.canvas.selector.subheader).addClass("indent_" + V.ui.subheader_indent);
-			$(V.canvas.selector.not_subheader).addClass("indent_" + V.ui.main_indent);
+			PAGE.main.find(V.canvas.selector.subheader).addClass("indent_" + V.ui.subheader_indent);
+			PAGE.main.find(V.canvas.selector.not_subheader).addClass("indent_" + V.ui.main_indent);
 		}
 
 		// === place and populate the table of contents ===
@@ -510,7 +520,7 @@ class Main {
 			$(formatted)
 				.find("a")
 				.click(e => {
-					const moduleEl = $("#context_module_" + modId);
+					const moduleEl = PAGE.id("context_module_" + modId);
 					UI.scrollToElement(moduleEl);
 
 					if (moduleEl.hasClass("collapsed_module"))
@@ -552,7 +562,7 @@ class Main {
 				});
 				$(element).insertBefore(item.checkboxElement);
 
-				$("#" + item.canvasElementId).find("a.external_url_link.title")
+				PAGE.id(item.canvasElementId).find("a.external_url_link.title")
 					.attr("href", function() { return $(this).attr("data-item-href"); })
 					.removeAttr("target rel")
 					.removeClass("external")
@@ -561,19 +571,11 @@ class Main {
 			}
 		}
 
-		$("." + V.cssClass.download).add("." + V.cssClass.external_url).show();
+		PAGE.cls(V.cssClass.download)
+			.add(PAGE.cls(V.cssClass.external_url))
+			.show();
 
 	} // end initPage
-
-	static getState(stateName: string): boolean {
-		if (DATA.states.has(stateName)) {
-			const state = DATA.states.get(stateName);
-			return state.active;
-		}
-		else {
-			return null;
-		}
-	}
 
 	static async setState(stateName: string, state: boolean) {
 		if (!DATA.states.has(stateName)) return;
@@ -703,9 +705,9 @@ class Main {
 					Utils.loadToken(respondFunc);
 					break;*/
 				case "jump to first unchecked":
-					const uncheckedEls = unchecked
-						.map(i => document.getElementById(i.canvasElementId));
-					UI.scrollToElement($(uncheckedEls).first());
+					const firstUnchecked = unchecked
+						.map(i => PAGE.id(i.canvasElementId))[0];
+					UI.scrollToElement(firstUnchecked);
 					respondFunc();
 					break;
 				default:
@@ -794,7 +796,7 @@ class UI {
 
 		// if no visible items in this module, hide the entire module
 		const noItems = module.items.filter(i => !i.isSubHeader && !i.hidden).length === 0;
-		$("#context_module_" + module.id).toggleClass(V.cssClass.item_hidden, noItems);
+		PAGE.id("context_module_" + module.id).toggleClass(V.cssClass.item_hidden, noItems);
 
 	}
 
@@ -802,7 +804,7 @@ class UI {
 
 		if (!tab.hasCustomPosition) throw new Error("Tab has no custom position");
 
-		const tabList = $(V.canvas.selector.nav_tabs);
+		const tabList = PAGE.left.find(V.canvas.selector.nav_tabs);
 		const tabEl = tabList.find("a." + tab.id).parent();
 
 		if (tab.hidden)

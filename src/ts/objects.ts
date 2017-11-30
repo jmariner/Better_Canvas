@@ -51,6 +51,15 @@ class Page {
 		if (DATA.coursePage === CanvasPage.GRADES)
 			this.grades = $("#grades_summary");
 	}
+
+	id(cssId: string): JQuery {
+		return this.body.find("#" + cssId);
+	}
+
+	cls(cssClass: string): JQuery {
+		return this.body.find("." + cssClass);
+	}
+
 }
 
 export class CustomCourseTab {

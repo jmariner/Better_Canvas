@@ -275,14 +275,14 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 	return performance.now() - initStart;
 
 })()
-.catch((reason: Exception | any) => {
+.catch((err: Error) => {
 	// Exceptions are intentionally throw by my code
-	if (reason instanceof Exception) {
-		if (reason.isFatal) throw new Error(reason.toString());
-		else console.warn("Exception in init:", reason.toString());
+	if (err instanceof Exception) {
+		if (err.isFatal) throw err;
+		else console.warn("Exception in init:", err);
 	}
 	else { // anything else is unknown and is a problem
-		throw new Error("Unknown error in init: " + reason);
+		throw new Error("Unknown error in init: " + err);
 	}
 })
 .then((totalDuration: number) => {

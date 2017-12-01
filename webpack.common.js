@@ -13,7 +13,7 @@ const commonConfig = {
 		"popup": _path("src/ts/popup.ts"),
 		"options": _path("src/ts/options.ts"),
 		"content_script": _path("src/ts/main.ts"),
-		"background": _path("src/js/background.js")
+		"background": _path("src/ts/background.ts")
 	},
 	output: {
 		path: _path("dist/"),

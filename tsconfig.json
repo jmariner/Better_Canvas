@@ -11,7 +11,8 @@
   "files": [
     "src/ts/main.ts",
     "src/ts/popup.ts",
-    "src/ts/options.ts"
+    "src/ts/options.ts",
+    "src/ts/background.ts"
   ],
   "compileOnSave": false,
   "exclude": [

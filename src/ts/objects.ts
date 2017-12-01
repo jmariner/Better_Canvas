@@ -295,13 +295,12 @@ export class StateMessageData extends MessageData {
 	}
 }
 
-export class Exception {
-	private reason: string;
+export class Exception extends Error {
 	private fatal: boolean;
 
-	constructor(reason: string, fatal?: boolean) {
+	constructor(message: string, fatal?: boolean) {
+		super(message);
 		if (fatal === undefined) fatal = false;
-		this.reason = reason;
 		this.fatal = fatal;
 	}
 
@@ -309,9 +308,6 @@ export class Exception {
 		return this.fatal;
 	}
 
-	public toString() {
-		return this.reason;
-	}
 }
 
 export const DATA = new Data();

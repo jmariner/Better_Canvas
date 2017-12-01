@@ -1,3 +1,5 @@
+import "../lib/chrome-extension-async";
+
 import { V } from "./vars";
 import { MessageData, MessageAction } from "./objects";
 

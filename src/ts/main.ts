@@ -5,7 +5,7 @@ import * as CanvasAPI from "./canvas_api";
 import { V } from "./vars";
 import * as Utils from "./utils";
 import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
-	State, Module, ModuleItem, MessageData,  StateMessageData,
+	State, Module, ModuleItem, MessageData, MessageAction, StateMessageData,
 	CanvasPage, MessageType, ModuleItemType } from "./objects";
 
 (async function init() {
@@ -689,49 +689,58 @@ class Main {
 
 		if (source.id !== DATA.extensionId) return;
 
+		let resp: any = null;
+
 		if (data.type === MessageType.BASIC) {
 
 			const unchecked = Array.from(DATA.moduleItems.values())
 				.filter(i => !i.checked && !i.hidden && !i.isSubHeader);
 
-			switch (data.action) {
-				case "ping":
-					respondFunc({pong: $.now()});
-					break;
-				case "count unchecked":
-					respondFunc({count: unchecked.length});
-					break;
-			/*	case "update token":
-					Utils.loadToken(respondFunc);
-					break;*/
-				case "jump to first unchecked":
-					const firstUnchecked = unchecked
-						.map(i => PAGE.id(i.canvasElementId))[0];
-					UI.scrollToElement(firstUnchecked);
-					respondFunc();
-					break;
-				default:
-					console.warn("Unknown basic message in content script:", data);
+			const a = data.action;
+
+			if (a === MessageAction.PING) {
+				resp = {pong: $.now()};
 			}
+			else if (a === MessageAction.COUNT_UNCHECKED) {
+				resp = {count: unchecked.length};
+			}
+			else if (a === MessageAction.JUMP_TO_FIRST_UNCHECKED) {
+				const firstUnchecked = unchecked
+					.map(i => PAGE.id(i.canvasElementId))[0];
+				UI.scrollToElement(firstUnchecked);
+				resp = undefined;
+			}
+			else {
+				console.warn("Unknown basic message in content script:", data);
+			}
+
 		}
 		else if (data.type === MessageType.STATE) {
+
 			const stateData = data as StateMessageData;
-			if (data.action === "get") {
-				respondFunc(DATA.states.get(stateData.stateName));
+
+			if (data.action === MessageAction.STATE_GET) {
+				resp = DATA.states.get(stateData.stateName);
 			}
-			else if (data.action === "set") {
-				Main.setState(stateData.stateName, stateData.state).then(success => {
-					respondFunc(success);
-				});
+			else if (data.action === MessageAction.STATE_SET) {
+				Main.setState(stateData.stateName, stateData.state)
+					.then(success => respondFunc(success));
+
 				return true; // this tells chrome that we want this response to be async
 			}
 			else {
 				console.warn("Unknown state message in content script:", data);
 			}
+
 		}
 		else {
 			console.warn("Unknown message in content script:", data);
 		}
+
+		if (resp === undefined)
+			respondFunc();
+		else if (resp !== null)
+			respondFunc(resp);
 	}
 }
 

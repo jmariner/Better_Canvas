@@ -260,13 +260,22 @@ export enum MessageType {
 	BASIC, STATE
 }
 
+export enum MessageAction {
+	PING, COUNT_UNCHECKED, JUMP_TO_FIRST_UNCHECKED,
+	OPEN_OPTIONS, STATE_GET, STATE_SET
+}
+
 export class MessageData {
-	action: string;
+	action: MessageAction;
 	type: MessageType;
 
-	constructor(action: string, type?: MessageType) {
+	constructor(action: MessageAction) {
 		this.action = action;
-		this.type = type || MessageType.BASIC;
+		this.type = MessageType.BASIC;
+	}
+
+	protected setType(type: MessageType) {
+		this.type = type;
 	}
 }
 
@@ -274,13 +283,14 @@ export class StateMessageData extends MessageData {
 	stateName: string;
 	state: boolean;
 
-	constructor(action: "get" | "set", stateName: string, state?: boolean) {
-		super(action, MessageType.STATE);
+	constructor(action: MessageAction.STATE_GET | MessageAction.STATE_SET, stateName: string, state?: boolean) {
+		super(action);
+		this.setType(MessageType.STATE);
 
 		this.stateName = stateName;
 		this.state = state;
 
-		if (action === "set" && this.state === undefined)
+		if (action === MessageAction.STATE_SET && this.state === undefined)
 			throw new Error("Invalid state message: no boolean to set state to");
 	}
 }

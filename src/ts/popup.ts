@@ -5,7 +5,8 @@ import "../scss/popup.scss";
 
 import { V } from "./vars";
 import { format } from "./utils";
-import { MessageData, StateMessageData, State } from "./objects";
+import { MessageData, StateMessageData,
+	MessageAction, State } from "./objects";
 
 declare const componentHandler;
 
@@ -23,7 +24,7 @@ $(async function() {
 	// ============================
 
 	const startPing = $.now();
-	const pingResp = await sendMessage(new MessageData("ping"));
+	const pingResp = await sendMessage(new MessageData(MessageAction.PING));
 
 	if (pingResp !== undefined) {
 		console.log("page ping", pingResp.pong - startPing);
@@ -39,7 +40,7 @@ $(async function() {
 	//  show/enable jump button
 	// ============================
 
-	const uncheckedResp = await	sendMessage(new MessageData("count unchecked"));
+	const uncheckedResp = await	sendMessage(new MessageData(MessageAction.COUNT_UNCHECKED));
 
 	if (uncheckedResp !== undefined) {
 		if (uncheckedResp.count === 0)
@@ -53,8 +54,10 @@ $(async function() {
 	// generate and update switches
 	// ============================
 
-	const statePromises: Promise<State>[] =
-		Object.keys(V.state).map(stateName => sendMessage(new StateMessageData("get", stateName)));
+	const statePromises: Array<Promise<State>> =
+		Object.keys(V.state).map(stateName =>
+			sendMessage(new StateMessageData(MessageAction.STATE_GET, stateName))
+		);
 
 	const states: State[] = await Promise.all(statePromises);
 
@@ -74,7 +77,9 @@ $(async function() {
 			inputEl.title = V.tooltip.waiting;
 			inputEl.disabled = true;
 
-			const setSuccess = sendMessage(new StateMessageData("set", state.name, newState));
+			const setSuccess = sendMessage(
+				new StateMessageData(MessageAction.STATE_SET, state.name, newState)
+			);
 
 			if (setSuccess) {
 				setMdlChecked(inputEl, newState);
@@ -92,7 +97,7 @@ $(async function() {
 	// ============================
 
 	jumpButton.click(async function() {
-		await sendMessage(new MessageData("jump to first unchecked"));
+		await sendMessage(new MessageData(MessageAction.JUMP_TO_FIRST_UNCHECKED));
 		window.close();
 	});
 

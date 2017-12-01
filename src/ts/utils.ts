@@ -1,5 +1,5 @@
 import { V } from "./vars";
-import { MessageData } from "./objects";
+import { MessageData, MessageAction } from "./objects";
 
 let ACCESS_TOKEN: string = null;
 
@@ -144,7 +144,7 @@ export async function testToken(token: string): Promise<{name: string} | null> {
 			error = true;
 		else
 			return parseJSONResponse(resp);
-	} catch(e) {
+	} catch (e) {
 		error = true;
 	}
 
@@ -159,21 +159,17 @@ export async function wait(ms: number) {
 }
 
 export async function loadToken() {
-	ACCESS_TOKEN = await new Promise<string>((resolve, reject) => {
+	const resultData = await chrome.storage.sync.get(V.misc.token_key);
 
-		chrome.storage.sync.get(V.misc.token_key, resultData => {
+	const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
 
-			const success = ACCESS_TOKEN !== null || resultData[V.misc.token_key];
-			if (success) resolve(resultData[V.misc.token_key]);
-			else reject();
+	if (success) ACCESS_TOKEN = resultData[V.misc.token_key];
+	else throw new Error("Access token does not exist in storage.");
 
-		});
-
-	});
 }
 
 export function accessTokenPrompt() {
 	const openOptions = confirm("Missing access token, press OK to open extension options");
 	if (openOptions) // TODO send tab ID with this message?
-		chrome.runtime.sendMessage(new MessageData("open options"));
+		chrome.runtime.sendMessage(new MessageData(MessageAction.OPEN_OPTIONS));
 }

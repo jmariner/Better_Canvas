@@ -1,4 +1,5 @@
 import "../lib/chrome-extension-async";
+import MessageSender = chrome.runtime.MessageSender;
 
 import { MessageData, MessageAction } from "./objects";
 
@@ -24,7 +25,7 @@ function onInstall() {
 	});
 }
 
-function onMessage(data: MessageData, source: chrome.runtime.MessageSender, respondFunc: (response?: any) => void) {
+function onMessage(data: MessageData, source: MessageSender, respondFunc: (data?: any) => void) {
 	if (data.action === MessageAction.OPEN_OPTIONS) {
 		chrome.runtime.openOptionsPage();
 		respondFunc();

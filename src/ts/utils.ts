@@ -79,7 +79,7 @@ export async function putData(url, data: any[] | any): Promise<boolean> {
 	checkToken();
 
 	const bodyData = {ns: V.canvas.api.namespace, data};
-	const method = data instanceof Array && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
+	const method = Array.isArray(data) && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
 
 	if (method === "DELETE")
 		delete bodyData.data;

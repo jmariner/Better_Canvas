@@ -1,54 +1,55 @@
 {
-    "defaultSeverity": "error",
-    "extends": [
-        "tslint:recommended"
-    ],
-    "jsRules": {},
-    "rules": {
-    	"no-unused-variable": true,
+	"defaultSeverity": "error",
+	"extends": [
+		"tslint:recommended"
+	],
+	"rulesDirectory": [
+	],
+	"jsRules": {},
+	"rules": {
+		"no-unused-variable": true,
 
-    	"trailing-comma": [true, {
-    		"multiline": "never",
-    		"singleline": "never"
-    	}],
-    	"member-ordering": [true, {
-    		"order": [
-    			"instance-field",
-    			"static-field",
-    			"constructor",
-    			"static-method",
-    			"instance-method"
-    		]
-    	}],
-    	"whitespace": [true, 
-    		"check-branch",
-    		"check-decl",
-    		"check-operator",
-    		"check-module",
-    		"check-rest-spread",
-    		"check-type",
-    		"check-typecast",
-    		"check-type-operator",
-    		"check-preblock"
-    	],
-    	"one-line": [true, 
-    		"check-open-brace",
-    		"check-whitespace"
-    	],
-    	
-    	"indent": [true, "tabs"],
-    	"variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],
-    //	"member-access": [true, "no-public", "check-accessor"],
+		"trailing-comma": [true, {
+			"multiline": "never",
+			"singleline": "never"
+		}],
+		"member-ordering": [true, {
+			"order": [
+				"instance-field",
+				"static-field",
+				"constructor",
+				"static-method",
+				"instance-method"
+			]
+		}],
+		"whitespace": [true, 
+			"check-branch",
+			"check-decl",
+			"check-operator",
+			"check-module",
+			"check-rest-spread",
+			"check-type",
+			"check-typecast",
+			"check-type-operator",
+			"check-preblock"
+		],
+		"one-line": [true, 
+			"check-open-brace",
+			"check-whitespace"
+		],
+		
+		"max-line-length": [true, 100],
+		"indent": [true, "tabs"],
+		"variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],
 
-    	"member-access": false,
-    	"interface-name": false,
-    	"curly": false,
-    	"no-console": false,
-    	"only-arrow-functions": false,
-    	"arrow-parens": false,
-    	"max-classes-per-file": false,
-    	"object-literal-sort-keys": false,
-        "ordered-imports": false
-    },
-    "rulesDirectory": []
+		"member-access": false,
+		"interface-name": false,
+		"curly": false,
+		"no-console": false,
+		"only-arrow-functions": false,
+		"arrow-parens": false,
+		"max-classes-per-file": false,
+		"object-literal-sort-keys": false,
+		"ordered-imports": false
+	}
 }

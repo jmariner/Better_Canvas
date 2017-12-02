@@ -1,5 +1,6 @@
 import $ from "../lib/jquery";
 import "../scss/style.scss";
+import MessageSender = chrome.runtime.MessageSender;
 
 import * as CanvasAPI from "./canvas_api";
 import { V } from "./vars";
@@ -156,7 +157,7 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 						perPage: module.itemCount
 					});
 
-					// return the promise instead of awaiting on this so it can be used in Promise.all
+					// return Promise instead of awaiting on this so it can be used in Promise.all
 					return Utils.getJSON<CanvasAPI.ModuleItem[]>(moduleItemsUrl);
 
 				});
@@ -226,8 +227,16 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 
 		// ===== load complete / hidden assignments =====
 
-		const complete = Utils.getOrDefault(customData.completed_assignments, DATA.courseID, new Array<number>());
-		const hidden = Utils.getOrDefault(customData.hidden_assignments, DATA.courseID, new Array<number>());
+		const complete = Utils.getOrDefault(
+			customData.completed_assignments,
+			DATA.courseID,
+			new Array<number>()
+		);
+		const hidden = Utils.getOrDefault(
+			customData.hidden_assignments,
+			DATA.courseID,
+			new Array<number>()
+		);
 
 		for (const [modItemId, modItem] of DATA.moduleItems) {
 			modItem.checked = complete.includes(modItemId);
@@ -246,7 +255,11 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 
 		// ===== load tabs positions =====
 
-		const tabPositions: {[key: string]: number} = Utils.getOrDefault(customData.tab_positions, DATA.courseID, {});
+		const tabPositions: {[key: string]: number} = Utils.getOrDefault(
+			customData.tab_positions,
+			DATA.courseID,
+			{}
+		);
 
 		for (const [tabId, navTab] of DATA.navTabs) {
 			if (tabPositions[tabId] !== undefined)
@@ -516,7 +529,10 @@ class Main {
 
 		for (const [modId, mod] of DATA.modules) {
 
-			const formatted = Utils.format(V.element.toc_item, {item_name: mod.name, item_id: modId});
+			const formatted = Utils.format(
+				V.element.toc_item,
+				{item_name: mod.name, item_id: modId}
+			);
 			$(formatted)
 				.find("a")
 				.click(e => {
@@ -681,11 +697,12 @@ class Main {
 			item.hidden = newState;
 			await UI.updateItemHide(item);
 			UI.updateModule(item.module);
-			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) has been ${item.hidden ? "" : "un"}hidden`);
+			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) ` +
+				`has been ${item.hidden ? "" : "un"}hidden`);
 		}
 	}
 
-	static onMessage(data: MessageData, source: chrome.runtime.MessageSender, respondFunc: (data?: any) => void) {
+	static onMessage(data: MessageData, source: MessageSender, respondFunc: (data?: any) => void) {
 
 		if (source.id !== DATA.extensionId) return;
 
@@ -769,7 +786,11 @@ class UI {
 
 		// update disable status and title, undoing waiting-disable
 		item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
-		iEl.attr("title", item.isGraded ? V.tooltip.hide_disabled : item.hidden ? V.tooltip.unhide : V.tooltip.hide);
+		iEl.attr("title",
+			item.isGraded ? V.tooltip.hide_disabled :
+			item.hidden ? V.tooltip.unhide :
+			V.tooltip.hide
+		);
 
 	}
 

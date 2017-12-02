@@ -97,7 +97,8 @@ export class NavTab {
 	}
 
 	get position(): number {
-		return this._position == null ? this.initPosition : this._position === -1 ? null : this._position;
+		return this._position == null ? this.initPosition :
+			this._position === -1 ? null : this._position;
 	}
 
 	get hidden(): boolean {
@@ -253,7 +254,8 @@ export enum ModuleItemType {
 }
 
 export enum CanvasPage {
-	MODULES, GRADES, HOME, USERS, GROUPS, COLLABORATIONS, DISCUSSION_TOPICS, EXTERNAL_TOOLS, ASSIGNMENTS
+	MODULES, GRADES, HOME, USERS, GROUPS, COLLABORATIONS,
+	DISCUSSION_TOPICS, EXTERNAL_TOOLS, ASSIGNMENTS
 }
 
 export enum MessageType {
@@ -283,7 +285,11 @@ export class StateMessageData extends MessageData {
 	stateName: string;
 	state: boolean;
 
-	constructor(action: MessageAction.STATE_GET | MessageAction.STATE_SET, stateName: string, state?: boolean) {
+	constructor(
+		action: MessageAction.STATE_GET | MessageAction.STATE_SET,
+		stateName: string,
+		state?: boolean
+	) {
 		super(action);
 		this.setType(MessageType.STATE);
 

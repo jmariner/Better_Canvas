@@ -42,7 +42,8 @@ $(async function() {
 			print("Token test passed. Saving token...");
 		}
 		else {
-			error("Token test failed. Please check that the token is correct and is still activated.");
+			error("Token test failed. Please check " +
+				"that the token is correct and is still activated.");
 			closeEl.attr("disabled", null);
 			return;
 		}

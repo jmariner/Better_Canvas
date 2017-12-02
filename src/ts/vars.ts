@@ -155,7 +155,8 @@ class Vars extends SassVars {
 	};
 
 	misc = {
-		toc_background: `-webkit-linear-gradient(left, ${this.color.toc_fill} {percent}%, transparent {percent}%)`,
+		toc_background: `-webkit-linear-gradient(left, ${this.color.toc_fill} ` +
+			`{percent}%, transparent {percent}%)`,
 		token_key: "accessToken"
 	};
 
@@ -167,12 +168,14 @@ class Vars extends SassVars {
 				</div>`,
 
 		download_button:
-				`<div style='display:none' class='${this.cssClass.download}' title='${this.tooltip.download}'>
+				`<div style='display:none' class='${this.cssClass.download}'
+					  title='${this.tooltip.download}'>
 					<a href="{file_url}"></a>
 				</div>`,
 
 		url_button:
-				`<div style='display:none' class='${this.cssClass.external_url}' title='${this.tooltip.external_url}'>
+				`<div style='display:none' class='${this.cssClass.external_url}'
+					  title='${this.tooltip.external_url}'>
 					<a href="{external_url}" class="not_external" target="_blank"></a>
 				</div>`,
 
@@ -182,12 +185,16 @@ class Vars extends SassVars {
 				</div>`,
 
 		course_link:
-			`<li style='background-color: {tabColor}' class='menu-item ic-app-header__menu-list-item'>
+			`<li style='background-color: {tabColor}'
+				 class='menu-item ic-app-header__menu-list-item'
+			>
 				<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>
 					<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>
 					<div style='background-color: {tabColor}; border-right-color: {tabColor}'
-							${this.dataAttr.course_name}='{name}' ${this.dataAttr.course_code}='{code}'
-							class='menu-item__text ${this.cssClass.course_link_text}'></div>
+							${this.dataAttr.course_name}='{name}'
+							${this.dataAttr.course_code}='{code}'
+							class='menu-item__text ${this.cssClass.course_link_text}'
+					></div>
 				</a>
 			</li>`,
 
@@ -201,7 +208,9 @@ class Vars extends SassVars {
 			`<li>
 				<a href='#' title='{item_name}'>
 					{item_name}
-					<div class='${this.cssClass.toc_ratio}' ${this.dataAttr.toc_module_id}='{item_id}'></div>
+					<div class='${this.cssClass.toc_ratio}'
+						${this.dataAttr.toc_module_id}='{item_id}'
+					></div>
 				</a>
 			</li>`,
 

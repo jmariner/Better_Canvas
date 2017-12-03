@@ -258,49 +258,6 @@ export enum CanvasPage {
 	DISCUSSION_TOPICS, EXTERNAL_TOOLS, ASSIGNMENTS
 }
 
-export enum MessageType {
-	BASIC, STATE
-}
-
-export enum MessageAction {
-	PING, COUNT_UNCHECKED, JUMP_TO_FIRST_UNCHECKED,
-	OPEN_OPTIONS, STATE_GET, STATE_SET
-}
-
-export class MessageData {
-	action: MessageAction;
-	type: MessageType;
-
-	constructor(action: MessageAction) {
-		this.action = action;
-		this.type = MessageType.BASIC;
-	}
-
-	protected setType(type: MessageType) {
-		this.type = type;
-	}
-}
-
-export class StateMessageData extends MessageData {
-	stateName: string;
-	state: boolean;
-
-	constructor(
-		action: MessageAction.STATE_GET | MessageAction.STATE_SET,
-		stateName: string,
-		state?: boolean
-	) {
-		super(action);
-		this.setType(MessageType.STATE);
-
-		this.stateName = stateName;
-		this.state = state;
-
-		if (action === MessageAction.STATE_SET && this.state === undefined)
-			throw new Error("Invalid state message: no boolean to set state to");
-	}
-}
-
 export class Exception extends Error {
 	private fatal: boolean;
 

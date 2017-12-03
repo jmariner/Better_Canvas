@@ -5,18 +5,16 @@ import MessageSender = chrome.runtime.MessageSender;
 import * as CanvasAPI from "./canvas_api";
 import { V } from "./vars";
 import * as Utils from "./utils";
+import * as Message from "./message";
 import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
-	State, Module, ModuleItem, MessageData, MessageAction, StateMessageData,
-	CanvasPage, MessageType, ModuleItemType } from "./objects";
+	State, Module, ModuleItem, CanvasPage, ModuleItemType } from "./objects";
 
-(async function init() {
+class Requests {
 
 	// =======================================
 	//           main initialization
 	// =======================================
-
-	(function() {
-
+	static async start() {
 		DATA.extensionId = chrome.runtime.id;
 		DATA.name = chrome.runtime.getManifest().name;
 
@@ -35,26 +33,44 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 		if (onCoursePage)
 			console.debug(`On course #${DATA.courseID} page, at ${CanvasPage[DATA.coursePage]}`);
 
-	})();
+		// begin async operations
 
-	// begin async operations
+		const initStart = performance.now();
 
-	const initStart = performance.now();
+		// try to load access token
 
-	// try to load access token
-	try {
-		await Utils.loadToken();
-	}
-	catch (e) {
-		Utils.accessTokenPrompt();
-		throw new Exception("Missing access token; must refresh", true);
+		try {
+			await Utils.loadToken();
+		}
+		catch (e) {
+			Utils.accessTokenPrompt();
+			throw new Exception("Missing access token; must refresh", true);
+		}
+
+		// run all async tasks
+
+		const promises = [Requests.courseTabFlow()];
+
+		if (DATA.coursePage !== null)
+			promises.push(Requests.navTabFlow());
+
+		if (DATA.onMainPage) {
+			promises.push(Requests.assignmentFlow());
+			promises.push(Requests.moduleItemFlow());
+		}
+
+		await Promise.all(promises);
+
+		// run custom data flow after everything
+		if (DATA.onMainPage) await Requests.customDataFlow();
+
+		return performance.now() - initStart;
 	}
 
 	// =======================================
 	//               course tabs
 	// =======================================
-
-	const courseTabFlow = async function() {
+	private static async courseTabFlow() {
 
 		const colorsUrl = Utils.formatUrl(V.canvas.api.urls.custom_colors);
 		const courseColors = (
@@ -70,14 +86,13 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 			DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
 		}
 
-	};
+	}
 
 	// =======================================
 	//            navigation tabs
 	//  requires: course page
 	// =======================================
-
-	const navTabFlow = async function() {
+	private static async navTabFlow() {
 
 		const navTabUrl = Utils.formatUrl(V.canvas.api.urls.navigation_tabs, {
 			perPage: 25,
@@ -88,14 +103,13 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 		for (const tab of navTabs)
 			DATA.navTabs.set(tab.id, new NavTab(tab));
 
-	};
+	}
 
 	// =======================================
 	//              assignments
 	//  requires: modules or grades page
 	// =======================================
-
-	const assignmentFlow = async function() {
+	private static async assignmentFlow() {
 
 		// hopefully 1000 is enough to get all in one go
 		const assignmentsUrl = Utils.formatUrl(V.canvas.api.urls.assignments, {
@@ -123,14 +137,13 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 			item.setAssignmentId(assignmentJson.id);
 
 		}
-	};
+	}
 
 	// =======================================
 	//       modules, items, and files
 	//  requires: modules or grades page
 	// =======================================
-
-	const moduleItemFlow = async function() {
+	private static async moduleItemFlow() {
 
 		// ===== modules =====
 
@@ -207,14 +220,13 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 		for (const file of files)
 			ModuleItem.byContentId.get(file.id).setFileData(file);
 
-	};
+	}
 
 	// =======================================
 	//              custom data
 	//  requires: modules or grades page
 	// =======================================
-
-	const customDataFlow = async function() {
+	private static async customDataFlow() {
 
 		const customDataUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {dataPath: ""});
 		const customData: CanvasAPI.CustomData = (
@@ -266,28 +278,37 @@ import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 				navTab.setPosition(tabPositions[tabId]);
 		}
 
-	};
+	}
 
-	// =======================================
-	//         run all async tasks
-	// =======================================
+	// update the checkboxes for this course
+	static async updateCheckboxes() {
+		const checkboxUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {
+			dataPath: ["", V.canvas.api.data_urls.completed_assignments, DATA.courseID].join("/")
+		});
+		const checked = (
+			await Utils.getJSON<{data: number[]}>(checkboxUrl)
+		).data;
 
-	const promises = [courseTabFlow()];
+		for (const [modItemId, modItem] of DATA.moduleItems)
+			modItem.checked = checked.includes(modItemId);
+	}
 
-	if (DATA.coursePage !== null)
-		promises.push(navTabFlow());
+	// update hide status for items for this course
+	static async updateHiddenItems() {
+		const checkboxUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {
+			dataPath: ["", V.canvas.api.data_urls.hidden_assignments, DATA.courseID].join("/")
+		});
+		const hidden = (
+			await Utils.getJSON<{data: number[]}>(checkboxUrl)
+		).data;
 
-	if (DATA.onMainPage)
-		promises.push(assignmentFlow(), moduleItemFlow());
+		for (const [modItemId, modItem] of DATA.moduleItems)
+			modItem.hidden = hidden.includes(modItemId);
+	}
 
-	await Promise.all(promises);
+}
 
-	// run custom data flow after everything
-	if (DATA.onMainPage) await customDataFlow();
-
-	return performance.now() - initStart;
-
-})()
+Requests.start()
 .catch((err: Error) => {
 	// Exceptions are intentionally throw by my code
 	if (err instanceof Exception) {
@@ -663,8 +684,10 @@ class Main {
 
 		if (success) {
 			item.checked = status;
-			UI.updateModule(item.module);
 			UI.updateCheckbox(item);
+
+			await chrome.runtime.sendMessage(new Message.SyncCheckboxes(id, DATA.courseID));
+
 			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) ` +
 				`has been ${el.checked ? "" : "un"}checked`);
 		}
@@ -696,69 +719,76 @@ class Main {
 		if (success) {
 			item.hidden = newState;
 			await UI.updateItemHide(item);
-			UI.updateModule(item.module);
+
+			await chrome.runtime.sendMessage(new Message.SyncHidden(id, DATA.courseID));
+
 			console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) ` +
 				`has been ${item.hidden ? "" : "un"}hidden`);
 		}
 	}
 
-	static onMessage(data: MessageData, source: MessageSender, respondFunc: (data?: any) => void) {
+	// this should return 'true' when 'respond' will be called with async
+	static onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void) {
 
-		if (source.id !== DATA.extensionId) return;
+		if (src.id !== DATA.extensionId) return;
 
 		let resp: any = null;
 
-		if (data.type === MessageType.BASIC) {
+		const unchecked = Array.from(DATA.moduleItems.values())
+			.filter(i => !i.checked && !i.hidden && !i.isSubHeader);
 
-			const unchecked = Array.from(DATA.moduleItems.values())
-				.filter(i => !i.checked && !i.hidden && !i.isSubHeader);
-
-			const a = data.action;
-
-			if (a === MessageAction.PING) {
-				resp = {pong: $.now()};
-			}
-			else if (a === MessageAction.COUNT_UNCHECKED) {
-				resp = {count: unchecked.length};
-			}
-			else if (a === MessageAction.JUMP_TO_FIRST_UNCHECKED) {
-				const firstUnchecked = unchecked
-					.map(i => PAGE.id(i.canvasElementId))[0];
-				UI.scrollToElement(firstUnchecked);
-				resp = undefined;
-			}
-			else {
-				console.warn("Unknown basic message in content script:", data);
-			}
-
+		if (msg.type === Message.Type.PING) {
+			resp = {pong: $.now()};
 		}
-		else if (data.type === MessageType.STATE) {
+		else if (msg.type === Message.Type.COUNT_UNCHECKED) {
+			resp = {count: unchecked.length};
+		}
+		else if (msg.type === Message.Type.JUMP_TO_FIRST_UNCHECKED) {
+			const firstUnchecked = unchecked
+				.map(i => PAGE.id(i.canvasElementId))[0];
+			UI.scrollToElement(firstUnchecked);
+			resp = undefined;
+		}
+		else if (msg.type === Message.Type.UPDATE_CHECKBOX) {
 
-			const stateData = data as StateMessageData;
+			const data = msg as Message.UpdateCheckbox;
 
-			if (data.action === MessageAction.STATE_GET) {
-				resp = DATA.states.get(stateData.stateName);
-			}
-			else if (data.action === MessageAction.STATE_SET) {
-				Main.setState(stateData.stateName, stateData.state)
-					.then(success => respondFunc(success));
+			(async function() {
+				await Requests.updateCheckboxes();
+				await UI.updateCheckbox(DATA.moduleItems.get(data.itemId));
+			})().then(respond);
 
-				return true; // this tells chrome that we want this response to be async
-			}
-			else {
-				console.warn("Unknown state message in content script:", data);
-			}
+			return true;
+		}
+		else if (msg.type === Message.Type.UPDATE_HIDDEN) {
 
+			const data = msg as Message.UpdateHidden;
+
+			(async function() {
+				await Requests.updateHiddenItems();
+				await UI.updateItemHide(DATA.moduleItems.get(data.itemId));
+			})().then(respond);
+
+			return true;
+		}
+		else if (msg.type === Message.Type.STATE_GET) {
+			const data = msg as Message.GetState;
+			resp = DATA.states.get(data.stateName);
+		}
+		else if (msg.type === Message.Type.STATE_SET) {
+			const data = msg as Message.SetState;
+			Main.setState(data.stateName, data.newState)
+				.then(success => respond(success));
+
+			return true;
 		}
 		else {
-			console.warn("Unknown message in content script:", data);
+			console.warn("Unknown message in content script:", msg);
 		}
 
-		if (resp === undefined)
-			respondFunc();
-		else if (resp !== null)
-			respondFunc(resp);
+		respond(resp);
 	}
+
 }
 
 class UI {
@@ -771,6 +801,8 @@ class UI {
 			.attr("title", item.checked ? V.tooltip.mark_incomplete : V.tooltip.mark_complete)
 			.closest(V.canvas.selector.module_item)
 			.toggleClass(V.cssClass.checkbox_checked, item.checked);
+
+		UI.updateModule(item.module);
 	}
 
 	static async updateItemHide(item: ModuleItem, instant?: boolean) {
@@ -791,6 +823,8 @@ class UI {
 			item.hidden ? V.tooltip.unhide :
 			V.tooltip.hide
 		);
+
+		UI.updateModule(item.module);
 
 	}
 
@@ -886,4 +920,7 @@ class UI {
 	}
 
 }
-// end MAIN
+
+// exports in an entry point like this will be
+// exposed to the global scope when compiled in development mode
+export { DATA, Requests, Main, UI };

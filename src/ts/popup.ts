@@ -5,8 +5,8 @@ import "../scss/popup.scss";
 
 import { V } from "./vars";
 import { format } from "./utils";
-import { MessageData, StateMessageData,
-	MessageAction, State } from "./objects";
+import { State } from "./objects";
+import * as Message from "./message";
 
 declare const componentHandler;
 
@@ -24,7 +24,7 @@ $(async function() {
 	// ============================
 
 	const startPing = $.now();
-	const pingResp = await sendMessage(new MessageData(MessageAction.PING));
+	const pingResp = await sendMessage(Message.Action.PING);
 
 	if (pingResp !== undefined) {
 		console.log("page ping", pingResp.pong - startPing);
@@ -40,7 +40,7 @@ $(async function() {
 	//  show/enable jump button
 	// ============================
 
-	const uncheckedResp = await	sendMessage(new MessageData(MessageAction.COUNT_UNCHECKED));
+	const uncheckedResp = await	sendMessage(Message.Action.COUNT_UNCHECKED);
 
 	if (uncheckedResp !== undefined) {
 		if (uncheckedResp.count === 0)
@@ -55,9 +55,7 @@ $(async function() {
 	// ============================
 
 	const statePromises: Array<Promise<State>> =
-		Object.keys(V.state).map(stateName =>
-			sendMessage(new StateMessageData(MessageAction.STATE_GET, stateName))
-		);
+		Object.keys(V.state).map(stateName => sendMessage(new Message.GetState(stateName)));
 
 	const states: State[] = await Promise.all(statePromises);
 
@@ -77,9 +75,7 @@ $(async function() {
 			inputEl.title = V.tooltip.waiting;
 			inputEl.disabled = true;
 
-			const setSuccess = sendMessage(
-				new StateMessageData(MessageAction.STATE_SET, state.name, newState)
-			);
+			const setSuccess = sendMessage(new Message.SetState(state.name, newState));
 
 			if (setSuccess) {
 				setMdlChecked(inputEl, newState);
@@ -97,7 +93,7 @@ $(async function() {
 	// ============================
 
 	jumpButton.click(async function() {
-		await sendMessage(new MessageData(MessageAction.JUMP_TO_FIRST_UNCHECKED));
+		await sendMessage(Message.Action.JUMP_TO_FIRST_UNCHECKED);
 		window.close();
 	});
 
@@ -108,7 +104,7 @@ $(async function() {
 
 });
 
-async function sendMessage(data: MessageData): Promise<any> {
+async function sendMessage(data: Message.Base): Promise<any> {
 	const activeTabs = await chrome.tabs.query({active: true, currentWindow: true});
 	return chrome.tabs.sendMessage(activeTabs[0].id, data);
 }

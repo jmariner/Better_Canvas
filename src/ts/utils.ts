@@ -1,7 +1,7 @@
 import "../lib/chrome-extension-async";
 
 import { V } from "./vars";
-import { MessageData, MessageAction } from "./objects";
+import * as Message from "./message";
 
 let ACCESS_TOKEN: string = null;
 
@@ -173,5 +173,5 @@ export async function loadToken() {
 export function accessTokenPrompt() {
 	const openOptions = confirm("Missing access token, press OK to open extension options");
 	if (openOptions) // TODO send tab ID with this message?
-		chrome.runtime.sendMessage(new MessageData(MessageAction.OPEN_OPTIONS));
+		chrome.runtime.sendMessage(Message.Action.OPEN_OPTIONS);
 }

@@ -61,9 +61,9 @@ $(async function() {
 
 		print("Access token saved.");
 
-		// TODO update the current canvas pages with the access token
-		// for this, add a button "Return to Canvas" that switches back to the Canvas tab
-		// don't think it's possible to also close the extensions page while doing this, though
+		// TODO look into switching back to the canvas tab that brought the user to the
+		// options page. also, figure out how to close the extensions page
+
 	});
 
 	closeEl.click(() => window.close());

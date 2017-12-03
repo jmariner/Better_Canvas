@@ -13,6 +13,7 @@ export class Type {
 	static SYNC_HIDDEN = "sync hidden";
 	static UPDATE_CHECKBOX = "update checkbox";
 	static UPDATE_HIDDEN = "update hidden";
+	static RE_INITIALIZE = "re initialize";
 }
 
 export class Action implements Base {
@@ -21,6 +22,7 @@ export class Action implements Base {
 	static JUMP_TO_FIRST_UNCHECKED = new Action(Type.JUMP_TO_FIRST_UNCHECKED);
 	static COUNT_UNCHECKED = new Action(Type.COUNT_UNCHECKED);
 	static OPEN_OPTIONS = new Action(Type.OPEN_OPTIONS);
+	static RE_INITIALIZE = new Action(Type.RE_INITIALIZE);
 
 	private constructor(readonly type: string) {}
 }

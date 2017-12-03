@@ -2,23 +2,18 @@ import "../lib/chrome-extension-async";
 import MessageSender = chrome.runtime.MessageSender;
 
 import * as Message from "./message";
-
-const CANVAS_URL = {
-	host: "ecpi.instructure.com",
-	prefix: "/courses/",
-	suffix: "/modules",
-	protocol: "https"
-};
+import { V } from "./vars";
+import { messageCanvasTabs } from "./utils";
 
 const RULES = [
 	{
 		conditions: [
 			new chrome.declarativeContent.PageStateMatcher({
 				pageUrl: {
-					hostEquals: CANVAS_URL.host,
-					pathPrefix: CANVAS_URL.prefix,
-					pathSuffix: CANVAS_URL.suffix,
-					schemes: [CANVAS_URL.protocol]
+					hostEquals: V.canvas.url_parts.host,
+					pathPrefix: V.canvas.url_parts.prefix,
+					pathSuffix: V.canvas.url_parts.suffix,
+					schemes: [V.canvas.url_parts.protocol]
 				}
 			})
 		],
@@ -43,13 +38,26 @@ function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void)
 		resp = undefined;
 	}
 	else if (msg.type === Message.Type.SYNC_CHECKBOXES) {
+
 		const data = msg as Message.SyncCheckboxes;
-		syncMessage(src, data, new Message.UpdateCheckbox(data.itemId)).then(respond);
+
+		messageCanvasTabs(
+			new Message.UpdateCheckbox(data.itemId),
+			data.courseId,
+			src.tab
+		).then(respond);
+
 		return true;
 	}
 	else if (msg.type === Message.Type.SYNC_HIDDEN) {
 		const data = msg as Message.SyncHidden;
-		syncMessage(src, data, new Message.UpdateHidden(data.itemId)).then(respond);
+
+		messageCanvasTabs(
+			new Message.UpdateHidden(data.itemId),
+			data.courseId,
+			src.tab
+		).then(respond);
+
 		return true;
 	}
 	else {
@@ -59,30 +67,23 @@ function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void)
 	respond(resp);
 }
 
-async function syncMessage(
-		src: MessageSender,
-		msgData: Message.SyncBase,
-		outData: Message.UpdateBase
+function onStorageChanged(
+	changes: {[key: string]: chrome.storage.StorageChange},
+	areaName: "sync" | "local"
+) {
+
+	const change = changes[V.misc.token_key];
+
+	if (
+		areaName === "sync" &&
+		change !== undefined &&
+		change.newValue !== change.oldValue &&
+		change.newValue !== undefined
 	) {
-
-	const canvasTabs = await chrome.tabs.query({
-		url: [
-			CANVAS_URL.protocol,
-			"://",
-			CANVAS_URL.host,
-			CANVAS_URL.prefix,
-			msgData.courseId,
-			CANVAS_URL.suffix,
-			"*"
-		].join("")
-	});
-
-	const msgPromises = canvasTabs
-		.filter(tab => tab.id !== src.tab.id)
-		.map(tab => chrome.tabs.sendMessage(tab.id, outData));
-
-	await Promise.all(msgPromises);
+		messageCanvasTabs(Message.Action.RE_INITIALIZE);
+	}
 }
 
+chrome.storage.onChanged.addListener(onStorageChanged);
 chrome.runtime.onInstalled.addListener(onInstall);
 chrome.runtime.onMessage.addListener(onMessage);

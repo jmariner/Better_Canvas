@@ -175,3 +175,35 @@ export function accessTokenPrompt() {
 	if (openOptions) // TODO send tab ID with this message?
 		chrome.runtime.sendMessage(Message.Action.OPEN_OPTIONS);
 }
+
+export async function messageCanvasTabs(
+	msg: Message.Base,
+	courseId?: number,
+	excludeTab?: chrome.tabs.Tab
+) {
+
+	if (chrome.tabs === undefined)
+		throw new Error("Unable to query tabs from content script.");
+
+	const query = {
+		url: [
+			V.canvas.url_parts.protocol,
+			"://",
+			V.canvas.url_parts.host,
+			V.canvas.url_parts.prefix,
+			courseId === undefined ? "*" : courseId,
+			V.canvas.url_parts.suffix,
+			"*"
+		].join("")
+	};
+
+	let canvasTabs = await chrome.tabs.query(query);
+
+	if (excludeTab !== undefined)
+		canvasTabs = canvasTabs.filter(tab => tab.id !== excludeTab.id);
+
+	if (canvasTabs.length === 0)
+		console.warn("No tabs found to send message to.", {query, msg});
+	else
+		await Promise.all(canvasTabs.map(tab => chrome.tabs.sendMessage(tab.id, msg)));
+}

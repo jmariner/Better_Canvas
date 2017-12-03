@@ -245,6 +245,12 @@ class Vars extends SassVars {
 			not_subheader: "li.context_module_item:not(.context_module_sub_header)",
 			nav_tabs: "ul#section-tabs"
 		},
+		url_parts: {
+			host: "ecpi.instructure.com",
+			prefix: "/courses/",
+			suffix: "/modules",
+			protocol: "https"
+		},
 		api: {
 			namespace: this._canvasNamespace,
 			absolute_url: "https://ecpi.instructure.com/api/v1/",

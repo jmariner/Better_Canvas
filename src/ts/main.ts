@@ -9,12 +9,34 @@ import * as Message from "./message";
 import { DATA, PAGE, Exception, CustomCourseTab, NavTab,
 	State, Module, ModuleItem, CanvasPage, ModuleItemType } from "./objects";
 
+function init() {
+	Requests.start()
+	.catch((err: Error) => {
+		// Exceptions are intentionally throw by my code
+		if (err instanceof Exception) {
+			if (err.isFatal) throw err;
+			else console.warn("Exception in init:", err);
+		}
+		else { // anything else is unknown and is a problem
+			throw new Error("Unknown error in init: " + err);
+		}
+	})
+	.then((totalDuration: number) => {
+		console.debug(`Initialization completed in ${Math.round(totalDuration)}ms`);
+	});
+}
+
 class Requests {
 
+	private static extensionInitialized = false;
+	private static pageInitialized = false;
+
 	// =======================================
-	//           main initialization
+	//         extension initialization
+	//   this only neesd run once;
+	//   start() can be re-ran to retry token
 	// =======================================
-	static async start() {
+	private static initExtension() {
 		DATA.extensionId = chrome.runtime.id;
 		DATA.name = chrome.runtime.getManifest().name;
 
@@ -30,8 +52,17 @@ class Requests {
 		DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
 		DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
 
-		if (onCoursePage)
-			console.debug(`On course #${DATA.courseID} page, at ${CanvasPage[DATA.coursePage]}`);
+		chrome.runtime.onMessage.addListener(Main.onMessage);
+
+		Requests.extensionInitialized = true;
+	}
+
+	// =======================================
+	//           main initialization
+	// =======================================
+	static async start() {
+
+		if (!Requests.extensionInitialized) Requests.initExtension();
 
 		// begin async operations
 
@@ -63,6 +94,14 @@ class Requests {
 
 		// run custom data flow after everything
 		if (DATA.onMainPage) await Requests.customDataFlow();
+
+		// TODO this still needs more testing; breaks when access token is removed and re-added,
+		// which runs the re-init with the page already initialized.
+		// all this does is prevent elements being added twice
+		if (!Requests.pageInitialized) {
+			Main.initPage();
+			Requests.pageInitialized = true;
+		}
 
 		return performance.now() - initStart;
 	}
@@ -307,23 +346,6 @@ class Requests {
 	}
 
 }
-
-Requests.start()
-.catch((err: Error) => {
-	// Exceptions are intentionally throw by my code
-	if (err instanceof Exception) {
-		if (err.isFatal) throw err;
-		else console.warn("Exception in init:", err);
-	}
-	else { // anything else is unknown and is a problem
-		throw new Error("Unknown error in init: " + err);
-	}
-})
-.then((totalDuration: number) => {
-	console.debug(`Initialization completed in ${Math.round(totalDuration)}ms`);
-	Main.initPage();
-	chrome.runtime.onMessage.addListener(Main.onMessage);
-});
 
 class Main {
 
@@ -782,6 +804,9 @@ class Main {
 
 			return true;
 		}
+		else if (msg.type === Message.Type.RE_INITIALIZE) {
+			init();
+		}
 		else {
 			console.warn("Unknown message in content script:", msg);
 		}
@@ -920,6 +945,9 @@ class UI {
 	}
 
 }
+
+// run overall initialization function
+init();
 
 // exports in an entry point like this will be
 // exposed to the global scope when compiled in development mode

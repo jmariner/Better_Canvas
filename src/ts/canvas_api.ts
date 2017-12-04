@@ -1,10 +1,13 @@
 /*
-	https://canvas.instructure.com/doc/api/modules.html
-	https://canvas.instructure.com/doc/api/assignments.html
-	https://canvas.instructure.com/doc/api/discussion_topics.html
-	https://canvas.instructure.com/doc/api/courses.html
-	https://canvas.instructure.com/doc/api/files.html
-	https://canvas.instructure.com/doc/api/submissions.html
+	Interfaces for the JSON responses given from the Canvas API.
+
+	Module and ModuleItem: 	https://canvas.instructure.com/doc/api/modules.html
+	Assignment:				https://canvas.instructure.com/doc/api/assignments.html
+	DiscussionTopic:		https://canvas.instructure.com/doc/api/discussion_topics.html
+	Course:					https://canvas.instructure.com/doc/api/courses.html
+	File:					https://canvas.instructure.com/doc/api/files.html
+	Submission:				https://canvas.instructure.com/doc/api/submissions.html
+	Tab:					https://canvas.instructure.com/doc/api/tabs.html
 */
 
 export interface Module {
@@ -141,13 +144,6 @@ export interface DiscussionTopic {
 	sort_by_rating: boolean;
 }
 
-export interface CustomData {
-	active_states: string[];
-	completed_assignments: Map<number, number[]>;
-	hidden_assignments: Map<number, number[]>;
-	tab_positions: Map<number, Map<string, number>>;
-}
-
 export interface Course {
 	id: number;
 	sis_course_id: number;
@@ -253,4 +249,11 @@ export interface Tab {
 	position: number;
 	visibility: string;
 	type: string;
+}
+
+export interface CustomData {
+	active_states: string[];
+	completed_assignments: Map<number, number[]>;
+	hidden_assignments: Map<number, number[]>;
+	tab_positions: Map<number, Map<string, number>>;
 }

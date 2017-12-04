@@ -33,7 +33,7 @@ class Requests {
 
 	// =======================================
 	//         extension initialization
-	//   this only neesd run once;
+	//   this only needs to run once;
 	//   start() can be re-ran to retry token
 	// =======================================
 	private static initExtension() {
@@ -95,9 +95,12 @@ class Requests {
 		// run custom data flow after everything
 		if (DATA.onMainPage) await Requests.customDataFlow();
 
-		// TODO this still needs more testing; breaks when access token is removed and re-added,
-		// which runs the re-init with the page already initialized.
-		// all this does is prevent elements being added twice
+		/*
+			TODO: this still needs more testing; it breaks when the access token is removed and re-added,
+			which runs the re-init with the page already initialized. instead, this just
+			prevents the elements being added twice. note that this will only happen if somebody manually
+			removes the access token from the sync storage and adds it back again
+		*/
 		if (!Requests.pageInitialized) {
 			Main.initPage();
 			Requests.pageInitialized = true;
@@ -272,8 +275,7 @@ class Requests {
 			await Utils.getJSON<{data: CanvasAPI.CustomData}>(customDataUrl)
 		).data;
 
-		// this happens when there was an issue getting the data or there was no data at all
-		// TODO figure out what to do here
+		// TODO figure out what to do when custom data request returns no data at all
 		if (customData === undefined) return;
 
 		// ===== load complete / hidden assignments =====
@@ -358,7 +360,7 @@ class Main {
 
 		// =============== misc global init stuff ============================
 
-		// removing all repeated whitespace in class attributes
+		// remove all repeated whitespace in class attributes
 		PAGE.body.find("[class]")
 			.attr("class", (i, oldClass) => (oldClass.match(/\S+/g) || []).join(" "));
 
@@ -422,6 +424,7 @@ class Main {
 
 		if (DATA.courseTabs.has(DATA.courseID)) {
 			const color = DATA.courseTabs.get(DATA.courseID).color;
+			// TODO: do more with this accent color - edit more of the --ic-* variables
 			document.documentElement.style.setProperty("--ic-brand-primary", color);
 		}
 
@@ -527,7 +530,7 @@ class Main {
 			.html("");
 
 		// === setup and apply custom indents ===
-		// TODO this could be better
+		// TODO custom ident feature could be better
 
 		const disabledIndentState = DATA.states.get("disable_indent_override");
 		const disabledIndent = disabledIndentState.active;

@@ -2,14 +2,14 @@ import $ from "lib/jquery";
 import "scss/style.scss";
 import MessageSender = chrome.runtime.MessageSender;
 
-import * as UI from "./ui";
+import PAGE, * as UI from "./ui";
 import * as Main from "./main";
 import * as Init from "./init";
 
 import * as Utils from "../utils";
 import * as Message from "../message";
 import { V } from "../vars";
-import { DATA, PAGE, CanvasPage, ModuleItemType, Exception } from "../objects";
+import { DATA, CanvasPage, ModuleItemType, Exception } from "../objects";
 
 let extensionInitialized = false;
 let coreInitialized = false;

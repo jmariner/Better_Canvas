@@ -1,9 +1,9 @@
-import * as UI from "./ui";
+import PAGE, * as UI from "./ui";
 
 import * as Message from "../message";
 import * as Utils from "../utils";
 import { V } from "../vars";
-import { DATA, PAGE, NavTab } from "../objects";
+import { DATA, NavTab } from "../objects";
 
 export async function setState(stateName: string, state: boolean) {
 	if (!DATA.states.has(stateName)) return;

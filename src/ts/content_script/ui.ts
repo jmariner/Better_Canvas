@@ -1,6 +1,44 @@
+import $ from "lib/jquery";
+
 import * as Utils from "../utils";
 import { V } from "../vars";
-import { DATA, PAGE, Module, ModuleItem, NavTab } from "../objects";
+import { DATA, Module, ModuleItem, NavTab, CanvasPage } from "../objects";
+
+class Page {
+
+	body: JQuery;
+	scrollingElement: JQuery;
+	main?: JQuery;
+	content?: JQuery;
+	left?: JQuery;
+	sidebar: JQuery;
+	grades?: JQuery;
+
+	initialize() {
+
+		this.body = $("body");
+		this.scrollingElement = $(document.scrollingElement || document.body);
+		this.sidebar = $("#menu");
+		this.main = $("#main");
+
+		if (DATA.onMainPage) {
+			this.content = $("#content");
+			this.left = $("#left-side");
+		}
+
+		if (DATA.coursePage === CanvasPage.GRADES)
+			this.grades = $("#grades_summary");
+	}
+
+	id(cssId: string): JQuery {
+		return this.body.find("#" + cssId);
+	}
+
+	cls(cssClass: string): JQuery {
+		return this.body.find("." + cssClass);
+	}
+
+}
 
 export function updateCheckbox(item: ModuleItem) {
 	if (item.checkboxElement === null) throw new Error("No checkbox to update");
@@ -127,3 +165,6 @@ function flashElement(element: JQuery) {
 	element.addClass(V.cssClass.flash);
 	setTimeout(() => element.removeClass(V.cssClass.flash), 1000);
 }
+
+const PAGE = new Page();
+export default PAGE;

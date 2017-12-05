@@ -1,4 +1,3 @@
-import $ from "lib/jquery";
 import * as CanvasAPI from "./canvas_api";
 
 class Data {
@@ -24,42 +23,6 @@ class Data {
 		this.elements = {jump_button: null, toc: null};
 
 	}
-}
-
-class Page {
-
-	body: JQuery;
-	scrollingElement: JQuery;
-	main?: JQuery;
-	content?: JQuery;
-	left?: JQuery;
-	sidebar: JQuery;
-	grades?: JQuery;
-
-	initialize() {
-
-		this.body = $("body");
-		this.scrollingElement = $(document.scrollingElement || document.body);
-		this.sidebar = $("#menu");
-		this.main = $("#main");
-
-		if (DATA.onMainPage) {
-			this.content = $("#content");
-			this.left = $("#left-side");
-		}
-
-		if (DATA.coursePage === CanvasPage.GRADES)
-			this.grades = $("#grades_summary");
-	}
-
-	id(cssId: string): JQuery {
-		return this.body.find("#" + cssId);
-	}
-
-	cls(cssClass: string): JQuery {
-		return this.body.find("." + cssClass);
-	}
-
 }
 
 export class CustomCourseTab {
@@ -249,15 +212,6 @@ export class ModuleItem {
 
 }
 
-export enum ModuleItemType {
-	ASSIGNMENT, SUB_HEADER, DISCUSSION, QUIZ, PAGE, FILE, EXTERNAL_URL, EXTERNAL_TOOL
-}
-
-export enum CanvasPage {
-	MODULES, GRADES, HOME, USERS, GROUPS, COLLABORATIONS,
-	DISCUSSION_TOPICS, EXTERNAL_TOOLS, ASSIGNMENTS
-}
-
 export class Exception extends Error {
 	private fatal: boolean;
 
@@ -273,5 +227,13 @@ export class Exception extends Error {
 
 }
 
+export enum ModuleItemType {
+	ASSIGNMENT, SUB_HEADER, DISCUSSION, QUIZ, PAGE, FILE, EXTERNAL_URL, EXTERNAL_TOOL
+}
+
+export enum CanvasPage {
+	MODULES, GRADES, HOME, USERS, GROUPS, COLLABORATIONS,
+	DISCUSSION_TOPICS, EXTERNAL_TOOLS, ASSIGNMENTS
+}
+
 export const DATA = new Data();
-export const PAGE = new Page();

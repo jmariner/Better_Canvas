@@ -68,7 +68,7 @@ function initExtension() {
 //  access token problems prevent completion,
 //    allowing it to run again to retry
 // ============================================
-async function initCore() {
+async function initCore(): Promise<number> {
 
 	// begin async operations
 
@@ -407,7 +407,7 @@ function initPage() {
 // this should return 'true' when 'respond'
 //     will be called with async
 // =========================================
-function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void) {
+function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void): true | void {
 
 	if (src.id !== DATA.extensionId) return;
 
@@ -434,7 +434,7 @@ function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void)
 
 		(async function() {
 			await Main.updateCheckboxes();
-			await UI.updateCheckbox(DATA.moduleItems.get(data.itemId));
+			UI.updateCheckbox(DATA.moduleItems.get(data.itemId));
 		})().then(respond);
 
 		return true;

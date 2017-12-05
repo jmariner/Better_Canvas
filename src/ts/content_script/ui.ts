@@ -2,7 +2,7 @@ import $ from "lib/jquery";
 
 import * as Utils from "../utils";
 import { V } from "../vars";
-import { DATA, Module, ModuleItem, NavTab, CanvasPage } from "../objects";
+import { DATA, Module, ModuleItem, NavTab, State, CanvasPage } from "../objects";
 
 class Page {
 
@@ -38,6 +38,13 @@ class Page {
 		return this.body.find("." + cssClass);
 	}
 
+}
+
+export function updateState(stateObj: State) {
+	if (stateObj.bodyClass !== undefined)
+		PAGE.body.toggleClass(stateObj.bodyClass, stateObj.active);
+
+	stateObj.onChange();
 }
 
 export function updateCheckbox(item: ModuleItem) {

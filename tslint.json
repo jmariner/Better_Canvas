@@ -8,6 +8,7 @@
 	"jsRules": {},
 	"rules": {
 		"no-unused-variable": true,
+		"await-promise": true,
 
 		"trailing-comma": [true, {
 			"multiline": "never",
@@ -22,7 +23,7 @@
 				"instance-method"
 			]
 		}],
-		"whitespace": [true, 
+		"whitespace": [true,
 			"check-branch",
 			"check-decl",
 			"check-operator",
@@ -33,11 +34,11 @@
 			"check-type-operator",
 			"check-preblock"
 		],
-		"one-line": [true, 
+		"one-line": [true,
 			"check-open-brace",
 			"check-whitespace"
 		],
-		
+
 		"max-line-length": [true, 100],
 		"indent": [true, "tabs"],
 		"variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],

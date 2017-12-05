@@ -1,8 +1,8 @@
 import * as CanvasAPI from "../canvas_api";
 import * as Utils from "../utils";
 import { V } from "../vars";
-import { DATA, Module, ModuleItem, ModuleItemType,
-	NavTab, CustomCourseTab, State } from "../objects";
+import { DATA, Module, ModuleItem, ModuleItemType, NavTab,
+	CustomCourseTab, State, StateData } from "../objects";
 
 // =======================================
 //               course tabs
@@ -197,9 +197,13 @@ export async function customDataFlow() {
 
 	// load states from config
 
-	for (const [name, stateData] of Object.entries(V.state)) {
-		const stateObj = new State(name, stateData, activeStates.includes(name));
-		DATA.states.set(name, stateObj);
+	for (const [stateName, stateData] of Object.entries(V.state)) {
+		const stateObj = new State(
+			stateName,
+			stateData as StateData,
+			activeStates.includes(stateName)
+		);
+		DATA.states.set(stateName, stateObj);
 	}
 
 	// ===== load tabs positions =====

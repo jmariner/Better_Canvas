@@ -79,23 +79,23 @@ export class State {
 	public onEnable: () => void;
 	public onDisable: () => void;
 
-	constructor(key, stateData, active) {
+	constructor(key: string, stateData: StateData, active: boolean) {
 		this.name = key;
 		this.bodyClass = stateData.cssClass;
 		this.desc = stateData.desc;
 		this.active = active;
 		this.onPages = [];
 
-		stateData.pages.forEach((page: string) => {
+		stateData.pages.forEach(page => {
 			const _page = CanvasPage[page.toUpperCase()];
 			if (_page !== undefined)
 				this.onPages.push(_page);
 		});
 	}
 
-	onChange(newState: boolean) {
-		if (newState && this.onEnable instanceof Function) this.onEnable();
-		else if (this.onDisable instanceof Function) this.onDisable();
+	onChange() {
+		if (this.active && this.onEnable instanceof Function) this.onEnable();
+		else if (!this.active && this.onDisable instanceof Function) this.onDisable();
 	}
 
 }
@@ -225,6 +225,12 @@ export class Exception extends Error {
 		return this.fatal;
 	}
 
+}
+
+export interface StateData {
+	cssClass?: string;
+	pages: string[];
+	desc: string;
 }
 
 export enum ModuleItemType {

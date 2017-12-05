@@ -37,7 +37,7 @@ export class SetState implements Base {
 	constructor(readonly stateName: string, readonly newState: boolean) {}
 }
 
-export class SyncBase implements Base {
+class SyncBase implements Base {
 	readonly type = null;
 	constructor(readonly itemId: number, readonly courseId: number) {}
 }
@@ -50,7 +50,7 @@ export class SyncHidden extends SyncBase {
 	readonly type = Type.SYNC_HIDDEN;
 }
 
-export class UpdateBase implements Base {
+class UpdateBase implements Base {
 	readonly type = null;
 	constructor(readonly itemId: number) {}
 }

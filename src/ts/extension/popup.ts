@@ -4,7 +4,7 @@ import "lib/chrome-extension-async";
 import "scss/popup.scss";
 
 import { V } from "../vars";
-import { format } from "../utils";
+import { format, messageCanvasTabs } from "../utils";
 import { State } from "../objects";
 import * as Message from "../message";
 
@@ -24,13 +24,12 @@ $(async function() {
 	// ============================
 
 	const startPing = $.now();
-	const pingResp = await sendMessage(Message.Action.PING);
 
-	if (pingResp !== undefined) {
+	try {
+		const pingResp = await sendMessage(Message.Action.PING);
 		console.log("page ping", pingResp.pong - startPing);
 		BODY.addClass(V.cssClass.popup_connected);
-	}
-	else {
+	} catch (e) {
 		BODY.addClass(V.cssClass.popup_loaded);
 		return;
 	}
@@ -75,7 +74,7 @@ $(async function() {
 			inputEl.title = V.tooltip.waiting;
 			inputEl.disabled = true;
 
-			const setSuccess = sendMessage(new Message.SetState(state.name, newState));
+			const setSuccess = messageCanvasTabs(new Message.SetState(state.name, newState));
 
 			if (setSuccess) {
 				setMdlChecked(inputEl, newState);

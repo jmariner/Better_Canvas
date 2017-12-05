@@ -1,27 +1,33 @@
-import PAGE, * as UI from "./ui";
+import * as UI from "./ui";
 
 import * as Message from "../message";
 import * as Utils from "../utils";
 import { V } from "../vars";
 import { DATA, NavTab } from "../objects";
 
-export async function setState(stateName: string, state: boolean) {
+export async function setState(stateName: string, newState: boolean): Promise<boolean> {
 	if (!DATA.states.has(stateName)) return;
 
 	const stateObj = DATA.states.get(stateName);
 
 	if (!stateObj.onPages.includes(DATA.coursePage)) return;
 
-	if (stateObj.bodyClass)
-		PAGE.body.toggleClass(stateObj.bodyClass, state);
-
-	stateObj.active = state;
-	stateObj.onChange(state);
-
 	const url = Utils.formatUrl(V.canvas.api.urls.custom_data, {
 		dataPath: "/" + V.canvas.api.data_urls.active_states
 	});
-	return Utils.editDataArray(url, state, [stateName]);
+	const success = Utils.editDataArray(url, newState, [stateName]);
+
+	if (success) {
+		stateObj.active = newState;
+		UI.updateState(stateObj);
+
+	//	await chrome.runtime.sendMessage(new Message.SyncState(stateName));
+	}
+	else {
+		console.error("State update failed.");
+	}
+
+	return success;
 }
 
 export async function setNavTabPosition(tab: NavTab, position: number) {
@@ -77,10 +83,11 @@ export async function onCheckboxChange(el: HTMLInputElement) {
 		item.checked = status;
 		UI.updateCheckbox(item);
 
-		await chrome.runtime.sendMessage(new Message.SyncCheckboxes(id, DATA.courseID));
-
 		console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) ` +
 			`has been ${el.checked ? "" : "un"}checked`);
+	}
+	else {
+		throw new Error("Checkbox update failed.");
 	}
 
 }
@@ -115,6 +122,9 @@ export async function onHideButtonClick(el: JQuery) {
 
 		console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) ` +
 			`has been ${item.hidden ? "" : "un"}hidden`);
+	}
+	else {
+		throw new Error("Hidden status update failed.");
 	}
 }
 

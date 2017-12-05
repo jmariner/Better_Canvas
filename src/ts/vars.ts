@@ -39,10 +39,11 @@ class SassVars {
 		toc: "toc",
 		jump_button: "jump-to-top",
 
-		popup_page_missing: "page-missing-error",
+		popup_page_missing: "page-missing",
 		popup_ex_name: "extension-name",
 		popup_insertion_point: "insertion-point",
-		popup_jump_button: "jump-to"
+		popup_jump_button: "jump-to",
+		popup_refresh_button: "refresh-canvas-pages"
 	};
 
 	color = {

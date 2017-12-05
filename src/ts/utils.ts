@@ -1,4 +1,5 @@
 import "lib/chrome-extension-async";
+import Tab = chrome.tabs.Tab;
 
 import { V } from "./vars";
 import * as Message from "./message";
@@ -176,12 +177,7 @@ export function accessTokenPrompt() {
 		chrome.runtime.sendMessage(Message.Action.OPEN_OPTIONS);
 }
 
-export async function messageCanvasTabs(
-	msg: Message.Base,
-	courseId?: number,
-	excludeTab?: chrome.tabs.Tab
-) {
-
+export async function getCanvasTabs(courseId?: number): Promise<Tab[]> {
 	if (chrome.tabs === undefined)
 		throw new Error("Unable to query tabs from content script.");
 
@@ -197,13 +193,20 @@ export async function messageCanvasTabs(
 		].join("")
 	};
 
-	let canvasTabs = await chrome.tabs.query(query);
+	return chrome.tabs.query(query);
+}
+
+export async function messageCanvasTabs(
+	msg: Message.Base,
+	courseId?: number,
+	excludeTab?: chrome.tabs.Tab
+) {
+
+	let canvasTabs = await getCanvasTabs(courseId);
 
 	if (excludeTab !== undefined)
 		canvasTabs = canvasTabs.filter(tab => tab.id !== excludeTab.id);
 
-	if (canvasTabs.length === 0)
-		console.warn("No tabs found to send message to.", {query, msg});
-	else
+	if (canvasTabs.length > 0)
 		await Promise.all(canvasTabs.map(tab => chrome.tabs.sendMessage(tab.id, msg)));
 }

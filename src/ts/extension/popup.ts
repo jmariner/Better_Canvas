@@ -4,7 +4,7 @@ import "lib/chrome-extension-async";
 import "scss/popup.scss";
 
 import { V } from "../vars";
-import { format, messageCanvasTabs } from "../utils";
+import { format, getCanvasTabs, messageCanvasTabs } from "../utils";
 import { State } from "../objects";
 import * as Message from "../message";
 
@@ -17,6 +17,19 @@ $(async function() {
 	const insertionPoint = $("#" + V.id.popup_insertion_point);
 
 	$("#" + V.id.popup_ex_name).text(chrome.runtime.getManifest().name);
+
+	// ============================
+	//        refresh button
+	//  does not need connection
+	// ============================
+
+	$("#" + V.id.popup_refresh_button).click(async function() {
+		const canvasTabs = await getCanvasTabs();
+		const reloadPromises = canvasTabs.map(tab => chrome.tabs.reload(tab.id));
+		await Promise.all(reloadPromises);
+		// TODO figure out how to reload the popup after the canvas tabs reload
+		window.close();
+	});
 
 	// ============================
 	//           page ping

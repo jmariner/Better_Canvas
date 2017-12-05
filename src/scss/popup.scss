@@ -15,6 +15,14 @@ body {
 		display: none;
 	}
 
+	#{id(popup_page_missing)} {
+		padding: 0 8px;
+	}
+
+	#{id(popup_refresh_button)} {
+		margin-top: 16px;
+	}
+
 	> div {
 		display: block;
 		margin-bottom: 1em;

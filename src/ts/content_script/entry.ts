@@ -39,7 +39,7 @@ function init() {
 // =======================================
 //         extension initialization
 //   this only needs to run once;
-//   start() can be re-ran to retry token
+//   initCore() can re run to retry token
 // =======================================
 function initExtension() {
 	DATA.extensionId = chrome.runtime.id;
@@ -62,11 +62,12 @@ function initExtension() {
 	extensionInitialized = true;
 }
 
-// =======================================
+// ============================================
 //           core initialization
-//  will only run when coreInitialized = false.
-//  access token problems cause it to remain false
-// =======================================
+//  will only run all the way through one time.
+//  access token problems prevent completion,
+//    allowing it to run again to retry
+// ============================================
 async function initCore() {
 
 	// begin async operations
@@ -107,6 +108,12 @@ async function initCore() {
 	return performance.now() - initStart;
 }
 
+// ==================================
+//       page initialization
+//  places the elements on the page
+//  and adds listeners and such.
+//  should only ever run once
+// ==================================
 function initPage() {
 
 	PAGE.initialize();
@@ -395,7 +402,11 @@ function initPage() {
 
 }
 
-// this should return 'true' when 'respond' will be called with async
+// =========================================
+//   chrome extension message listener
+// this should return 'true' when 'respond'
+//     will be called with async
+// =========================================
 function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void) {
 
 	if (src.id !== DATA.extensionId) return;

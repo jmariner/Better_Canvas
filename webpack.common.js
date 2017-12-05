@@ -10,10 +10,10 @@ function _path(pathString) {
 
 const commonConfig = {
 	entry: {
-		"popup": _path("src/ts/popup.ts"),
-		"options": _path("src/ts/options.ts"),
-		"content_script": _path("src/ts/main.ts"),
-		"background": _path("src/ts/background.ts")
+		"popup": _path("src/ts/extension/popup.ts"),
+		"options": _path("src/ts/extension/options.ts"),
+		"content_script": _path("src/ts/content_script/entry.ts"),
+		"background": _path("src/ts/extension/background.ts")
 	},
 	output: {
 		path: _path("dist/"),
@@ -29,7 +29,8 @@ const commonConfig = {
 		]
 	},
 	resolve: {
-		extensions: [".ts", ".js"]
+		extensions: [".ts", ".js"],
+		modules: [_path("src/"), "node_modules"]
 	},
 	resolveLoader: {
 		modules: [_path("scripts/"), "node_modules"]

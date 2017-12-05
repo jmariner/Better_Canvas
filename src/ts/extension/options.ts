@@ -1,9 +1,9 @@
-import $ from "../lib/jquery";
-import "../lib/material";
-import "../lib/chrome-extension-async";
+import $ from "lib/jquery";
+import "lib/material";
+import "lib/chrome-extension-async";
 
-import { V } from "./vars";
-import { testToken } from "./utils";
+import { V } from "../vars";
+import { testToken } from "../utils";
 
 $(async function() {
 

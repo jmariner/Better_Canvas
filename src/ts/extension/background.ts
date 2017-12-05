@@ -1,9 +1,9 @@
-import "../lib/chrome-extension-async";
+import "lib/chrome-extension-async";
 import MessageSender = chrome.runtime.MessageSender;
 
-import * as Message from "./message";
-import { V } from "./vars";
-import { messageCanvasTabs } from "./utils";
+import * as Message from "../message";
+import { V } from "../vars";
+import { messageCanvasTabs } from "../utils";
 
 const RULES = [
 	{

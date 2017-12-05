@@ -2,17 +2,17 @@
   "compilerOptions": {
     "typeRoots": ["src/ts/typings", "node_modules/@types"],
     "types": ["jquery", "chrome", "custom"],
-    "lib": ["es2016", "dom"],
+    "lib": ["es2017", "dom"],
     "module": "es6",
     "target": "es2015",
     "removeComments": true,
     "sourceMap": true
   },
   "files": [
-    "src/ts/main.ts",
-    "src/ts/popup.ts",
-    "src/ts/options.ts",
-    "src/ts/background.ts"
+    "src/ts/content_script/entry.ts",
+    "src/ts/extension/popup.ts",
+    "src/ts/extension/options.ts",
+    "src/ts/extension/background.ts"
   ],
   "compileOnSave": false,
   "exclude": [

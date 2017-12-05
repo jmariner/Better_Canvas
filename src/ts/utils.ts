@@ -1,4 +1,4 @@
-import "../lib/chrome-extension-async";
+import "lib/chrome-extension-async";
 
 import { V } from "./vars";
 import * as Message from "./message";

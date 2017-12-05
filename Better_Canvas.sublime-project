@@ -16,6 +16,7 @@
 			"name": "webpack",
 			"shell_cmd": "npm run build",
 			"working_dir": "$project_path",
+			"quiet": true,
 
 			"variants": [
 				{

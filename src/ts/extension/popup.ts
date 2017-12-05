@@ -1,12 +1,12 @@
-import $ from "../lib/jquery";
-import "../lib/material";
-import "../lib/chrome-extension-async";
-import "../scss/popup.scss";
+import $ from "lib/jquery";
+import "lib/material";
+import "lib/chrome-extension-async";
+import "scss/popup.scss";
 
-import { V } from "./vars";
-import { format } from "./utils";
-import { State } from "./objects";
-import * as Message from "./message";
+import { V } from "../vars";
+import { format } from "../utils";
+import { State } from "../objects";
+import * as Message from "../message";
 
 declare const componentHandler;
 

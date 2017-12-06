@@ -1,3 +1,11 @@
+/**
+ * Main content script entry point. The functions in this module use some combination of the other
+ * content script modules, where importing them into each other would result in a circular import
+ * situation.
+ *
+ * This module also includes imports for the content script SCSS file and the import for jQuery,
+ * both of which need to be injected along with the rest of the content script.
+ */
 import $ from "lib/jquery";
 import "scss/style.scss";
 import MessageSender = chrome.runtime.MessageSender;
@@ -11,9 +19,16 @@ import * as Message from "../message";
 import { V } from "../vars";
 import { DATA, CanvasPage, ModuleItemType, Exception } from "../objects";
 
+/** @type {Boolean} If the extension has been initialized. */
 let extensionInitialized = false;
+/** @type {Boolean} If the core of the extension has been initialized. */
 let coreInitialized = false;
 
+/**
+ * Initialize everything. This is called once on load (see the bottom of this file) and can be
+ * called again when the background page sends the RE_INITIALIZE request. All errors
+ * from the separate init functions are caught here.
+ */
 function init() {
 	if (!extensionInitialized)
 		initExtension();
@@ -36,11 +51,15 @@ function init() {
 	});
 }
 
-// =======================================
-//         extension initialization
-//   this only needs to run once;
-//   initCore() can re run to retry token
-// =======================================
+/**
+ * Initialize the Chrome extension settings and data. This includes:
+ * - storing the ID and name of the extension
+ * - overriding default console.{log,debug,info,...} functions to display the extension name
+ * - parsing the URL of the page to determine which Canvas page is active
+ * - setting the Chrome message listener
+ *
+ * This should only ever run one time.
+ */
 function initExtension() {
 	DATA.extensionId = chrome.runtime.id;
 	DATA.name = chrome.runtime.getManifest().name;
@@ -62,12 +81,18 @@ function initExtension() {
 	extensionInitialized = true;
 }
 
-// ============================================
-//           core initialization
-//  will only run all the way through one time.
-//  access token problems prevent completion,
-//    allowing it to run again to retry
-// ============================================
+/**
+ * Initialize the core of the extension, including:
+ * - checking for the access token
+ * - sending and parsing JSON requests for various Canvas data
+ * - tracking the duration of this entire process
+ *
+ * This is intended to be ran again when the access token check fails, but will not run to
+ * completion more than once.
+ *
+ * @returns {Promise<number>} A promise containing the milliseconds elapsed during the full
+ *                              asynchronous initialization process
+ */
 async function initCore(): Promise<number> {
 
 	// begin async operations
@@ -108,12 +133,17 @@ async function initCore(): Promise<number> {
 	return performance.now() - initStart;
 }
 
-// ==================================
-//       page initialization
-//  places the elements on the page
-//  and adds listeners and such.
-//  should only ever run once
-// ==================================
+/**
+ * Initialize the Canvas page, including:
+ * - placing all custom elements on the page
+ * - setting up all event listeners, including for custom elements
+ * - repairing misc. parts of the webpage to better complement the additions
+ *
+ * The current Canvas page determines exactly how much of this function runs; it's filled with
+ * 'return' guards to that it stops early when it can.
+ *
+ * This should only ever run once to prevent elements from being added multiple times.
+ */
 function initPage() {
 
 	PAGE.initialize();
@@ -402,11 +432,17 @@ function initPage() {
 
 }
 
-// =========================================
-//   chrome extension message listener
-// this should return 'true' when 'respond'
-//     will be called with async
-// =========================================
+/**
+ * Chrome runtime message listener. See the Message module for the types of messages this handles.
+ *
+ * @param   {Message.Base}  msg The instance of a message type, which is received as a plain object
+ *                              with no understanding of its class, so casting is required and
+ *                              'instanceof' does not work.
+ * @param   {MessageSender} src The source of this message. Should be the Chrome extension runtime.
+ * @param   {(x?) => void}  respond The callback function used to respond to the message.
+ * @returns {true | void} Must return 'true' when the callback function will be called
+ *                        asychronously. Otherwise, does not return.
+ */
 function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void): true | void {
 
 	if (src.id !== DATA.extensionId) return;
@@ -475,6 +511,8 @@ function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void)
 // run overall initialization function
 init();
 
-// exports in an entry point like this will be
-// exposed to the global scope when compiled in development mode
+/**
+ * Export all of the content script modules, exposing them to the global scope when built in
+ * development mode.
+ */
 export { DATA, Init, Main, UI };

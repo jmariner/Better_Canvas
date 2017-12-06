@@ -20,8 +20,6 @@ export async function setState(stateName: string, newState: boolean): Promise<bo
 	if (success) {
 		stateObj.active = newState;
 		UI.updateState(stateObj);
-
-	//	await chrome.runtime.sendMessage(new Message.SyncState(stateName));
 	}
 	else {
 		console.error("State update failed.");
@@ -82,6 +80,8 @@ export async function onCheckboxChange(el: HTMLInputElement) {
 	if (success) {
 		item.checked = status;
 		UI.updateCheckbox(item);
+
+		await chrome.runtime.sendMessage(new Message.SyncCheckboxes(id, DATA.courseID));
 
 		console.debug(`Item ID ${id} (${item.name.substr(0, 25)}...) ` +
 			`has been ${el.checked ? "" : "un"}checked`);

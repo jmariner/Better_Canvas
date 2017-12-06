@@ -4,9 +4,13 @@ import { V } from "../vars";
 import { DATA, Module, ModuleItem, ModuleItemType, NavTab,
 	CustomCourseTab, State, StateData } from "../objects";
 
-// =======================================
-//               course tabs
-// =======================================
+/**
+ * Gather and set data required to set up the custom course tab system. This includes both the
+ * user's custom colors and their favorited courses.
+ *
+ * All data gathered here is placed in the DATA.courseTabs map.
+ * This has no page requirement and should run globally on Canvas.
+ */
 export async function courseTabFlow() {
 
 	const colorsUrl = Utils.formatUrl(V.canvas.api.urls.custom_colors);
@@ -25,10 +29,12 @@ export async function courseTabFlow() {
 
 }
 
-// =======================================
-//            navigation tabs
-//  requires: course page
-// =======================================
+/**
+ * Gather and set the data regarding the current course's navigation tabs.
+ *
+ * The data gathered here is placed in the DATA.navTabs map.
+ * Requires that the user be on any Canvas course page.
+ */
 export async function navTabFlow() {
 
 	const navTabUrl = Utils.formatUrl(V.canvas.api.urls.navigation_tabs, {
@@ -42,10 +48,17 @@ export async function navTabFlow() {
 
 }
 
-// =======================================
-//              assignments
-//  requires: modules or grades page
-// =======================================
+/**
+ * Gather and set information about this course's assignments. Note that assignments are a subset of
+ * all module items. This runs at the same time as the module item flow, so it takes care to
+ * determine if the assignment's corresponding module item has already been set.
+ *
+ * Sets the data in the ModuleItem class so that the module item flow can look up which items have
+ * been set already.
+ *
+ * Requires that the user be on either the GRADES or MODULES page of Canvas since those are the
+ * ones where assingments are listed.
+ */
 export async function assignmentFlow() {
 
 	// hopefully 1000 is enough to get all in one go
@@ -76,10 +89,14 @@ export async function assignmentFlow() {
 	}
 }
 
-// =======================================
-//       modules, items, and files
-//  requires: modules or grades page
-// =======================================
+/**
+ * Gather and set information about this course's module items. This includes requesting the
+ * course's modules and then requesting the items from each module separately. Additionally, module
+ * items that are of the FILE type require further requests to get that file's data.
+ *
+ * Sets data in both DATA.modules and DATA.moduleItems maps.
+ * Requires either the GRADES or MODULES page.
+ */
 export async function moduleItemFlow() {
 
 	// ===== modules =====
@@ -159,10 +176,16 @@ export async function moduleItemFlow() {
 
 }
 
-// =======================================
-//              custom data
-//  requires: modules or grades page
-// =======================================
+/**
+ * Gather and set all of the custom data that this extension stores in the Canvas API's custom data
+ * system. This consists of, so far, a list of completed items, a list of hidden items, a list of
+ * active states, and a custom order to the course's navigation tabs.
+ *
+ * Completed and hidden items modify the DATA.moduleItems map, active states are stored in
+ * DATA.states, and custom tab positions are stores in DATA.navTabs.
+ *
+ * Requires either the GRADES or MODULES page.
+ */
 export async function customDataFlow() {
 
 	const customDataUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {dataPath: ""});

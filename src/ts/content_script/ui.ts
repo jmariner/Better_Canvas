@@ -1,9 +1,22 @@
+/**
+ * Deals with all manipulations of the Canvas page.
+ *
+ * Exports several functions to update each part of the extension and includes a default export of
+ * the global PAGE object, which is an instance of the Page class.
+ */
 import $ from "lib/jquery";
 
 import * as Utils from "../utils";
 import { V } from "../vars";
 import { DATA, Module, ModuleItem, NavTab, State, CanvasPage } from "../objects";
 
+/**
+ * The Page class contains global data members referencing the common elements in the Canvas page.
+ * Also contains functions to find other elements.
+ *
+ * This eventual plan here is to create a full interface to jQuery in a separate module; this is the
+ * initial state of that.
+ */
 class Page {
 
 	body: JQuery;
@@ -40,6 +53,12 @@ class Page {
 
 }
 
+/**
+ * Updates the new boolean value of a state on the Canvas page. This consists of toggling the
+ * state's bodyClass and calling its onChange handler.
+ *
+ * @param {State} stateObj The State object to update the page for.
+ */
 export function updateState(stateObj: State) {
 	if (stateObj.bodyClass !== undefined)
 		PAGE.body.toggleClass(stateObj.bodyClass, stateObj.active);
@@ -47,6 +66,13 @@ export function updateState(stateObj: State) {
 	stateObj.onChange();
 }
 
+/**
+ * Updates the new checked value of a checkbox on the Canvas page. This consists of updating the
+ * 'checked' attribute and the tooltip of the <input> element, as well as toggling classes in the
+ * checkbox's parent element. Also updates the parent module of this item.
+ *
+ * @param {ModuleItem} item The module item object to update the checkbox for.
+ */
 export function updateCheckbox(item: ModuleItem) {
 	if (item.checkboxElement === null) throw new Error("No checkbox to update");
 	item.checkboxElement
@@ -59,6 +85,15 @@ export function updateCheckbox(item: ModuleItem) {
 	updateModule(item.module);
 }
 
+/**
+ * Update the hide status of a module item on the Canvas page. This consists of updating the hide
+ * button's tooltip and toggling the required classes on the module item. The class change will also
+ * run the particular animation. Also updates the parent module of this item.
+ *
+ * @param {ModuleItem} item    The module item object to update the hide status for.
+ * @param {boolean}    instant Whether or not to update this item instantly. If 'false', this
+ *                             function will run asychronously.
+ */
 export async function updateItemHide(item: ModuleItem, instant?: boolean) {
 	if (item.hideElement === null) throw new Error("No hide button to update");
 
@@ -82,6 +117,14 @@ export async function updateItemHide(item: ModuleItem, instant?: boolean) {
 
 }
 
+/**
+ * Update a module on the Canvas page, consisting of updating the table of contents in the sidebar,
+ * which counts the amount of items that are checked versus the total amount of items that are not
+ * hidden or subheaders. Also will optionally hide an entire module, and its entry in the TOC, if
+ * it does not have any items at all.
+ *
+ * @param {Module} module The module object to update the page for.
+ */
 export function updateModule(module: Module) {
 
 	if (DATA.elements.toc !== null) {
@@ -118,6 +161,12 @@ export function updateModule(module: Module) {
 
 }
 
+/**
+ * Update the Canvas page with the custom position of a navigation tab. This consists of detaching
+ * and re-inserting the tab into the navigation list.
+ *
+ * @param {NavTab} tab The navigation tab object to upate the page for.
+ */
 export function updateNavTabPosition(tab: NavTab) {
 
 	if (!tab.hasCustomPosition) throw new Error("Tab has no custom position");
@@ -131,6 +180,10 @@ export function updateNavTabPosition(tab: NavTab) {
 		tabEl.show().detach().insertBefore(tabList.children().eq(tab.position - 1));
 }
 
+/**
+ * Update the page when it is scrolled, which consists of updating the table of contents and the
+ * 'jump to top' button accordingly.
+ */
 export function updateScrollPosition() {
 	const scrollTop = PAGE.scrollingElement.prop("scrollTop");
 
@@ -146,16 +199,22 @@ export function updateScrollPosition() {
 
 }
 
+/**
+ * Scroll to an element on the Canvas page, flashing it after arriving. If the element is already in
+ * the viewport, no scrolling will occur.
+ *
+ * An element is in the viewport if its height is shorter than viewport height and both top and
+ * bottom are inside the viewport OR if its height is taller than viewport and top is within top
+ * part of the page.
+ *
+ * @param {JQuery} element The element to scroll to.
+ */
 export function scrollToElement(element: JQuery) {
 	const elRect = element[0].getBoundingClientRect();
 	const cliHeight = document.documentElement.clientHeight;
 	const topRatio = V.ui.top_inside_ratio;
 
 	// if element is in viewport, just flash it
-	/*	in viewport if...
-	 height is shorter than viewport and both top and bottom are inside OR
-	 height is taller than viewport and top is within top part of page
-	 */
 	if ((elRect.height < cliHeight && elRect.top >= 0 && elRect.bottom < cliHeight) ||
 		(elRect.top >= 0 && elRect.top <= cliHeight * topRatio)) {
 		flashElement(element);
@@ -168,6 +227,11 @@ export function scrollToElement(element: JQuery) {
 	}
 }
 
+/**
+ * Flash an element on the page by setting the flash class and removing it after one second.
+ *
+ * @param {JQuery} element The element to flash.
+ */
 function flashElement(element: JQuery) {
 	element.addClass(V.cssClass.flash);
 	setTimeout(() => element.removeClass(V.cssClass.flash), 1000);

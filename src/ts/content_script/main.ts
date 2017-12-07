@@ -1,3 +1,9 @@
+/**
+ * Functions that control various parts of the global DATA. This mostly ends up being event
+ * listeners and functions to update the custom data storage in the Canvas API.
+ *
+ * Exports all functions for use in the Entry module.
+ */
 import * as UI from "./ui";
 
 import * as Message from "../message";
@@ -5,6 +11,14 @@ import * as Utils from "../utils";
 import { V } from "../vars";
 import { DATA, NavTab } from "../objects";
 
+/**
+ * Set the boolean value of one of the states in DATA.states. This includes updating the State
+ * object and the custom data storage with the new value and updating the current page accordingly.
+ *
+ * @param   {string}           stateName The name of the state to change.
+ * @param   {boolean}          newState  The new boolean value of the state.
+ * @returns {Promise<boolean>}           A Promise containing the success status of this change.
+ */
 export async function setState(stateName: string, newState: boolean): Promise<boolean> {
 	if (!DATA.states.has(stateName)) return;
 
@@ -28,6 +42,13 @@ export async function setState(stateName: string, newState: boolean): Promise<bo
 	return success;
 }
 
+/**
+ * Change the custom position of a navigation tab. This includes updating the NavTab object and the
+ * custom data storage with the new position and updating the page accordingly.
+ *
+ * @param {NavTab} tab      the navigation tab object to change
+ * @param {number} position the new 1-indexed position to give to this tab
+ */
 export async function setNavTabPosition(tab: NavTab, position: number) {
 
 	const url = Utils.formatUrl(V.canvas.api.urls.custom_data, {
@@ -45,7 +66,13 @@ export async function setNavTabPosition(tab: NavTab, position: number) {
 	}
 }
 
-// element is the <input>
+/**
+ * Event handler for when a checkbox is checked or unchecked. Disables the checkbox while it updates
+ * the custom data storage, and then updates the respective ModuleItem object with the new value.
+ * Also sends a message to the chrome runtime to update all other Canvas pages with the new status.
+ *
+ * @param {HTMLInputElement} el The checkbox's <input> element.
+ */
 export async function onCheckboxChange(el: HTMLInputElement) {
 	const id = Number(el.getAttribute(V.dataAttr.mod_item_id));
 	const item = DATA.moduleItems.get(id);
@@ -92,7 +119,13 @@ export async function onCheckboxChange(el: HTMLInputElement) {
 
 }
 
-// element is <i>
+/**
+ * Event handler for when a module item's hide or unhide button is clicked. Disables the hide button
+ * while it updates the custom data storage, then updates the ModuleItem object with the new status.
+ * Also sends a message to the chrome runtime to update all other Canvas pages with the new status.
+ *
+ * @param {JQuery} el The <i> element used in the hide button.
+ */
 export async function onHideButtonClick(el: JQuery) {
 	const id = Number(el.attr(V.dataAttr.mod_item_id));
 	const item = DATA.moduleItems.get(id);
@@ -128,7 +161,11 @@ export async function onHideButtonClick(el: JQuery) {
 	}
 }
 
-// update the checkboxes for this course
+/**
+ * Update the checkboxes from the custom data storage in the Canvas API. This runs very similar to
+ * the customDataFlow() in the Init module, but only requests and only handles this course's
+ * completed assignments. Used for synchronizing the checkboxes between pages.
+ */
 export async function updateCheckboxes() {
 	const checkboxUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {
 		dataPath: ["", V.canvas.api.data_urls.completed_assignments, DATA.courseID].join("/")
@@ -141,7 +178,11 @@ export async function updateCheckboxes() {
 		modItem.checked = checked.includes(modItemId);
 }
 
-// update hide status for items for this course
+/**
+ * Update the hidden items from the custom data storage in the Canvas API. This runs similarly to
+ * the customDataFlow() in the Init module, but only requests this courses hidden items. Used for
+ * synchronizing the hide status of the items.
+ */
 export async function updateHiddenItems() {
 	const checkboxUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {
 		dataPath: ["", V.canvas.api.data_urls.hidden_assignments, DATA.courseID].join("/")

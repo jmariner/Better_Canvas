@@ -1,3 +1,9 @@
+/**
+ * Set of functions called in a particular order and under certain conditions when the extension
+ * first loads. All of these functions send requests to the Canvas API for particular sets of data.
+ *
+ * Exports all functions for use in the Entry module.
+ */
 import * as CanvasAPI from "../canvas_api";
 import * as Utils from "../utils";
 import { V } from "../vars";

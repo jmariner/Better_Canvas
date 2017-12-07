@@ -1,3 +1,10 @@
+/**
+ * Entry point for the Chrome extension options page. Only contains simple scripts to set up the
+ * input and buttons for entering and testing the Canvas API acess token.
+ *
+ * Imports JS all libraries that the options page needs to run, like the Material Design Light
+ * library that ensures everything consistently uses material design.
+ */
 import $ from "lib/jquery";
 import "lib/material";
 import "lib/chrome-extension-async";
@@ -5,6 +12,7 @@ import "lib/chrome-extension-async";
 import { V } from "../vars";
 import { testToken } from "../utils";
 
+/** Run everything on load using jQuery */
 $(async function() {
 
 	const [tokenEl, statusEl, nameEl, saveEl, closeEl] =

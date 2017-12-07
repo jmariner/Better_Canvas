@@ -1,3 +1,13 @@
+/**
+ * Entry point for the Chrome extension popup window that is openable on Canvas pages that contain
+ * the content script. Includes an initialization that creates toggle switches for all available
+ * states listed in the global variables, event handlers for those switches and for some extra
+ * buttons, and utility functions for easily messaging the active Canvas tab and for updating the
+ * custom material design switches.
+ *
+ * Imports all required JS libraries like Material Design Light, and also imports the SCSS styles
+ * for this page.
+ */
 import $ from "lib/jquery";
 import "lib/material";
 import "lib/chrome-extension-async";
@@ -10,6 +20,7 @@ import * as Message from "../message";
 
 declare const componentHandler;
 
+/** Run everything on load using jQuery */
 $(async function() {
 
 	const BODY = $("body");
@@ -39,7 +50,7 @@ $(async function() {
 	const startPing = $.now();
 
 	try {
-		const pingResp = await sendMessage(Message.Action.PING);
+		const pingResp = await sendMessage<{pong: number}>(Message.Action.PING);
 		console.log("page ping", pingResp.pong - startPing);
 		BODY.addClass(V.cssClass.popup_connected);
 	} catch (e) {
@@ -52,7 +63,7 @@ $(async function() {
 	//  show/enable jump button
 	// ============================
 
-	const uncheckedResp = await	sendMessage(Message.Action.COUNT_UNCHECKED);
+	const uncheckedResp = await	sendMessage<{count: number}>(Message.Action.COUNT_UNCHECKED);
 
 	if (uncheckedResp !== undefined) {
 		if (uncheckedResp.count === 0)
@@ -67,7 +78,7 @@ $(async function() {
 	// ============================
 
 	const statePromises: Array<Promise<State>> =
-		Object.keys(V.state).map(stateName => sendMessage(new Message.GetState(stateName)));
+		Object.keys(V.state).map(stateName => sendMessage<State>(new Message.GetState(stateName)));
 
 	const states: State[] = await Promise.all(statePromises);
 
@@ -105,7 +116,7 @@ $(async function() {
 	// ============================
 
 	jumpButton.click(async function() {
-		await sendMessage(Message.Action.JUMP_TO_FIRST_UNCHECKED);
+		await sendMessage<void>(Message.Action.JUMP_TO_FIRST_UNCHECKED);
 		window.close();
 	});
 
@@ -116,11 +127,26 @@ $(async function() {
 
 });
 
-async function sendMessage(data: Message.Base): Promise<any> {
+/**
+ * Send a message to the current Canvas page and waits for a response.
+ *
+ * @template T The type of the expected response to this message.
+ * @param   {Message.Base} data The message data object to send, which will be received as a plain
+ *                              object.
+ * @returns {Promise<T>} A promise containing the response to this message.
+ */
+async function sendMessage<T>(data: Message.Base): Promise<T> {
 	const activeTabs = await chrome.tabs.query({active: true, currentWindow: true});
-	return chrome.tabs.sendMessage(activeTabs[0].id, data);
+	return chrome.tabs.sendMessage(activeTabs[0].id, data) as Promise<T>;
 }
 
+/**
+ * Upate the checked status of a Material Design Light checkbox, which requires setting more than
+ * just the 'checked' property.
+ *
+ * @param {HTMLInputElement} checkbox The checkbox element to update.
+ * @param {boolean}          checked  The new checked status to give this checkbox.
+ */
 function setMdlChecked(checkbox: HTMLInputElement, checked: boolean) {
 	$(checkbox)
 		.prop("checked", checked)

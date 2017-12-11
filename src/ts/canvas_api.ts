@@ -1,14 +1,27 @@
-/*
-	Interfaces for the JSON responses given from the Canvas API.
+/**
+ * Interfaces for the JSON responses given from the Canvas API. Properties that are commented out
+ * and have their types replacd by question marks are ones that are not documented enough to list
+ * correctly and are not used by this extension.
+ *
+ * References and documentation of this module's interfaces:
+ * Module and ModuleItem:   https://canvas.instructure.com/doc/api/modules.html
+ * Assignment:              https://canvas.instructure.com/doc/api/assignments.html
+ * DiscussionTopic:         https://canvas.instructure.com/doc/api/discussion_topics.html
+ * Course:                  https://canvas.instructure.com/doc/api/courses.html
+ * File:                    https://canvas.instructure.com/doc/api/files.html
+ * Submission:              https://canvas.instructure.com/doc/api/submissions.html
+ * Tab:                     https://canvas.instructure.com/doc/api/tabs.html
+ */
 
-	Module and ModuleItem: 	https://canvas.instructure.com/doc/api/modules.html
-	Assignment:				https://canvas.instructure.com/doc/api/assignments.html
-	DiscussionTopic:		https://canvas.instructure.com/doc/api/discussion_topics.html
-	Course:					https://canvas.instructure.com/doc/api/courses.html
-	File:					https://canvas.instructure.com/doc/api/files.html
-	Submission:				https://canvas.instructure.com/doc/api/submissions.html
-	Tab:					https://canvas.instructure.com/doc/api/tabs.html
-*/
+/**
+ * The custom data stored in the Canvas API for the user.
+ */
+export interface CustomData {
+	active_states: string[];
+	completed_assignments: Map<number, number[]>;
+	hidden_assignments: Map<number, number[]>;
+	tab_positions: Map<number, Map<string, number>>;
+}
 
 export interface Module {
 	id: number;
@@ -249,11 +262,4 @@ export interface Tab {
 	position: number;
 	visibility: string;
 	type: string;
-}
-
-export interface CustomData {
-	active_states: string[];
-	completed_assignments: Map<number, number[]>;
-	hidden_assignments: Map<number, number[]>;
-	tab_positions: Map<number, Map<string, number>>;
 }

@@ -61,12 +61,11 @@ function init() {
  * This should only ever run one time.
  */
 function initExtension() {
-	DATA.extensionId = chrome.runtime.id;
-	DATA.name = chrome.runtime.getManifest().name;
+	const extensionName = chrome.runtime.getManifest().name;
 
 	for (const logType of "log debug info warn error dir".split(" ")) {
 		const orig = console[logType];
-		console[logType] = orig.bind(console, `[${DATA.name}] [${logType.toUpperCase()}]`);
+		console[logType] = orig.bind(console, `[${extensionName}] [${logType.toUpperCase()}]`);
 	}
 
 	// load course id and what page user is on within that course
@@ -445,7 +444,7 @@ function initPage() {
  */
 function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void): true | void {
 
-	if (src.id !== DATA.extensionId) return;
+	if (src.id !== chrome.runtime.id) return;
 
 	let resp: any = null;
 

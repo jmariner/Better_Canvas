@@ -178,7 +178,7 @@ export async function moduleItemFlow() {
 	const files: CanvasAPI.File[] = await Promise.all(filePromises);
 
 	for (const file of files)
-		ModuleItem.byContentId.get(file.id).setFileData(file);
+		ModuleItem.byContentId.get(file.id).fileData = file;
 
 }
 

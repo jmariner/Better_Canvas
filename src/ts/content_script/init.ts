@@ -137,6 +137,19 @@ export async function moduleItemFlow() {
 
 	const moduleItemSets: CanvasAPI.ModuleItem[][] = await Promise.all(itemSetPromises);
 
+	/*
+	Canvas can sometimes include duplicate content IDs for non-assignment items. Unsure if this is
+	intentional on Canvas's side, but precautions are taken to allow for this: we avoid getting
+	existing items via fromContentId() if we've seen it before in the module item flow. This way,
+	repeated content IDs do not affect items that were not added from the assignment flow.
+
+	This issue was shown to exist on a set of ExternalTool-type items in the same module and all
+	pointing to a page on the same domain.
+	TODO: examine Canvas source to see if this is intended; if not, consider filing an issue.
+	*/
+
+	const visitedContentIds = new Array<number>();
+
 	for (const items of moduleItemSets) {
 
 		const moduleObj = DATA.modules.get(items[0].module_id);
@@ -146,12 +159,19 @@ export async function moduleItemFlow() {
 			let item: ModuleItem;
 			const contentId = modItemData.content_id;
 
-			if (ModuleItem.byContentId.has(contentId))
-				item = ModuleItem.byContentId.get(contentId);
-			else if (contentId)
+			if (ModuleItem.byContentId.has(contentId)) {
+				if (visitedContentIds.includes(contentId))
+					item = new ModuleItem();
+				else
+					item = ModuleItem.byContentId.get(contentId);
+			}
+			else if (contentId !== undefined) {
 				item = ModuleItem.fromContentId(contentId);
-			else
+				visitedContentIds.push(contentId);
+			}
+			else {
 				item = new ModuleItem();
+			}
 
 			item.update(modItemData);
 

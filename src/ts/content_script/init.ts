@@ -74,15 +74,15 @@ export async function assignmentFlow() {
 	});
 	const assignments = await Utils.getJSON<CanvasAPI.Assignment[]>(assignmentsUrl);
 
-	for (const assignmentJson of assignments) {
+	for (const assignmentData of assignments) {
 
 		let contentId: number;
-		if (assignmentJson.quiz_id)
-			contentId = assignmentJson.quiz_id;
-		else if (assignmentJson.discussion_topic)
-			contentId = assignmentJson.discussion_topic.id;
+		if (assignmentData.quiz_id)
+			contentId = assignmentData.quiz_id;
+		else if (assignmentData.discussion_topic)
+			contentId = assignmentData.discussion_topic.id;
 		else
-			contentId = assignmentJson.id;
+			contentId = assignmentData.id;
 
 		let item: ModuleItem;
 		if (ModuleItem.byContentId.has(contentId))
@@ -90,7 +90,7 @@ export async function assignmentFlow() {
 		else
 			item = ModuleItem.fromContentId(contentId);
 
-		item.setAssignmentId(assignmentJson.id);
+		item.setAssignmentId(assignmentData.id);
 
 	}
 }
@@ -122,12 +122,12 @@ export async function moduleItemFlow() {
 	const itemSetPromises: Array<Promise<CanvasAPI.ModuleItem[]>> =
 		moduleIds.map(modId => DATA.modules.get(modId))
 			.filter(mod => mod.itemCount > 0)
-			.map(module => {
+			.map(moduleObj => {
 
 				const moduleItemsUrl = Utils.formatUrl(V.canvas.api.urls.module_items, {
-					moduleID: module.id,
+					moduleID: moduleObj.id,
 					courseID: DATA.courseID,
-					perPage: module.itemCount
+					perPage: moduleObj.itemCount
 				});
 
 				// return Promise instead of awaiting on this so it can be used in Promise.all
@@ -139,12 +139,12 @@ export async function moduleItemFlow() {
 
 	for (const items of moduleItemSets) {
 
-		const module = DATA.modules.get(items[0].module_id);
+		const moduleObj = DATA.modules.get(items[0].module_id);
 
-		for (const modItemJson of items) {
+		for (const modItemData of items) {
 
 			let item: ModuleItem;
-			const contentId = modItemJson.content_id;
+			const contentId = modItemData.content_id;
 
 			if (ModuleItem.byContentId.has(contentId))
 				item = ModuleItem.byContentId.get(contentId);
@@ -153,10 +153,10 @@ export async function moduleItemFlow() {
 			else
 				item = new ModuleItem();
 
-			item.update(modItemJson);
+			item.update(modItemData);
 
-			DATA.moduleItems.set(modItemJson.id, item);
-			module.items.push(item);
+			DATA.moduleItems.set(modItemData.id, item);
+			moduleObj.items.push(item);
 		}
 
 	}

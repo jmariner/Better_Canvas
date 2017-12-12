@@ -202,16 +202,28 @@ export class State {
 
 }
 
+/**
+ * A class representing a module, which contains module items. This is primarily used in the
+ * creation of the table of contents.
+ */
 export class Module {
+	/** The name of this module. */
 	readonly name: string;
+	/** The unique ID number for this module. */
 	readonly id: number;
+	/** The expected item count for this module, independent of its item list. */
 	readonly itemCount: number;
+	/** The child items contains within this module. */
 	readonly items: ModuleItem[];
 
-	constructor(moduleJson: CanvasAPI.Module) {
-		this.name = moduleJson.name;
-		this.id = moduleJson.id;
-		this.itemCount = moduleJson.items_count;
+	/**
+	 * Create a module object instance given its data object.
+	 * @param {CanvasAPI.Module} moduleData This module's data object from the Canvas API.
+	 */
+	constructor(moduleData: CanvasAPI.Module) {
+		this.name = moduleData.name;
+		this.id = moduleData.id;
+		this.itemCount = moduleData.items_count;
 		this.items = [];
 	}
 
@@ -251,7 +263,7 @@ export class ModuleItem {
 	public static readonly byContentId = new Map<number, ModuleItem>();
 
 	/**
-	 * Create an instance of a module item from its data object.
+	 * Create an empty instance of a module item.
 	 */
 	constructor() {} // tslint:disable-line: no-empty
 
@@ -270,15 +282,15 @@ export class ModuleItem {
 
 	/**
 	 * Update this item's fields from its data.
-	 * @param {CanvasAPI.ModuleItem} moduleItemJson The data object from the Canvas API.
+	 * @param {CanvasAPI.ModuleItem} moduleItemData The data object from the Canvas API.
 	 */
-	public update(moduleItemJson: CanvasAPI.ModuleItem) {
-		this._id = moduleItemJson.id;
-		this._name = moduleItemJson.title;
-		this.moduleId = moduleItemJson.module_id;
-		this._externalUrl = moduleItemJson.external_url || null;
+	public update(moduleItemData: CanvasAPI.ModuleItem) {
+		this._id = moduleItemData.id;
+		this._name = moduleItemData.title;
+		this.moduleId = moduleItemData.module_id;
+		this._externalUrl = moduleItemData.external_url || null;
 
-		const typeString: string = moduleItemJson.type
+		const typeString: string = moduleItemData.type
 			.replace(/([A-Z])/g, (r, s) => "_" + s)
 			.replace(/^_/, "").toUpperCase();
 
@@ -291,7 +303,7 @@ export class ModuleItem {
 		this.hidden = false;
 
 		if (this._type === ModuleItemType.ASSIGNMENT)
-			this.setAssignmentId(moduleItemJson.content_id);
+			this.setAssignmentId(moduleItemData.content_id);
 		else
 			this.assignmentId = null;
 	}

@@ -19,9 +19,9 @@ import * as Message from "../message";
 import { V } from "../vars";
 import { DATA, CanvasPage, ModuleItemType, Exception } from "../objects";
 
-/** @type {Boolean} If the extension has been initialized. */
+/** If the extension has been initialized. */
 let extensionInitialized = false;
-/** @type {Boolean} If the core of the extension has been initialized. */
+/** If the core of the extension has been initialized. */
 let coreInitialized = false;
 
 /**

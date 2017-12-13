@@ -36,6 +36,7 @@ function init() {
 	if (coreInitialized) return;
 
 	initCore()
+	// TODO global error handling needs work
 	.catch((err: Error) => {
 		// Exceptions are intentionally throw by my code
 		if (err instanceof Exception) {
@@ -43,7 +44,7 @@ function init() {
 			else console.warn("Exception in init:", err);
 		}
 		else { // anything else is unknown and is a problem
-			throw new Error("Unknown error in init: " + err);
+			throw err;
 		}
 	})
 	.then((totalDuration: number) => {

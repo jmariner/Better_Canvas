@@ -21,9 +21,9 @@ class Page {
 
 	body: JQuery;
 	scrollingElement: JQuery;
-	main?: JQuery;
-	content?: JQuery;
-	left?: JQuery;
+	main: JQuery;
+	content: JQuery;
+	left: JQuery;
 	sidebar: JQuery;
 	grades?: JQuery;
 
@@ -31,13 +31,10 @@ class Page {
 
 		this.body = $("body");
 		this.scrollingElement = $(document.scrollingElement || document.body);
-		this.sidebar = $("#menu");
 		this.main = $("#main");
-
-		if (DATA.onMainPage) {
-			this.content = $("#content");
-			this.left = $("#left-side");
-		}
+		this.content = $("#content");
+		this.left = $("#left-side");
+		this.sidebar = $("#menu");
 
 		if (DATA.coursePage === CanvasPage.GRADES)
 			this.grades = $("#grades_summary");

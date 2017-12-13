@@ -173,7 +173,7 @@ function initPage() {
 	// === insert individual course links after the all courses link ===
 
 	for (const [tabID, courseTab] of DATA.courseTabs) {
-		newCourseNav.after(
+		courseNavLi.after(
 			Utils.format(V.element.course_link, {
 				tabColor: courseTab.color,
 				tabID,

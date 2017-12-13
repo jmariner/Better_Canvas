@@ -1,3 +1,18 @@
+/**
+ * Contains the global configuration for the entire extension. This idea of this module was to
+ * export a global variable 'V' to emulate the feature of Android Studio where all configuration
+ * values are accessed from a global class 'R' ("Resources"). An additional design goal was to be
+ * able to import these variables into a SCSS file to ensure all CSS classes, attributes, IDs, etc.,
+ * always match between the TS and SCSS code.
+ *
+ * Note that this module cannot include any imports whatsoever; they will break the custom
+ * SCSS loader that compiles this file. This may be fixed in the future, if needed.
+ */
+
+/**
+ * Configuration class that is imported into SCSS files. This should only contain string, number, or
+ * nested objects as values.
+ */
 class SassVars {
 
 	prefix = "betterCanvas";
@@ -98,6 +113,13 @@ class SassVars {
 		prefixExclude: ["popup_.+"]
 	};
 
+	/**
+	 * Recursively steps along the configuration and transforms certain values in a few ways:
+	 * If the parent object's key or the current item's key is contained in
+	 * meta.prefixTypes, the extension prefix is prepended. If the parent object's
+	 * key equals meta.dataPrefixType, the "data-" prefix is also added. This leads
+	 * to values like "item-id" becoming "data-betterCanvas-item-id", for example.
+	 */
 	constructor() {
 
 		const types = new Set(SassVars.meta.prefixTypes);
@@ -139,6 +161,10 @@ class SassVars {
 
 }
 
+/**
+ * Configuration object containing any values not needed or not supported by the SCSS imports. Also
+ * includes all values from SassVars by extending it.
+ */
 class Vars extends SassVars {
 
 	tooltip = {
@@ -220,11 +246,6 @@ class Vars extends SassVars {
 				<i title='${this.tooltip.jump_button}'></i>
 			</div>`,
 
-		submission_icon:
-			`<div title='${this.tooltip.has_submission}' class='${this.cssClass.item_icon}'>
-				<i class='icon-publish'></i>
-			</div>`,
-
 		popup_state_switch:
 			`<div class="switch ${this.cssClass.popup_require_page}">
 				<label for="{name}" class="mdl-switch mdl-js-switch mdl-js-ripple-effect">
@@ -239,7 +260,6 @@ class Vars extends SassVars {
 
 	canvas = {
 		selector: {
-			module: "div.context_module",
 			module_item: "li.context_module_item",
 			module_items: "ul.context_module_items",
 			subheader: "li.context_module_sub_header",
@@ -256,7 +276,6 @@ class Vars extends SassVars {
 			namespace: this._canvasNamespace,
 			absolute_url: "https://ecpi.instructure.com/api/v1/",
 			root_url: "/api/v1/",
-			per_page: 100,
 			urls: {
 				custom_data: `users/self/custom_data{dataPath}?ns=${this._canvasNamespace}`,
 				favorite_courses: "users/self/favorites/courses",
@@ -278,5 +297,12 @@ class Vars extends SassVars {
 }
 
 const VARS = new Vars();
+
+/** Export 'V' as the global configuration object. */
 export const V = VARS;
+
+/**
+ * Set the default export to sassExports, which is a clone of the SassVars object. This is used for
+ * the SCSS TypeScript importer.
+ */
 export default VARS.sassExports;

@@ -15,6 +15,7 @@
 
 /**
  * The custom data stored in the Canvas API for the user.
+ * @deprecated Switching to querying the custom data API with full paths.
  */
 export interface CustomData {
 	active_states: string[];

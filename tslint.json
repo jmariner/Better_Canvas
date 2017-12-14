@@ -9,6 +9,7 @@
 	"rules": {
 		"no-unused-variable": true,
 		"await-promise": true,
+		"deprecation": true,
 
 		"trailing-comma": [true, {
 			"multiline": "never",

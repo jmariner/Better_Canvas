@@ -111,20 +111,26 @@ async function initCore(): Promise<number> {
 
 	// run all async tasks
 
-	const promises = [Init.courseTabFlow()];
+	const promises = [Init.courseTabFlow];
+	const customDataPromises = new Array<() => Promise<void>>();
 
-	if (DATA.coursePage !== null)
-		promises.push(Init.navTabFlow());
-
-	if (DATA.onMainPage) {
-		promises.push(Init.assignmentFlow());
-		promises.push(Init.moduleItemFlow());
+	if (DATA.coursePage !== null) {
+		promises.push(Init.navTabFlow);
+		customDataPromises.push(Init.customTabPositionsFlow);
 	}
+	if (DATA.onMainPage) {
+		promises.push(Init.assignmentFlow);
+		promises.push(Init.moduleItemFlow);
+		customDataPromises.push(Init.customItemDataFlow);
+	}
+	if (DATA.coursePage === CanvasPage.MODULES)
+		customDataPromises.push(Init.customStatesFlow);
 
-	await Promise.all(promises);
+	// Run main promises
+	await Promise.all(promises.map(func => func()));
 
-	// run custom data flow after everything
-	if (DATA.onMainPage) await Init.customDataFlow();
+	// Run custom data flow items after everything else completes
+	await Promise.all(customDataPromises.map(func => func()));
 
 	initPage();
 

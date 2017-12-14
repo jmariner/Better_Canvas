@@ -203,46 +203,35 @@ export async function moduleItemFlow() {
 }
 
 /**
- * Gather and set all of the custom data that this extension stores in the Canvas API's custom data
- * system. This consists of, so far, a list of completed items, a list of hidden items, a list of
- * active states, and a custom order to the course's navigation tabs.
+ * Gather the lists of completed assignments and hidden assignments from the Canvas API custom data
+ * storage system.
  *
- * Completed and hidden items modify the DATA.moduleItems map, active states are stored in
- * DATA.states, and custom tab positions are stores in DATA.navTabs.
- *
- * Requires either the GRADES or MODULES page.
+ * Edits the values in the DATA.moduleItems map.
+ * Requires the GRADES or MODULES page.
  */
-export async function customDataFlow() {
+export async function customItemDataFlow() {
 
-	const customDataUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {dataPath: ""});
-	const customData: CanvasAPI.CustomData = (
-		await Utils.getJSON<{data: CanvasAPI.CustomData}>(customDataUrl)
-	).data;
-
-	// TODO figure out what to do when custom data request returns no data at all
-	if (customData === undefined) return;
-
-	// ===== load complete / hidden assignments =====
-
-	const complete = Utils.getOrDefault(
-		customData.completed_assignments,
-		DATA.courseID,
-		new Array<number>()
-	);
-	const hidden = Utils.getOrDefault(
-		customData.hidden_assignments,
-		DATA.courseID,
-		new Array<number>()
-	);
+	const [completedItems, hiddenItems] = await Promise.all([
+		getCustomData<number[]>(V.canvas.api.data_urls.completed_assignments, DATA.courseID),
+		getCustomData<number[]>(V.canvas.api.data_urls.hidden_assignments, DATA.courseID)
+	]);
 
 	for (const [modItemId, modItem] of DATA.moduleItems) {
-		modItem.checked = complete.includes(modItemId);
-		modItem.hidden = hidden.includes(modItemId);
+		modItem.checked = completedItems.includes(modItemId);
+		modItem.hidden = hiddenItems.includes(modItemId);
 	}
 
-	// ===== load active state list =====
+}
 
-	const activeStates: string[] = customData.active_states || [];
+/**
+ * Gather the list of active states from the Canvas API custom data storage system.
+ *
+ * Stores state data in the DATA.states map.
+ * Requires the MODULES page.
+ */
+export async function customStatesFlow() {
+
+	const activeStates = await getCustomData<string[]>(V.canvas.api.data_urls.active_states);
 
 	// load states from config
 
@@ -255,17 +244,50 @@ export async function customDataFlow() {
 		DATA.states.set(stateName, stateObj);
 	}
 
-	// ===== load tabs positions =====
+}
 
-	const tabPositions: {[key: string]: number} = Utils.getOrDefault(
-		customData.tab_positions,
-		DATA.courseID,
-		{}
-	);
+/**
+ * Gather data regarding the custom position of the page's navigation tabs from the Canvas API
+ * custom data storage system.
+ *
+ * Edits the positions of the values in the DATA.navTabs map.
+ * Requires any course page.
+ */
+export async function customTabPositionsFlow() {
+
+	const tabPositions =
+		await getCustomData<{[tabId: string]: number}>(
+			V.canvas.api.data_urls.tab_positions,
+			DATA.courseID
+		);
+
+	if (tabPositions === null) return;
 
 	for (const [tabId, navTab] of DATA.navTabs) {
 		if (tabPositions[tabId] !== undefined)
 			navTab.setPosition(tabPositions[tabId]);
 	}
+}
+
+/**
+ * Get a particular set of custom data from the Canvas API given a path.
+ *
+ * @template T The type of custom data to get.
+ * @param   {...any} pathParts    The parts of the path. This will be joined by '/'.
+ * @returns {Promise<T | null>}   A Promise containing the result or null if no result.
+ */
+async function getCustomData<T>(...pathParts: any[]): Promise<T | null> {
+	const customDataUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {
+		dataPath: pathParts.length > 0 ? "/" + pathParts.join("/") : ""
+	});
+
+	const resp = await Utils.getJSON<{data: T}>(customDataUrl);
+
+	if (resp.data === null) // no items
+		return null;
+	else if (resp.data === undefined) // invalid scope
+		return null;
+	else
+		return resp.data;
 
 }

@@ -217,8 +217,8 @@ export async function customItemDataFlow() {
 	]);
 
 	for (const [modItemId, modItem] of DATA.moduleItems) {
-		modItem.checked = completedItems.includes(modItemId);
-		modItem.hidden = hiddenItems.includes(modItemId);
+		modItem.checked = completedItems !== null && completedItems.includes(modItemId);
+		modItem.hidden = hiddenItems !== null && hiddenItems.includes(modItemId);
 	}
 
 }
@@ -231,7 +231,9 @@ export async function customItemDataFlow() {
  */
 export async function customStatesFlow() {
 
-	const activeStates = await getCustomData<string[]>(V.canvas.api.data_urls.active_states);
+	let activeStates = await getCustomData<string[]>(V.canvas.api.data_urls.active_states);
+	if (activeStates === null)
+		activeStates = [];
 
 	// load states from config
 

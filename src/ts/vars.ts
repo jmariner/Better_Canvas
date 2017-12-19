@@ -10,8 +10,8 @@
  */
 
 /**
- * Configuration class that is imported into SCSS files. This should only contain string, number, or
- * nested objects as values.
+ * Configuration class that is imported into SCSS files. This should only contain strings, numbers,
+ * or nested objects as values.
  */
 class SassVars {
 
@@ -64,7 +64,7 @@ class SassVars {
 	color = {
 		toc_fill: "rgba(0, 255, 0, .75)",
 		toc_border: "rgb(102, 120, 135)",
-		toc_title: "var(--ic-brand-primary)", // was "rgb(57, 75, 88)",
+		toc_title: "var(--ic-brand-primary)",
 		checkbox_check: "rgb(22, 160, 133)",
 		checkbox_border: "rgb(102, 120, 135)",
 		highlight_orange: "rgb(255, 152, 0)",
@@ -122,16 +122,18 @@ class SassVars {
 	 */
 	constructor() {
 
-		const types = new Set(SassVars.meta.prefixTypes);
+		const prefixTypes = new Set(SassVars.meta.prefixTypes);
 
+		// tslint:disable-next-line:interface-over-type-literal
+		type Obj = {[key: string]: string | string[] | number | Obj};
+
+		// Must use the primitive type 'object' for this 'obj' parameter because this initially
+		// gets an instance of SassVars, which cannot conform to a custom type
 		const processObject = (obj: object, objName: string) => {
 
-			for (const key in obj) {
-				if (!obj.hasOwnProperty(key)) continue;
+			for (const [key, val] of Object.entries(obj as Obj)) {
 
-				let val: object | string | number = obj[key];
-
-				if (typeof val === "object") {
+				if (typeof val === "object" && !Array.isArray(val)) {
 
 					processObject(val, key);
 
@@ -142,13 +144,15 @@ class SassVars {
 						.map(str => new RegExp("^" + str + "$"))
 						.some(regex => regex.test(key));
 
-					if (!excluded && (types.has(objName) || types.has(key)))
-						val = this.prefix + "-" + val;
+					let newVal = val;
+
+					if (!excluded && (prefixTypes.has(objName) || prefixTypes.has(key)))
+						newVal = this.prefix + "-" + newVal;
 
 					if (objName === SassVars.meta.dataPrefixType)
-						val = "data-" + val;
+						newVal = "data-" + newVal;
 
-					obj[key] = val;
+					obj[key] = newVal;
 				}
 			}
 

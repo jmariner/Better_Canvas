@@ -76,6 +76,9 @@ function initExtension() {
 	DATA.courseID = onCoursePage ? Number(urlMatch[1]) : null;
 	DATA.onMainPage = [CanvasPage.MODULES, CanvasPage.GRADES].includes(DATA.coursePage);
 
+	if (DATA.coursePage === undefined) // course page was not in the CanvasPage enum
+		console.warn("Unknown course page:", urlMatch[2]);
+
 	chrome.runtime.onMessage.addListener(onMessage);
 
 	extensionInitialized = true;
@@ -518,7 +521,8 @@ function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void)
 init();
 
 /**
- * Export all of the content script modules, exposing them to the global scope when built in
+ * Export several constants and modules, exposing them to the global scope when built in
  * development mode.
  */
-export { DATA, Init, Main, UI };
+export { V, DATA, Init, Main, UI };
+export * from "../objects";

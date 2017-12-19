@@ -407,17 +407,28 @@ export interface StateData {
 
 /**
  * The types of module items that are available.
+ *
+ * Source:
+ * https://github.com/instructure/canvas-lms/blob/stable/app/controllers/
+ *         context_module_items_api_controller.rb#L123
  */
 export enum ModuleItemType {
-	ASSIGNMENT, SUB_HEADER, DISCUSSION, QUIZ, PAGE, FILE, EXTERNAL_URL, EXTERNAL_TOOL
+	FILE, PAGE, DISCUSSION, ASSIGNMENT,
+	QUIZ, SUB_HEADER, EXTERNAL_URL, EXTERNAL_TOOL
 }
 
 /**
  * The various Canvas page types, determined from the URL.
+ *
+ * Source:
+ * https://github.com/instructure/canvas-lms/blob/stable/lib/user_content.rb#L133
  */
 export enum CanvasPage {
-	MODULES, GRADES, HOME, USERS, GROUPS, COLLABORATIONS,
-	DISCUSSION_TOPICS, EXTERNAL_TOOLS, ASSIGNMENTS
+	HOME,
+	ASSIGNMENTS, ANNOUNCEMENTS, CALENDAR_EVENTS, DISCUSSION_TOPICS,
+	COLLABORATIONS, FILES, CONFERENCES, QUIZZES, GROUPS,
+	WIKI, PAGES, GRADES, USERS, EXTERNAL_TOOLS,
+	FILE_CONTENTS, MODULES, ITEMS
 }
 
 /** Create and export an empty Data object. */

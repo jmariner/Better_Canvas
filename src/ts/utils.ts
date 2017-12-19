@@ -61,10 +61,8 @@ async function parseJSONResponse<T>(resp: Response): Promise<T> {
  */
 export function format(str: string, obj: object): string {
 
-	for (const key in obj) {
-		if (obj.hasOwnProperty(key))
-			str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), obj[key]);
-	}
+	for (const [key, val] of Object.entries(obj))
+		str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), val);
 
 	return str;
 }
@@ -167,7 +165,7 @@ export async function putData(url: string, data: any[] | any): Promise<boolean> 
 	const resp = await fetch(url, ops);
 
 	if (!resp.ok || resp.status === 401) { // 401 unauthorized
-		console.error(`Unable to ${method} data to ${url}. resp:`, JSON.stringify(resp));
+		console.error(`Unable to ${method} data to ${url}. resp:`, resp);
 		return false;
 	}
 	else {

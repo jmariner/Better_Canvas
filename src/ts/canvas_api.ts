@@ -29,14 +29,14 @@ export interface Module {
 	workflow_state: string;
 	position: number;
 	name: string;
-	unlock_at: string;
+	unlock_at?: string;
 	require_sequential_progress: boolean;
 	prerequisite_module_ids: number[];
 	items_count: number;
 	items_url: string;
-	items: ModuleItem[];
-	state: string;
-	completed_at: string;
+	items?: ModuleItem[];
+	state?: string;
+	completed_at?: string;
 	publish_final_grade: boolean;
 }
 
@@ -49,10 +49,12 @@ export interface ModuleItem {
 	type: string;
 	content_id: number;
 	html_url: string;
-	url: string;
-	page_url: string;
-	external_url: string;
-	new_tab: boolean;
+	url?: string;
+	page_url?: string;
+	external_url?: string;
+	new_tab?: boolean;
+	completion_requirement: object;
+	content_details?: object;
 }
 
 export interface Assignment {
@@ -65,7 +67,7 @@ export interface Assignment {
 	lock_at: string;
 	unlock_at: string;
 	has_overrides: boolean;
-//  all_dates: ???;
+	all_dates?: any;
 	course_id: number;
 	html_url: string;
 	submissions_download_url: string;
@@ -75,9 +77,9 @@ export interface Assignment {
 	max_name_length: number;
 	turnitin_enabled: boolean;
 	vericite_enabled: boolean;
-//  turnitin_settings: ???;
+	turnitin_settings?: object;
 	grade_group_students_individually: boolean;
-//  external_tool_tag_attributes: ???;
+	external_tool_tag_attributes?: object;
 	peer_reviews: boolean;
 	automatic_peer_reviews: boolean;
 	peer_review_count: number;
@@ -85,36 +87,36 @@ export interface Assignment {
 	intra_group_peer_reviews: boolean;
 	group_category_id: number;
 	needs_grading_count: number;
-//  needs_grading_count_by_section: ???;
+	needs_grading_count_by_section?: object[];
 	position: number;
-	post_to_sis: boolean;
-	integration_id: number;
-	integration_data: number;
+	post_to_sis?: boolean;
+	integration_id?: number;
+	integration_data?: number;
 	muted: boolean;
 	points_possible: number;
 	submission_types: string[];
+	has_submitted_submissions: boolean;
 	grading_type: string;
 	grading_standard_id: number;
 	published: boolean;
 	unpublishable: boolean;
 	only_visible_to_overrides: boolean;
 	locked_for_user: boolean;
-//  lock_info: ???;
-	lock_explanation: string;
-	quiz_id: number;
-	anonymous_submissions: boolean;
-	discussion_topic: DiscussionTopic;
-//  freeze_on_copy: ???;
-//  frozen: ???;
-//  frozen_attributes: ???;
-//  submission: ???;
-	use_rubric_for_grading: boolean;
-//  rubric_settings: ???;
-//  rubric: ???;
-	assignment_visibility: number[];
-//  overrides: ???;
-	omit_from_final_grade: boolean;
-	has_submitted_submissions: boolean;
+	lock_info?: any;
+	lock_explanation?: string;
+	quiz_id?: number;
+	anonymous_submissions?: boolean;
+	discussion_topic?: DiscussionTopic;
+	freeze_on_copy?: boolean;
+	frozen?: boolean;
+	frozen_attributes?: string[];
+	submission?: Submission;
+	use_rubric_for_grading?: boolean;
+	rubric_settings?: object;
+	rubric?: object[];
+	assignment_visibility?: number[];
+	overrides?: object[];
+	omit_from_final_grade?: boolean;
 }
 
 export interface DiscussionTopic {
@@ -130,7 +132,7 @@ export interface DiscussionTopic {
 	read_state: string;
 	unread_count: number;
 	subscribed: boolean;
-	subscription_hold: string;
+	subscription_hold?: string;
 	assignment_id: number;
 	delayed_post_at: string;
 	published: boolean;
@@ -138,8 +140,8 @@ export interface DiscussionTopic {
 	locked: boolean;
 	pinned: boolean;
 	locked_for_user: boolean;
-//  lock_info: ???;
-	lock_explanation: string;
+	lock_info?: any;
+	lock_explanation?: string;
 	user_name: string;
 	topic_children: number[];
 	root_topic_id: number;
@@ -152,7 +154,7 @@ export interface DiscussionTopic {
 		filename: string;
 		display_name: string;
 	}>;
-//  permissions: ???;
+	permissions: {[key: string]: boolean};
 	allow_rating: boolean;
 	only_graders_can_rate: boolean;
 	sort_by_rating: boolean;
@@ -160,8 +162,10 @@ export interface DiscussionTopic {
 
 export interface Course {
 	id: number;
-	sis_course_id: number;
-	integration_id: number;
+	sis_course_id?: number;
+	uuid: string;
+	integration_id?: number;
+	sis_import_id?: number;
 	name: string;
 	course_code: string;
 	workflow_state: string;
@@ -172,21 +176,21 @@ export interface Course {
 	start_at: string;
 	end_at: string;
 	locale: string;
-//  enrollments: ???;
-	total_students: number;
-	calendar: {ics: string};
+	enrollments?: any[];
+	total_students?: number;
+	calendar: object;
 	default_view: string;
-	syllabus_body: string;
-	needs_grading_count: number;
-//  term: ???;
-//  course_progress: ???;
+	syllabus_body?: string;
+	needs_grading_count?: number;
+	term?: object;
+	course_progress?: object;
 	apply_assignment_group_weights: boolean;
-//  permissions: ???;
+	permissions: {[key: string]: boolean};
 	is_public: boolean;
 	is_public_to_auth_users: boolean;
 	public_syllabus: boolean;
 	public_syllabus_to_auth: boolean;
-	public_description: string;
+	public_description?: string;
 	storage_quota_mb: number;
 	storage_quota_used_mb: number;
 	hide_final_grades: boolean;
@@ -198,8 +202,11 @@ export interface Course {
 	self_enrollment: boolean;
 	restrict_enrollments_to_course_dates: boolean;
 	course_format: string;
-	access_restricted_by_date: boolean;
+	access_restricted_by_date?: boolean;
 	time_zone: string;
+	blueprint?: boolean;
+	blueprint_restrictions?: object;
+	blueprint_restrictions_by_object_type?: object;
 }
 
 export interface File {
@@ -216,19 +223,19 @@ export interface File {
 	hidden: boolean;
 	lock_at: string;
 	locked_for_user: boolean;
-//  lock_info: ???;
-	lock_explanation: string;
+	lock_info?: any
+	lock_explanation?: string;
 	hidden_for_user: boolean;
 	thumbnail_url: string;
 	mime_class: string;
-//  media_entry_id: ???;
-	preview_url: string;
+	media_entry_id: any;
+	preview_url?: string;
 }
 
 export interface Submission {
 	assignment_id: number;
-//  assignment: ???;
-//  course: ???;
+	assignment: Assignment;
+	course: Course;
 	attempt: number;
 	body: string;
 	grade: string;
@@ -236,14 +243,14 @@ export interface Submission {
 	html_url: string;
 	preview_url: string;
 	score: number;
-	submission_comments: string;
+	submission_comments?: string;
 	submission_type: string;
 	submitted_at: string;
 	url: string;
 	user_id: number;
 	grader_id: number;
 	graded_at: string;
-//  user: ???;
+	user?: object;
 	late: boolean;
 	assignment_visible: boolean;
 	excused: boolean;
@@ -255,12 +262,12 @@ export interface Submission {
 }
 
 export interface Tab {
+	html_url: string;
 	id: string;
 	label: string;
-	html_url: string;
-	full_url: string;
-	url?: string;
-	position: number;
-	visibility: string;
 	type: string;
+	hidden?: boolean;
+	full_url: string;
+	visibility: string;
+	position: number;
 }

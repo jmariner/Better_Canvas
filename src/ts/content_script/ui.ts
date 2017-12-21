@@ -103,9 +103,9 @@ export async function updateItemHide(item: ModuleItem, instant?: boolean) {
 	if (!instant) await Utils.wait(V.ui.fade_time);
 
 	// update disable status and title, undoing waiting-disable
-	item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isGraded);
+	item.hideElement.toggleClass(V.cssClass.hide_disabled, item.isAssignment);
 	iEl.attr("title",
-		item.isGraded ? V.tooltip.hide_disabled :
+		item.isAssignment ? V.tooltip.hide_disabled :
 		item.hidden ? V.tooltip.unhide :
 		V.tooltip.hide
 	);

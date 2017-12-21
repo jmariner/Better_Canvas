@@ -87,19 +87,40 @@ export function getOrDefault<T>(obj: object, key: PropertyKey, def: T): T {
  * object for both of those functions combined. This also prefixes the URL with the Canvas API
  * prefix.
  *
- * @param {string} url       The starting URL to format, including format tokens.
- * @param {object}  formatObj A plain object with key-value pairs to pass to 'format', and an
- *                            optional 'perPage' property to pass to the 'perPage' function.
+ * @param {string} urlStr       The starting URL to format, including format tokens.
+ * @param {object}  obj A plain object used to fill in the format tokens in the URL. Key-value
+ *                      pairs not used up in formatting are added as query params to the URL.
  */
-export function formatUrl(url: string, formatObj?: {perPage?: number, [key: string]: any}) {
+export function formatUrl(urlStr: string, obj?: {[key: string]: any}): string {
 
-	if (formatObj !== undefined) {
-		if (formatObj.perPage !== undefined)
-			url = perPage(url, formatObj.perPage);
-		url = format(url, formatObj);
+	if (obj !== undefined) {
+		// custom formatting code to delete used properties from the input object
+		urlStr = urlStr.replace(/\{([A-Za-z]+)\}/g, (m, key) => {
+			const val = obj[key];
+			delete obj[key];
+			return val;
+		});
 	}
 
-	return V.canvas.api.root_url + url;
+	const url = new URL(urlStr, V.canvas.api.absolute_url);
+
+	if (obj !== undefined) {
+		// append remaining object properties as query params
+		for (let [key, val] of Object.entries(obj)) {
+			key = key.replace(/[A-Z]/g, letter => "_" + letter.toLowerCase());
+			
+			// translate array value into "key[]=val1&key[]=val2"
+			if (Array.isArray(val)) {
+				for (const item of val)
+					url.searchParams.append(key + "[]", item);
+			}
+			else {
+				url.searchParams.append(key, val);
+			}
+		}
+	}
+
+	return url.toString();
 }
 
 /**

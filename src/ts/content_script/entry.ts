@@ -270,7 +270,7 @@ function initPage() {
 				.prependTo(mainEl);
 
 			hasHideButton = false;
-			hasCheckbox = item.isGraded;
+			hasCheckbox = item.isAssignment;
 		}
 
 		if (hasCheckbox) {

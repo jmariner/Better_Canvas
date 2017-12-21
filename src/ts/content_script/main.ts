@@ -131,7 +131,7 @@ export async function onHideButtonClick(el: JQuery) {
 	const item = DATA.moduleItems.get(id);
 
 	// cancel hiding if the item is graded or has hiding manually disabled for any other reason
-	if (item.isGraded || item.hideElement.hasClass(V.cssClass.hide_disabled)) return;
+	if (item.isAssignment || item.hideElement.hasClass(V.cssClass.hide_disabled)) return;
 
 	// disable until updating complete. this is undone by updateHideButton later
 	item.hideElement

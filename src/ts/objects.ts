@@ -246,7 +246,7 @@ export class ModuleItem {
 	private _indentLevel: number;
 
 	/** The assignment ID corresponding to this module item, if any. */
-	private assignmentId: number;
+	private assignmentData: CanvasAPI.Assignment;
 
 	/** The ID of the parent module to this module item. */
 	private moduleId: number;
@@ -304,19 +304,18 @@ export class ModuleItem {
 		this.checked = false;
 		this.hidden = false;
 
-		if (this._type === ModuleItemType.ASSIGNMENT)
-			this.setAssignmentId(moduleItemData.content_id);
-		else
-			this.assignmentId = null;
+		// default assignment data to null
+		this.assignmentData = null;
+
 	}
 
 	/**
-	 * Set this item's assignment ID. This is used to prevent race condition issues when
-	 * concurrently querying for module items and assignments.
+	 * Set this item's assignment data. This data is used to check if this module item is an
+	 * assignment, has submissions, and has grades.
 	 *
-	 * @param {number} id The ID to set.
+	 * @param {CanvasAPI.Assignment} data The assignment object from the Canvas API.
 	 */
-	public setAssignmentId(id: number) { this.assignmentId = id; }
+	public setAssignmentData(data: CanvasAPI.Assignment) { this.assignmentData = data; }
 
 	/**
 	 * The element ID for this module item, which will vary depending on the current Canvas page.
@@ -326,7 +325,7 @@ export class ModuleItem {
 			case CanvasPage.MODULES:
 				return "context_module_item_" + this.id; // li element
 			case CanvasPage.GRADES:
-				return "submission_" + this.assignmentId; // tr element
+				return "submission_" + this.assignmentData.id; // tr element
 			default:
 				return null;
 		}
@@ -341,8 +340,8 @@ export class ModuleItem {
 	/** The type of this item. */
 	get type(): ModuleItemType { return this._type; }
 
-	/** Whether or not this item is graded. */
-	get isGraded() { return this.assignmentId !== null; }
+	/** Whether or not this item is an assignment. */
+	get isAssignment() { return this.assignmentData !== null; }
 
 	/** Whether or not this item is a subheader */
 	get isSubHeader() { return this._type === ModuleItemType.SUB_HEADER; }
@@ -358,6 +357,32 @@ export class ModuleItem {
 
 	/** The indentation level of this module item. */
 	get indentLevel() { return this._indentLevel; }
+
+	/** The Canvas API file object for this item, if any. */
+	get fileData(): CanvasAPI.File { return this._fileData; }
+	set fileData(data: CanvasAPI.File) { this._fileData = data; }
+
+	/**
+	 * Whether or not this item has a submission, determined by the submission's 'missing' status.
+	 * Is 'null' if this item does not accept submissions (is not an assignment).
+	 */
+	get isSubmitted(): boolean | null {
+		if (!this.isAssignment) return null;
+
+		const sub = this.assignmentData.submission || {} as CanvasAPI.Submission;
+		return sub.missing === false;
+	}
+
+	/**
+	 * Whether or not this item has been graded, determined by checking the submission score.
+	 * Is 'null' if this item cannot be graded (is not an assignment).
+	 */
+	get isGraded(): boolean | null {
+		if (!this.isAssignment) return null;
+
+		const sub = this.assignmentData.submission || {} as CanvasAPI.Submission;
+		return sub.score !== null;
+	}
 
 	/** The checkbox element that was created for this item. */
 	get checkboxElement(): JQuery { return this._checkboxElement; }
@@ -376,10 +401,6 @@ export class ModuleItem {
 		else
 			throw new Error("Invalid Module Item Element: " + value);
 	}
-
-	/** The Canvas API file object for this item, if any. */
-	get fileData(): CanvasAPI.File { return this._fileData; }
-	set fileData(data: CanvasAPI.File) { this._fileData = data; }
 
 }
 

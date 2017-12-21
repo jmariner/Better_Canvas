@@ -70,8 +70,10 @@ export async function assignmentFlow() {
 	// hopefully 1000 is enough to get all in one go
 	const assignmentsUrl = Utils.formatUrl(V.canvas.api.urls.assignments, {
 		perPage: 1000,
-		courseID: DATA.courseID
+		courseID: DATA.courseID,
+		include: ["submission"]
 	});
+
 	const assignments = await Utils.getJSON<CanvasAPI.Assignment[]>(assignmentsUrl);
 
 	for (const assignmentData of assignments) {
@@ -90,7 +92,7 @@ export async function assignmentFlow() {
 		else
 			item = ModuleItem.fromContentId(contentId);
 
-		item.setAssignmentId(assignmentData.id);
+		item.setAssignmentData(assignmentData);
 
 	}
 }

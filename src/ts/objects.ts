@@ -243,6 +243,7 @@ export class ModuleItem {
 	private _externalUrl: string;
 	private _checkboxElement: JQuery;
 	private _hideElement: JQuery;
+	private _indentLevel: number;
 
 	/** The assignment ID corresponding to this module item, if any. */
 	private assignmentId: number;
@@ -289,6 +290,7 @@ export class ModuleItem {
 		this._name = moduleItemData.title;
 		this.moduleId = moduleItemData.module_id;
 		this._externalUrl = moduleItemData.external_url || null;
+		this._indentLevel = moduleItemData.indent;
 
 		const typeString: string = moduleItemData.type
 			.replace(/([A-Z])/g, (r, s) => "_" + s)
@@ -353,6 +355,9 @@ export class ModuleItem {
 
 	/** This item's corresponding content ID, if any. */
 	get contentId() { return this._contentId; }
+
+	/** The indentation level of this module item. */
+	get indentLevel() { return this._indentLevel; }
 
 	/** The checkbox element that was created for this item. */
 	get checkboxElement(): JQuery { return this._checkboxElement; }

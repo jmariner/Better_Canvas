@@ -223,7 +223,7 @@ export interface File {
 	hidden: boolean;
 	lock_at: string;
 	locked_for_user: boolean;
-	lock_info?: any
+	lock_info?: any;
 	lock_explanation?: string;
 	hidden_for_user: boolean;
 	thumbnail_url: string;

@@ -335,40 +335,29 @@ function initPage() {
 	// TODO custom ident feature could be better
 
 	const disabledIndentState = DATA.states.get("disable_indent_override");
-	const disabledIndent = disabledIndentState.active;
+	const indentClasses = [0,1,2,3,4,5].map(level => "indent_" + level);
+
+	const applyIndentOverrides = () => {
+		PAGE.main
+		.find(V.canvas.selector.module_item)
+			.removeClass(indentClasses.join(" ")).end()
+		.find(V.canvas.selector.subheader)
+			.addClass(indentClasses[V.ui.subheader_indent]).end()
+		.find(V.canvas.selector.not_subheader)
+			.addClass(indentClasses[V.ui.main_indent]);
+	};
 
 	disabledIndentState.onEnable = () => {
-		PAGE.main.find(V.canvas.selector.module_item).each(function() {
-			[0,1,2,3,4,5].forEach(level => $(this).removeClass("indent_" + level));
-			const defLevel = $(this).attr(V.dataAttr.def_indent);
-			$(this).addClass("indent_" + defLevel);
-		});
+		for (const modItem of DATA.moduleItems.values())
+			PAGE.id(modItem.canvasElementId)
+				.removeClass(indentClasses.join(" "))
+				.addClass(indentClasses[modItem.indentLevel]);
 	};
 
-	disabledIndentState.onDisable = () => {
-		[0,1,2,3,4,5].forEach(level =>
-			PAGE.main.find(V.canvas.selector.module_item
-		).removeClass("indent_" + level));
+	disabledIndentState.onDisable = applyIndentOverrides;
 
-		PAGE.main.find(V.canvas.selector.subheader)
-			.addClass("indent_" + V.ui.subheader_indent);
-
-		PAGE.main.find(V.canvas.selector.not_subheader)
-			.addClass("indent_" + V.ui.main_indent);
-	};
-
-	PAGE.main.find(V.canvas.selector.module_item).each(function() {
-		const defIndent =
-			[0,1,2,3,4,5].filter(level => $(this).hasClass("indent_" + level))[0];
-		$(this).attr(V.dataAttr.def_indent, defIndent);
-		if (!disabledIndent)
-			$(this).removeClass("indent_" + defIndent);
-	});
-
-	if (!disabledIndent) {
-		PAGE.main.find(V.canvas.selector.subheader).addClass("indent_" + V.ui.subheader_indent);
-		PAGE.main.find(V.canvas.selector.not_subheader).addClass("indent_" + V.ui.main_indent);
-	}
+	if (!disabledIndentState.active)
+		applyIndentOverrides();
 
 	// === place and populate the table of contents ===
 

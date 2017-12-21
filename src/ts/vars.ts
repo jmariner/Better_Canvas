@@ -46,8 +46,7 @@ class SassVars {
 		toc_percentage: "toc-percentage",
 		mod_item_id: "item-id",
 		course_name: "course-name",
-		course_code: "course-code",
-		def_indent: "default-indent"
+		course_code: "course-code"
 	};
 
 	id = {

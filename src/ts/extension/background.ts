@@ -6,9 +6,9 @@
 import "lib/chrome-extension-async";
 import MessageSender = chrome.runtime.MessageSender;
 
+import * as Utils from "../utils";
 import * as Message from "../message";
 import { V } from "../vars";
-import { messageCanvasTabs } from "../utils";
 
 /**
  * Chrome declarative content rule that allows the enabling and disabling of the page action when on
@@ -21,7 +21,7 @@ const RULES = [
 				pageUrl: {
 					hostEquals: V.canvas.url_parts.host,
 					pathPrefix: V.canvas.url_parts.prefix,
-					pathSuffix: V.canvas.url_parts.suffix,
+					pathSuffix: V.canvas.url_parts.suffix.modules,
 					schemes: [V.canvas.url_parts.protocol]
 				}
 			})
@@ -67,7 +67,7 @@ function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void)
 
 		const data = msg as Message.SyncCheckboxes;
 
-		messageCanvasTabs(
+		Utils.messageCanvasTabs(
 			new Message.UpdateCheckbox(data.itemId),
 			data.courseId,
 			src.tab
@@ -78,7 +78,7 @@ function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void)
 	else if (msg.type === Message.Type.SYNC_HIDDEN) {
 		const data = msg as Message.SyncHidden;
 
-		messageCanvasTabs(
+		Utils.messageCanvasTabs(
 			new Message.UpdateHidden(data.itemId),
 			data.courseId,
 			src.tab
@@ -115,7 +115,7 @@ function onStorageChanged(
 		change.newValue !== change.oldValue &&
 		change.newValue !== undefined
 	) {
-		messageCanvasTabs(Message.Action.RE_INITIALIZE);
+		Utils.messageCanvasTabs(Message.Action.RE_INITIALIZE);
 	}
 }
 
@@ -123,3 +123,6 @@ function onStorageChanged(
 chrome.runtime.onInstalled.addListener(onInstall);
 chrome.runtime.onMessage.addListener(onMessage);
 chrome.storage.onChanged.addListener(onStorageChanged);
+
+// Expose the global variables and the Utils module to the global scope.
+export { V, Utils };

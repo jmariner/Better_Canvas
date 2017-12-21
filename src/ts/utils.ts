@@ -278,9 +278,17 @@ export function accessTokenPrompt() {
  * @param {number} courseId The optional course ID to look for.
  * @returns {Promise<Tab[]>} A promise containing an array of found Canvas tabs.
  */
-export async function getCanvasTabs(courseId?: number): Promise<Tab[]> {
+export async function getCanvasTabs(
+	options: {courseId?: number, pageSuffix?: string}
+): Promise<Tab[]> {
+
 	if (chrome.tabs === undefined)
 		throw new Error("Unable to query tabs from content script.");
+
+	const {courseId, pageSuffix} = Object.assign({
+		courseId: "*",
+		pageSuffix: ""
+	}, options);
 
 	const query = {
 		url: [
@@ -288,8 +296,8 @@ export async function getCanvasTabs(courseId?: number): Promise<Tab[]> {
 			"://",
 			V.canvas.url_parts.host,
 			V.canvas.url_parts.prefix,
-			courseId === undefined ? "*" : courseId,
-			V.canvas.url_parts.suffix,
+			courseId,
+			pageSuffix,
 			"*"
 		].join("")
 	};
@@ -308,7 +316,7 @@ export async function getCanvasTabs(courseId?: number): Promise<Tab[]> {
  */
 export async function messageCanvasTabs(msg: Message.Base, courseId?: number, excludeTab?: Tab) {
 
-	let canvasTabs = await getCanvasTabs(courseId);
+	let canvasTabs = await getCanvasTabs({courseId});
 
 	if (excludeTab !== undefined)
 		canvasTabs = canvasTabs.filter(tab => tab.id !== excludeTab.id);

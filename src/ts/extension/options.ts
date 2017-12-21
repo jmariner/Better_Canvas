@@ -9,8 +9,8 @@ import $ from "lib/jquery";
 import "lib/material";
 import "lib/chrome-extension-async";
 
+import * as Utils from "../utils";
 import { V } from "../vars";
-import { testToken } from "../utils";
 
 /** Run everything on load using jQuery */
 $(async function() {
@@ -43,7 +43,7 @@ $(async function() {
 
 		print("Testing token...");
 
-		const testData = await testToken(token);
+		const testData = await Utils.testToken(token);
 
 		if (testData !== null) {
 			nameEl.text("Welcome, " + testData.name);
@@ -86,3 +86,6 @@ $(async function() {
 	}
 
 });
+
+// Expose the global variables and the Utils module to the global scope.
+export { V, Utils };

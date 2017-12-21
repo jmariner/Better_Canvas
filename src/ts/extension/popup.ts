@@ -13,10 +13,10 @@ import "lib/material";
 import "lib/chrome-extension-async";
 import "scss/popup.scss";
 
-import { V } from "../vars";
-import { format, getCanvasTabs, messageCanvasTabs } from "../utils";
-import { State } from "../objects";
+import * as Utils from "../utils";
 import * as Message from "../message";
+import { V } from "../vars";
+import { State } from "../objects";
 
 declare const componentHandler;
 
@@ -35,9 +35,14 @@ $(async function() {
 	// ============================
 
 	$("#" + V.id.popup_refresh_button).click(async function() {
-		const canvasTabs = await getCanvasTabs();
+
+		const canvasTabs = await Utils.getCanvasTabs({
+			pageSuffix: V.canvas.url_parts.suffix.modules
+		});
+
 		const reloadPromises = canvasTabs.map(tab => chrome.tabs.reload(tab.id));
 		await Promise.all(reloadPromises);
+
 		// TODO figure out how to reload the popup after the canvas tabs reload
 		window.close();
 	});
@@ -84,7 +89,10 @@ $(async function() {
 
 	for (const state of states) {
 
-		const el = $(format(V.element.popup_state_switch, {name: state.name, desc: state.desc}));
+		const el = $(Utils.format(V.element.popup_state_switch, {
+			name: state.name,
+			desc: state.desc
+		}));
 
 		el.insertAfter(insertionPoint);
 		componentHandler.upgradeElement(el.find("label").get(0));
@@ -98,7 +106,7 @@ $(async function() {
 			inputEl.title = V.tooltip.waiting;
 			inputEl.disabled = true;
 
-			const setSuccess = messageCanvasTabs(new Message.SetState(state.name, newState));
+			const setSuccess = Utils.messageCanvasTabs(new Message.SetState(state.name, newState));
 
 			if (setSuccess) {
 				setMdlChecked(inputEl, newState);
@@ -153,3 +161,6 @@ function setMdlChecked(checkbox: HTMLInputElement, checked: boolean) {
 		.parent()
 		.toggleClass("is-checked", checked);
 }
+
+// Expose the global variables and the Utils module to the global scope.
+export { V, Utils };

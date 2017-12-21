@@ -273,7 +273,9 @@ class Vars extends SassVars {
 		url_parts: {
 			host: "ecpi.instructure.com",
 			prefix: "/courses/",
-			suffix: "/modules",
+			suffix: {
+				modules: "/modules"
+			},
 			protocol: "https"
 		},
 		api: {

@@ -524,5 +524,5 @@ init();
  * Export several constants and modules, exposing them to the global scope when built in
  * development mode.
  */
-export { V, DATA, Init, Main, UI };
+export { V, DATA, Init, Main, UI, Utils };
 export * from "../objects";

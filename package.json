@@ -1,20 +1,29 @@
 {
   "name": "Better_Canvas",
-  "version": "3.0",
-  "devDependencies": {
-    "@types/node": "^7.0.32",
-    "@types/node-sass": "^3.10.32",
-    "download": "^6.2.5",
-    "grunt": "~1.0.1",
-    "grunt-contrib-concat": "^1.0.1",
-    "grunt-contrib-watch": "^1.0.0",
-    "grunt-execute": "^0.2.2",
-    "node-sass": "^4.5.3",
-    "ts-node": "^3.1.0",
-    "typescript": "^2.3.4"
+  "version": "3.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jmariner/Better_Canvas"
   },
-  "dependencies": {
-    "@types/chrome": "0.0.47",
-    "@types/jquery": "^3.2.4"
+  "scripts": {
+    "build": "webpack --config webpack.dev.js",
+    "prod": "webpack --config webpack.prod.js",
+    "watch": "webpack -w --config webpack.dev.js",
+    "icons": "node scripts/update-icons.js",
+    "update": "git pull && npm i"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.0.54",
+    "@types/jquery": "^3.2.16",
+    "clean-webpack-plugin": "^0.1.17",
+    "download": "^6.2.5",
+    "eval": "^0.1.2",
+    "extract-text-webpack-plugin": "^3.0.2",
+    "node-sass": "^4.7.2",
+    "ts-loader": "^3.1.1",
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.2",
+    "webpack": "^3.8.1",
+    "webpack-merge": "^4.1.1"
   }
 }

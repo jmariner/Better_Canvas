@@ -1,15 +1,48 @@
 {
-	"folders":
-	[
+	"folders": [
 		{
 			"path": ".",
 			"file_exclude_patterns": [
-				"src/js/*.js",
-				"package-lock.json"
+				"package-lock.json",
+				".gitkeep"
 			],
 			"folder_exclude_patterns": [
-				"src/js/dist/",
 				"node_modules"
+			]
+		}
+	],
+	"build_systems": [
+		{
+			"name": "webpack",
+			"shell_cmd": "npm run build",
+			"working_dir": "$project_path",
+			"quiet": true,
+
+			"variants": [
+				{
+					"name": "production",
+					"shell_cmd": "npm run prod"
+				},
+				{
+					"name": "production: verbose",
+					"shell_cmd": "npm run prod -- --verbose"
+				},
+				{
+					"name": "development: verbose",
+					"shell_cmd": "npm run build -- --verbose"
+				},
+				{
+					"name": "watch",
+					"shell_cmd": "npm run watch"
+				},
+				{
+					"name": "icons",
+					"shell_cmd": "npm run icons"
+				},
+				{
+					"name": "update",
+					"shell_cmd": "npm run update"
+				}
 			]
 		}
 	]

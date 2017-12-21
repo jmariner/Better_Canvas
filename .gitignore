@@ -1,4 +1,4 @@
 node_modules/
-.idea/
-util/
+dist/js/*.js
+dist/css/*.css
 *.sublime-workspace

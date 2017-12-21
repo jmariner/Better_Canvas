@@ -1,0 +1,61 @@
+@import 'vars';
+
+body {
+	width: 250px;
+	margin: 0;
+	padding: 0;
+	font: 16px "Roboto", sans-serif;
+
+	&:not(#{class(popup_loaded)}) {
+		display: none;
+	}
+
+	&:not(#{class(popup_connected)}) > #{class(popup_require_page, div)},
+	&#{class(popup_connected)} > #{id(popup_page_missing)} {
+		display: none;
+	}
+
+	#{id(popup_page_missing)} {
+		padding: 0 8px;
+	}
+
+	#{id(popup_refresh_button)} {
+		margin-top: 16px;
+	}
+
+	> div {
+		display: block;
+		margin-bottom: 1em;
+
+		&.title {
+			padding: .75em .5em;
+			border-bottom: 1px solid black;
+			display: flex;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: center;
+
+			> div.title-text {
+				flex-grow: 2;
+				font-size: 20px;
+			}
+
+			> div.title-icon {
+				flex-grow: 1;
+			}
+		}
+
+		&.button, &.title, &#{id(popup_page_missing)} {
+			text-align: center;
+		}
+
+		&.switch {
+			padding-left: 16px;
+		}
+	}
+
+	label.mdl-switch {
+		width: auto;
+	}
+}
+

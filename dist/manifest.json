@@ -1,0 +1,47 @@
+{
+  "manifest_version": 2,
+  "name": "Better Canvas",
+  "version": "3.0",
+
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsE1B6wbQ3I2XWqf7qs2Gu3SOE4LeZxQYjzWFIlcDYhsICUi/StDAkqFzMOPBv20k/XzdhtxhGlV1E7WvmWPDOOLAW1RN9sgOGnPIU/tnrfGgNYIpowKGBZBEHOaweCsmClaWbJqNDozYwIOo29TdOBIZo/X1t9cOh2EQN8Pw1R4sCuTMK2ueHeAmZrRY96+gfvvbWERXy32+cVDeCL+xNfEmkRSaV4s9MNvfpz8D2XgDGyKrHwaBkIwMPPAE8rUwI/giKtzYe2V+bToq1QDE/XV4SyEyC/w/mZWx76xboipGNwRDhpCljbdUyb7PmSrZ/ylWNKYFKJSaOcBF8NlHNwIDAQAB",
+
+  "icons": {
+    "16": "img/icon16.png",
+    "32": "img/icon32.png",
+    "48": "img/icon48.png",
+    "128": "img/icon128.png"
+  },
+
+  "permissions": [
+    "https://ecpi.instructure.com/api/v1/*",
+    "storage",
+    "activeTab",
+    "declarativeContent"
+  ],
+
+  "options_ui": {
+    "page": "options.html",
+    "chrome_style": false
+  },
+
+  "page_action": {
+    "default_title": "Better Canvas",
+    "default_popup": "popup.html"
+  },
+
+  "background": {
+    "scripts": ["js/common.js", "js/background.js"],
+    "persistent": false
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://ecpi.instructure.com/*"],
+      "css": ["css/content_script.css"],
+      "js": [
+        "js/common.js",
+        "js/content_script.js"
+      ]
+    }
+  ]
+}

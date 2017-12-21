@@ -1,16 +1,18 @@
 {
   "compilerOptions": {
-    "types": ["jquery", "chrome", "node", "node-sass"],
-    "lib": ["es2016", "dom"],
-    "module": "system",
-    "target": "es6",
+    "typeRoots": ["src/ts/typings", "node_modules/@types"],
+    "types": ["jquery", "chrome", "custom"],
+    "lib": ["es2017", "dom"],
+    "module": "es6",
+    "target": "es2015",
     "removeComments": true,
     "sourceMap": true
   },
   "files": [
-    "src/js/main.ts",
-    "src/js/popup.ts",
-    "src/js/options.ts"
+    "src/ts/content_script/entry.ts",
+    "src/ts/extension/popup.ts",
+    "src/ts/extension/options.ts",
+    "src/ts/extension/background.ts"
   ],
   "compileOnSave": false,
   "exclude": [

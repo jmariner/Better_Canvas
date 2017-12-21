@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link href="lib/material.min.css" rel="stylesheet" type="text/css">
+	<script src="js/common.js"></script>
+	<script src="js/options.js"></script>
+	<title>Better Canvas Options</title>
+	<style>
+		main {
+			padding: 1em 0;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-around;
+			align-items: center;
+		}
+		#token-wrapper {
+			width: 45em;
+			margin: 0 0.5em;
+			max-width: 720px;
+		}
+		#token {
+			text-align: center;
+		}
+		#name {
+			font-size: 12px;
+			margin-top: -10px;
+		}
+		#status {
+			margin-bottom: 20px;
+			font-size: 16px;
+			color: black;
+		}
+		#status.error {
+			color: red;
+		}
+		#buttons {
+			width: 100%;
+			display: flex;
+			justify-content: space-around;
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<div id="token-wrapper" class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+			<input id="token" class="mdl-textfield__input" type="text" spellcheck="false">
+			<label for="token" class="mdl-textfield__label">Access Token</label>
+		</div>
+		<div id="name">&nbsp;</div>
+		<div id="status">&nbsp;</div>
+		<div id="buttons">
+			<button id="save" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised mdl-button--colored">
+				Save
+			</button>
+			<button id="close" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised mdl-button--accent">
+				Close
+			</button>
+		</div>
+	</main>
+</body>
+</html>

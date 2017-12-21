@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link href="lib/material.min.css" rel="stylesheet" type="text/css">
+	<link href="css/popup.css" rel="stylesheet" type="text/css">
+	<script src="js/common.js"></script>
+	<script src="js/popup.js"></script>
+</head>
+
+<body>
+
+	<div class="title">
+		<div class="title-icon">
+			<img src="/img/icon48.png">
+		</div>
+		<div class="title-text">
+			<span id="extension-name"></span>
+			<br>
+			Actions
+		</div>
+	</div>
+
+	<div class="button require-page" style="display:none">
+		<button id="jump-to" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised mdl-button--accent">
+			Jump to first unchecked
+		</button>
+	</div>
+
+	<div id="insertion-point" style="display:none"></div>
+
+	<div id="page-missing">
+		<div class="mdl-color-text--primary">
+			Unable to connect to active Canvas page; try refreshing it.
+		</div>
+		<button id="refresh-canvas-pages" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised mdl-button--colored">
+			Reload all Canvas pages
+		</button>
+	</div>
+</body>
+</html>

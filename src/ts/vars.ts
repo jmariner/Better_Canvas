@@ -30,9 +30,9 @@ class SassVars {
 		toc_ratio: "toc-ratio",
 		toc_title: "toc-title",
 		fixed: "fixed",
-		item_icon: "icon-wrapper",
 		download: "download-btn",
 		external_url: "url-btn",
+		status_icon: "status-icon",
 
 		popup_loaded: "done-loading",
 		popup_connected: "page-connected",
@@ -46,7 +46,8 @@ class SassVars {
 		toc_percentage: "toc-percentage",
 		mod_item_id: "item-id",
 		course_name: "course-name",
-		course_code: "course-code"
+		course_code: "course-code",
+		icon_name: "icon"
 	};
 
 	id = {
@@ -190,27 +191,47 @@ class Vars extends SassVars {
 		token_key: "accessToken"
 	};
 
+	private _displayNone = "style='display:none'";
+
+	icon = {
+		graded: {
+			tooltip: "Assignment is graded",
+			icon: "check-plus",
+			color: "rgb(10, 158, 43)"
+		},
+		submitted_not_graded: {
+			tooltip: "Assignment submitted but not graded",
+			icon: "not-graded",
+			color: "rgb(234, 169, 49)"
+		}
+	};
+
 	element = {
 
 		checkbox:
-				`<div style='display:none' class='${this.cssClass.checkbox_parent}'>
+				`<div ${this._displayNone} class='${this.cssClass.checkbox_parent}'>
 					<input type='checkbox' ${this.dataAttr.mod_item_id}='{item_id}'>
 				</div>`,
 
 		download_button:
-				`<div style='display:none' class='${this.cssClass.download}'
+				`<div ${this._displayNone} class='${this.cssClass.download}'
 					  title='${this.tooltip.download}'>
-					<a href="{file_url}"></a>
+					<a href='{file_url}'></a>
 				</div>`,
 
 		url_button:
-				`<div style='display:none' class='${this.cssClass.external_url}'
+				`<div ${this._displayNone} class='${this.cssClass.external_url}'
 					  title='${this.tooltip.external_url}'>
-					<a href="{external_url}" class="not_external" target="_blank"></a>
+					<a href='{external_url}' class='not_external' target='_blank'></a>
+				</div>`,
+
+		status_icon:
+				`<div ${this._displayNone} class='${this.cssClass.status_icon}' title='{tooltip}'>
+					<span ${this.dataAttr.icon_name}='{icon}' style='color: {color}'></span>
 				</div>`,
 
 		hide_button:
-				`<div style='display:none' class='${this.cssClass.hide_button}'>
+				`<div ${this._displayNone} class='${this.cssClass.hide_button}'>
 					<i ${this.dataAttr.mod_item_id}='{item_id}'></i>
 				</div>`,
 
@@ -250,10 +271,10 @@ class Vars extends SassVars {
 			</div>`,
 
 		popup_state_switch:
-			`<div class="switch ${this.cssClass.popup_require_page}">
-				<label for="{name}" class="mdl-switch mdl-js-switch mdl-js-ripple-effect">
-					<span class="mdl-switch__label">{desc}</span>
-					<input id="{name}" type="checkbox" class="mdl-switch__input">
+			`<div class='switch ${this.cssClass.popup_require_page}'>
+				<label for='{name}' class='mdl-switch mdl-js-switch mdl-js-ripple-effect'>
+					<span class='mdl-switch__label'>{desc}</span>
+					<input id='{name}' type='checkbox' class='mdl-switch__input'>
 				</label>
 			</div>`
 	};

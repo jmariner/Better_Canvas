@@ -6,7 +6,8 @@ $canvas_icons: $icons-Solid;
 $canvasIconFont: "InstructureIcons-Solid";
 $courseLinkSize: 28px;
 $checkboxSize: 20px;
-$iconSize: 22px;
+$iconSize: 18px;
+$statusIconSize: 18px;
 $checkboxBorderSize: 2;
 $hideButtonSize: 14px;
 $jumpButtonSize: 36px;
@@ -17,20 +18,24 @@ $tocBorderWidth: 1px;
 	width: $size;
 	height: $size;
 
-	@if $includeFontSize {
+	@if ($includeFontSize) {
 		font-size: $size;
 	}
 }
 
-@mixin canvasIcon($name, $size: 0) {
-	content: map-get($canvas_icons, $name);
+@mixin canvasIcon($name: null, $size: 0) {
+
+	@if ($name != null) {
+		content: map-get($canvas_icons, $name);
+	}
+
 	font-family: $canvasIconFont;
 	display: inline-block;
 	vertical-align: middle;
 	font-style: normal;
 	line-height: 1;
 
-	@if $size > 0 {
+	@if ($size > 0) {
 		@include square($size, true);
 	}
 }
@@ -51,7 +56,6 @@ $tocBorderWidth: 1px;
 	}
 
 	@keyframes flash {
-	//	0%, 100% { background-color: transparent; }
 		50% { background-color: color(highlight_red, 0.5); }
 	}
 
@@ -63,7 +67,7 @@ $tocBorderWidth: 1px;
 		@include square($courseLinkSize);
 		color: white;
 		&:before {
-			@include canvasIcon(star /*"\EAB6"*/, $courseLinkSize);
+			@include canvasIcon(star, $courseLinkSize);
 		}
 	}
 
@@ -119,7 +123,6 @@ $tocBorderWidth: 1px;
 	// 'show hidden' not enabled and item hidden OR 'hide checked' enabled and item checked
 	body:not(#{state(show_hidden)}) &#{class(item_hidden)},
 	#{state(hide_checked, body)} &#{class(checkbox_checked)} {
-	//	display: none;
 		max-height: 0;
 	}
 }
@@ -216,12 +219,6 @@ $tocBorderWidth: 1px;
 			transform: scale(0);
 		}
 
-	//	&:hover:not(:checked):before {
-	//		content: map-get($canvas_icons, question);
-	//		transition-delay: 0.75s, 0s;
-	//		transform: scale(1);
-	//	}
-
 		&:checked:before {
 			transform: scale(1);
 		}
@@ -248,49 +245,6 @@ $tocBorderWidth: 1px;
 		}
 
 	}
-}
-
-#{class(download, div)}, #{class(external_url, div)} {
-	position: relative;
-	margin-right: $checkboxSize;
-
-	@include square($checkboxSize);
-
-	> a {
-		position: absolute;
-		top: 0;
-		left: 0;
-		outline: 0;
-
-		@include square($checkboxSize);
-
-		&:before {
-			position: absolute;
-		}
-	}
-}
-
-#{class(download, div)} > a:before {
-	@include canvasIcon(download, $checkboxSize);
-}
-
-#{class(external_url, div)} > a:before {
-	@include canvasIcon(link, $checkboxSize);
-}
-
-// the icon wrapper
-#{class(item_icon, div)} {
-
-	&, > i {
-		@include square($iconSize);
-	}
-
-	& > i:before {
-		@include square($iconSize, true);
-	}
-
-	margin-right: $iconSize/2;
-
 }
 
 #grades_summary #{class(checkbox_td, td)} {
@@ -342,10 +296,6 @@ $tocBorderWidth: 1px;
 
 			border: solid $tocBorderWidth color(toc_border);
 			margin-bottom: -1px; // collapses bottom borders
-
-		//	&:not(:last-child) {
-		//		border-bottom: none;
-		//	}
 
 			> a {
 				white-space: normal;
@@ -428,12 +378,68 @@ $tocBorderWidth: 1px;
 		color: inherit;
 
 		&:before {
-			@include canvasIcon(drop-down /*"\EA34"*/, $jumpButtonSize);
+			@include canvasIcon(drop-down, $jumpButtonSize);
 			transform-origin: center;
 			transform: scale(1, -1);
 		}
 	}
 }
+
+#{class(download, div)}, #{class(external_url, div)} {
+	position: relative;
+	margin-right: $iconSize;
+
+	@include square($iconSize);
+
+	> a {
+		position: absolute;
+		top: 0;
+		left: 0;
+		outline: 0;
+
+		@include square($iconSize);
+
+		&:before {
+			position: absolute;
+		}
+	}
+}
+
+#{class(download, div)} > a:before {
+	@include canvasIcon(download, $iconSize);
+}
+
+#{class(external_url, div)} > a:before {
+	@include canvasIcon(link, $iconSize);
+}
+
+// status icon wrapper
+#{class(status_icon, div)} {
+	position: relative;
+	margin-right: $statusIconSize;
+
+	@include square($statusIconSize);
+
+	> span {
+		position: absolute;
+		top: 0;
+		left: 0;
+
+		@include square($statusIconSize);
+
+		&:before {
+			position: absolute;
+			font-size: $statusIconSize;
+		}
+	}
+}
+
+
+@each $iconName, $iconCode in $canvas_icons {
+	*[#{data_attr(icon_name, false)}='#{$iconName}']:before { content: $iconCode; }
+}
+
+*[#{data_attr(icon_name, false)}]:before { @include canvasIcon(); }
 
 // ================ misc additions to canvas styles ========================
 
@@ -459,6 +465,16 @@ body.primary-nav-expanded div.ic-app-header__secondary-navigation {
 		> .ig-row {
 			border: none;
 			border-bottom: 1px solid color(checkbox_border);
+		}
+	}
+
+	div.module-item-status-icon {
+		margin-right: $statusIconSize;
+		width: $statusIconSize;
+		padding-right: 0;
+
+		> i:before {
+			font-size: $statusIconSize;
 		}
 	}
 }

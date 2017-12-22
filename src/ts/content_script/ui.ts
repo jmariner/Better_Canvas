@@ -44,8 +44,10 @@ class Page {
 		return this.body.find("#" + cssId);
 	}
 
-	cls(cssClass: string): JQuery {
-		return this.body.find("." + cssClass);
+	cls(...cssClasses: string[]): JQuery {
+		return this.body.find(
+			cssClasses.map(cls => "." + cls).join(",")
+		);
 	}
 
 }

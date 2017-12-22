@@ -398,7 +398,10 @@ function initPage() {
 		await Main.onHideButtonClick($(this));
 	});
 
-	// === add buttons to FILE and EXTERNAL_URL items ===
+	// === add buttons to FILE and EXTERNAL_URL items and add status icons to assignments ===
+
+	const gradedEl = Utils.format(V.element.status_icon, V.icon.graded);
+	const notGradedEl = Utils.format(V.element.status_icon, V.icon.submitted_not_graded);
 
 	for (const [, item] of DATA.moduleItems) {
 
@@ -422,11 +425,28 @@ function initPage() {
 				.addClass("ig-title")
 				.find(".ui-icon").remove();
 		}
+		else if (item.isAssignment) {
+
+			// using an array to allow future additions
+			const statusIcons = new Array<JQuery>();
+
+			if (item.isGraded)
+				statusIcons.push($(gradedEl));
+			else if (item.isSubmitted)
+				statusIcons.push($(notGradedEl));
+
+			// add elements in reverse order to the left of the checkbox
+			for (const icon of statusIcons.reverse())
+				icon.insertBefore(item.checkboxElement);
+
+		}
 	}
 
-	PAGE.cls(V.cssClass.download)
-		.add(PAGE.cls(V.cssClass.external_url))
-		.show();
+	PAGE.cls(
+		V.cssClass.download,
+		V.cssClass.external_url,
+		V.cssClass.status_icon
+	).show();
 
 }
 

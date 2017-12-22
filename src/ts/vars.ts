@@ -263,6 +263,11 @@ class Vars extends SassVars {
 				<nav><ul></ul></nav>
 			</div>`,
 
+	// TODO the TOC tooltips seem to cause some performance issues when clicking to scroll
+	// to a module. they also sometimes to not disappear when scrolling. consider
+	// replacing these tooltips with a better method of showing the full name, or a custom tooltip
+	// plugin instead of jq ui that allows for them to be manually removed before doing the scroll
+
 		toc_item:
 			`<li>
 				<a href='#' title='{item_name}' ${tt("right")}>

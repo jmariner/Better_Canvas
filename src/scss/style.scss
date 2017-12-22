@@ -298,7 +298,9 @@ $tocBorderWidth: 1px;
 			margin-bottom: -1px; // collapses bottom borders
 
 			> a {
-				white-space: normal;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 				padding: 5px 5px 5px 8px;
 				text-align: left;
 				border-radius: 0;

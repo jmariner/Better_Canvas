@@ -319,13 +319,14 @@ export class ModuleItem {
 
 	/**
 	 * The element ID for this module item, which will vary depending on the current Canvas page.
+	 * Will be 'null' if not on a valid page for this module item.
 	 */
-	get canvasElementId() {
+	get canvasElementId(): string | null {
 		switch (DATA.coursePage) {
 			case CanvasPage.MODULES:
-				return "context_module_item_" + this.id; // li element
+				return "context_module_item_" + this.id;
 			case CanvasPage.GRADES:
-				return "submission_" + this.assignmentData.id; // tr element
+				return this.isAssignment ? "submission_" + this.assignmentData.id : null;
 			default:
 				return null;
 		}

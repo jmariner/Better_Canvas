@@ -50,6 +50,21 @@ class Page {
 		);
 	}
 
+	/**
+	 * Create a new element from an HTML string and a format object. This allows for better control
+	 * of all created elements.
+	 *
+	 * @param {string} html      The HTML to turn into an element.
+	 * @param {object} formatObj The format object to pass to Utils.format
+	 * @returns {JQuery} The resulting jQuery element instance.
+	 */
+	newEl(html: string, formatObj?: object): JQuery {
+		if (formatObj !== undefined)
+			html = Utils.format(html, formatObj);
+
+		return $(html);
+	}
+
 }
 
 /**

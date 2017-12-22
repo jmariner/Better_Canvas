@@ -195,7 +195,7 @@ class Vars extends SassVars {
 
 	icon = {
 		graded: {
-			tooltip: "Assignment is graded",
+			tooltip: "Assignment has been graded",
 			icon: "check-plus",
 			color: "rgb(10, 158, 43)"
 		},
@@ -210,29 +210,37 @@ class Vars extends SassVars {
 
 		checkbox:
 				`<div ${this._displayNone} class='${this.cssClass.checkbox_parent}'>
-					<input type='checkbox' ${this.dataAttr.mod_item_id}='{item_id}'>
-				</div>`,
-
-		download_button:
-				`<div ${this._displayNone} class='${this.cssClass.download}'
-					  title='${this.tooltip.download}'>
-					<a href='{file_url}'></a>
-				</div>`,
-
-		url_button:
-				`<div ${this._displayNone} class='${this.cssClass.external_url}'
-					  title='${this.tooltip.external_url}'>
-					<a href='{external_url}' class='not_external' target='_blank'></a>
-				</div>`,
-
-		status_icon:
-				`<div ${this._displayNone} class='${this.cssClass.status_icon}' title='{tooltip}'>
-					<span ${this.dataAttr.icon_name}='{icon}' style='color: {color}'></span>
+					<input type='checkbox'
+					       ${this.dataAttr.mod_item_id}='{item_id}'
+					       title='' ${tt("top")}
+					>
 				</div>`,
 
 		hide_button:
 				`<div ${this._displayNone} class='${this.cssClass.hide_button}'>
-					<i ${this.dataAttr.mod_item_id}='{item_id}'></i>
+					<i ${this.dataAttr.mod_item_id}='{item_id}' title='' ${tt("left")}></i>
+				</div>`,
+
+		download_button:
+				`<div ${this._displayNone} class='${this.cssClass.download}'>
+					<a href='{file_url}' title='${this.tooltip.download}' ${tt("left")}></a>
+				</div>`,
+
+		url_button:
+				`<div ${this._displayNone} class='${this.cssClass.external_url}'>
+					<a href='{external_url}'
+					   class='not_external'
+					   target='_blank'
+					   title='${this.tooltip.external_url}' ${tt("left")}
+					></a>
+				</div>`,
+
+		status_icon:
+				`<div ${this._displayNone} class='${this.cssClass.status_icon}'>
+					<span ${this.dataAttr.icon_name}='{icon}'
+					      style='color: {color}'
+					      title='{tooltip}' ${tt("top")}
+					></span>
 				</div>`,
 
 		course_link:
@@ -257,7 +265,7 @@ class Vars extends SassVars {
 
 		toc_item:
 			`<li>
-				<a href='#' title='{item_name}'>
+				<a href='#' title='{item_name}' ${tt("right")}>
 					{item_name}
 					<div class='${this.cssClass.toc_ratio}'
 						${this.dataAttr.toc_module_id}='{item_id}'
@@ -266,8 +274,8 @@ class Vars extends SassVars {
 			</li>`,
 
 		jump_button:
-			`<div id='${this.id.jump_button}'>
-				<i title='${this.tooltip.jump_button}'></i>
+			`<div id='${this.id.jump_button}' title='${this.tooltip.jump_button}' ${tt("bottom")}>
+				<i></i>
 			</div>`,
 
 		popup_state_switch:
@@ -280,7 +288,10 @@ class Vars extends SassVars {
 	};
 
 	// separated for use in template strings below
-	private _canvasNamespace = `com.jmariner.${this.prefix}`;
+	private _canvas = {
+		namespace: `com.jmariner.${this.prefix}`,
+		host: "ecpi.instructure.com"
+	};
 
 	canvas = {
 		selector: {
@@ -291,7 +302,7 @@ class Vars extends SassVars {
 			nav_tabs: "ul#section-tabs"
 		},
 		url_parts: {
-			host: "ecpi.instructure.com",
+			host: this._canvas.host,
 			prefix: "/courses/",
 			suffix: {
 				modules: "/modules"
@@ -299,11 +310,10 @@ class Vars extends SassVars {
 			protocol: "https"
 		},
 		api: {
-			namespace: this._canvasNamespace,
-			absolute_url: "https://ecpi.instructure.com/api/v1/",
-			root_url: "/api/v1/",
+			namespace: this._canvas.namespace,
+			absolute_url: "https://" + this._canvas.host + "/api/v1/",
 			urls: {
-				custom_data: `users/self/custom_data{dataPath}?ns=${this._canvasNamespace}`,
+				custom_data: `users/self/custom_data{dataPath}?ns=${this._canvas.namespace}`,
 				favorite_courses: "users/self/favorites/courses",
 				custom_colors: "users/self/colors",
 				assignments: "users/self/courses/{courseID}/assignments",
@@ -322,10 +332,19 @@ class Vars extends SassVars {
 	};
 }
 
+/**
+ * Create a 'data-tooltip' attribute.
+ * @param {"top" | "bottom" | "left" | "right"} pos Tooltip position
+ * @returns The tooltip attribute.
+ */
+function tt(pos: "top" | "bottom" | "left" | "right"): string {
+	return `data-tooltip='${pos}'`;
+}
+
 const VARS = new Vars();
 
 /** Export 'V' as the global configuration object. */
-export const V = VARS;
+export { VARS as V };
 
 /**
  * Set the default export to sassExports, which is a clone of the SassVars object. This is used for

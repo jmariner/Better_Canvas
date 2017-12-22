@@ -196,7 +196,7 @@ function initPage() {
 	// === place "jump to top" button ===
 
 	DATA.elements.jump_button =
-		$(V.element.jump_button)
+		PAGE.newEl(V.element.jump_button)
 		.find("i")
 		.click(() => {
 			if (PAGE.scrollingElement.prop("scrollTop") > 0)
@@ -275,14 +275,14 @@ function initPage() {
 
 		if (hasCheckbox) {
 			item.checkboxElement =
-				$(Utils.format(V.element.checkbox, {item_id: itemId})).appendTo(parentEl);
+				PAGE.newEl(V.element.checkbox, {item_id: itemId}).appendTo(parentEl);
 
 			UI.updateCheckbox(item);
 			item.checkboxElement.show();
 		}
 		if (hasHideButton) {
 			item.hideElement =
-				$(Utils.format(V.element.hide_button, {item_id: itemId})).appendTo(parentEl);
+				PAGE.newEl(V.element.hide_button, {item_id: itemId}).appendTo(parentEl);
 
 			// this function is async, but with second argument 'true', it updates instantly
 			UI.updateItemHide(item, true);
@@ -361,16 +361,15 @@ function initPage() {
 
 	// === place and populate the table of contents ===
 
-	const toc = $(V.element.toc);
+	const toc = PAGE.newEl(V.element.toc);
 	const ul = toc.find("ul");
 
 	for (const [modId, mod] of DATA.modules) {
 
-		const formatted = Utils.format(
-			V.element.toc_item,
-			{item_name: mod.name, item_id: modId}
-		);
-		$(formatted)
+		PAGE.newEl(V.element.toc_item, {
+			item_name: mod.name,
+			item_id: modId
+		})
 			.find("a")
 			.click(e => {
 				const moduleEl = PAGE.id("context_module_" + modId);
@@ -406,17 +405,15 @@ function initPage() {
 	for (const [, item] of DATA.moduleItems) {
 
 		if (item.type === ModuleItemType.FILE) {
-			const element = Utils.format(V.element.download_button, {
+			PAGE.newEl(V.element.download_button, {
 				file_url: item.fileData.url,
 				filename: item.fileData.display_name
-			});
-			$(element).insertBefore(item.checkboxElement);
+			}).insertBefore(item.checkboxElement);
 		}
 		else if (item.type === ModuleItemType.EXTERNAL_URL) {
-			const element = Utils.format(V.element.url_button, {
+			PAGE.newEl(V.element.url_button, {
 				external_url: item.externalUrl
-			});
-			$(element).insertBefore(item.checkboxElement);
+			}).insertBefore(item.checkboxElement);
 
 			PAGE.id(item.canvasElementId).find("a.external_url_link.title")
 				.attr("href", function() { return $(this).attr("data-item-href"); })
@@ -431,9 +428,9 @@ function initPage() {
 			const statusIcons = new Array<JQuery>();
 
 			if (item.isGraded)
-				statusIcons.push($(gradedEl));
+				statusIcons.push(PAGE.newEl(gradedEl));
 			else if (item.isSubmitted)
-				statusIcons.push($(notGradedEl));
+				statusIcons.push(PAGE.newEl(notGradedEl));
 
 			// add elements in reverse order to the left of the checkbox
 			for (const icon of statusIcons.reverse())

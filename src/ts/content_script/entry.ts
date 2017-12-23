@@ -402,17 +402,19 @@ function initPage() {
 	const gradedEl = Utils.format(V.element.status_icon, V.icon.graded);
 	const notGradedEl = Utils.format(V.element.status_icon, V.icon.submitted_not_graded);
 
-	for (const [, item] of DATA.moduleItems) {
+	for (const [modItemId, item] of DATA.moduleItems) {
 
 		if (item.type === ModuleItemType.FILE) {
 			PAGE.newEl(V.element.download_button, {
 				file_url: item.fileData.url,
-				filename: item.fileData.display_name
+				filename: item.fileData.display_name,
+				item_id: modItemId
 			}).insertBefore(item.checkboxElement);
 		}
 		else if (item.type === ModuleItemType.EXTERNAL_URL) {
 			PAGE.newEl(V.element.url_button, {
-				external_url: item.externalUrl
+				external_url: item.externalUrl,
+				item_id: modItemId
 			}).insertBefore(item.checkboxElement);
 
 			PAGE.id(item.canvasElementId).find("a.external_url_link.title")
@@ -428,9 +430,9 @@ function initPage() {
 			const statusIcons = new Array<JQuery>();
 
 			if (item.isGraded)
-				statusIcons.push(PAGE.newEl(gradedEl));
+				statusIcons.push(PAGE.newEl(gradedEl, {item_id: modItemId}));
 			else if (item.isSubmitted)
-				statusIcons.push(PAGE.newEl(notGradedEl));
+				statusIcons.push(PAGE.newEl(notGradedEl, {item_id: modItemId}));
 
 			// add elements in reverse order to the left of the checkbox
 			for (const icon of statusIcons.reverse())

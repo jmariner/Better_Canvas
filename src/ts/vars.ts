@@ -61,6 +61,15 @@ class SassVars {
 		popup_refresh_button: "refresh-canvas-pages"
 	};
 
+	variableId = {
+		checkbox: "cb-{item_id}",
+		hide_button: "hide-{item_id}",
+		download: "dl-{item_id}",
+		url: "url-{item_id}",
+		status_icon: "{status_id}-{item_id}",
+		toc_item: "toc-{item_id}"
+	};
+
 	color = {
 		toc_fill: "rgba(0, 255, 0, .75)",
 		toc_border: "rgb(102, 120, 135)",
@@ -109,7 +118,9 @@ class SassVars {
 
 	private static readonly meta = {
 		dataPrefixType: "dataAttr",
-		prefixTypes: ["cssClass", "dataAttr", "id"],
+		get prefixTypes(): Array<keyof SassVars> { // workaround to define type for this array
+			return ["cssClass", "dataAttr", "id", "variableId"];
+		},
 		prefixExclude: ["popup_.+"]
 	};
 
@@ -122,7 +133,7 @@ class SassVars {
 	 */
 	constructor() {
 
-		const prefixTypes = new Set(SassVars.meta.prefixTypes);
+		const prefixTypes = new Set<string>(SassVars.meta.prefixTypes);
 
 		// tslint:disable-next-line:interface-over-type-literal
 		type Obj = {[key: string]: string | string[] | number | Obj};
@@ -197,11 +208,13 @@ class Vars extends SassVars {
 		graded: {
 			tooltip: "Assignment has been graded",
 			icon: "check-plus",
+			status_id: "graded",
 			color: "rgb(10, 158, 43)"
 		},
 		submitted_not_graded: {
 			tooltip: "Assignment submitted but not graded",
 			icon: "not-graded",
+			status_id: "not-graded",
 			color: "rgb(234, 169, 49)"
 		}
 	};
@@ -211,6 +224,7 @@ class Vars extends SassVars {
 		checkbox:
 				`<div ${this._displayNone} class='${this.cssClass.checkbox_parent}'>
 					<input type='checkbox'
+					       id='${this.variableId.checkbox}'
 					       ${this.dataAttr.mod_item_id}='{item_id}'
 					       title='' ${tt("top")}
 					>
@@ -218,17 +232,24 @@ class Vars extends SassVars {
 
 		hide_button:
 				`<div ${this._displayNone} class='${this.cssClass.hide_button}'>
-					<i ${this.dataAttr.mod_item_id}='{item_id}' title='' ${tt("left")}></i>
+					<i ${this.dataAttr.mod_item_id}='{item_id}'
+					   id='${this.variableId.hide_button}'
+					   title='' ${tt("left")}
+					></i>
 				</div>`,
 
 		download_button:
 				`<div ${this._displayNone} class='${this.cssClass.download}'>
-					<a href='{file_url}' title='${this.tooltip.download}' ${tt("left")}></a>
+					<a href='{file_url}'
+					   id='${this.variableId.download}'
+					   title='${this.tooltip.download}' ${tt("left")}
+					></a>
 				</div>`,
 
 		url_button:
 				`<div ${this._displayNone} class='${this.cssClass.external_url}'>
 					<a href='{external_url}'
+					   id='${this.variableId.url}'
 					   class='not_external'
 					   target='_blank'
 					   title='${this.tooltip.external_url}' ${tt("left")}
@@ -238,6 +259,7 @@ class Vars extends SassVars {
 		status_icon:
 				`<div ${this._displayNone} class='${this.cssClass.status_icon}'>
 					<span ${this.dataAttr.icon_name}='{icon}'
+					      id='${this.variableId.status_icon}'
 					      style='color: {color}'
 					      title='{tooltip}' ${tt("top")}
 					></span>
@@ -270,10 +292,10 @@ class Vars extends SassVars {
 
 		toc_item:
 			`<li>
-				<a href='#' title='{item_name}' ${tt("right")}>
+				<a href='#' id='${this.variableId.toc_item}' title='{item_name}' ${tt("right")}>
 					{item_name}
 					<div class='${this.cssClass.toc_ratio}'
-						${this.dataAttr.toc_module_id}='{item_id}'
+					     ${this.dataAttr.toc_module_id}='{item_id}'
 					></div>
 				</a>
 			</li>`,
@@ -343,7 +365,8 @@ class Vars extends SassVars {
  * @returns The tooltip attribute.
  */
 function tt(pos: "top" | "bottom" | "left" | "right"): string {
-	return `data-tooltip='${pos}'`;
+	// disabled temporarily
+	return ""; // `data-tooltip='${pos}'`;
 }
 
 const VARS = new Vars();

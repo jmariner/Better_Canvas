@@ -224,8 +224,8 @@ function initPage() {
 
 	// ==== apply course color to brand colors ====
 
-	if (DATA.courseTabs.has(DATA.courseID)) {
-		const color = DATA.courseTabs.get(DATA.courseID).color;
+	if (DATA.courseColors.has(DATA.courseID)) {
+		const color = DATA.courseColors.get(DATA.courseID);
 		// TODO: do more with this accent color - edit more of the --ic-* variables
 		document.documentElement.style.setProperty("--ic-brand-primary", color);
 	}

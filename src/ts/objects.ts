@@ -16,19 +16,22 @@ class Data {
 	courseID: number | null;
 
 	/** A map between a module ID and a module object. */
-	modules: Map<number, Module>;
+	modules = new Map<number, Module>();
 
 	/** A map between a module item ID and a module item object. */
-	moduleItems: Map<number, ModuleItem>;
+	moduleItems = new Map<number, ModuleItem>();
 
 	/** A map between a state name and a state object. */
-	states: Map<string, State>;
+	states = new Map<string, State>();
+
+	/** A map between a course ID and a color string. */
+	courseColors = new Map<number, string>();
 
 	/** A map between a course ID and a course tab object. */
-	courseTabs: Map<number, CustomCourseTab>;
+	courseTabs = new Map<number, CustomCourseTab>();
 
 	/** A map between a navigation tab name and a nav tab object. */
-	navTabs: Map<string, NavTab>;
+	navTabs = new Map<string, NavTab>();
 
 	/** Whether or not the active Canvas page is GRADES or MODULES, a main page. */
 	onMainPage: boolean;
@@ -41,18 +44,9 @@ class Data {
 		toc: JQuery
 	};
 
-	/**
-	 * Create an empty instance of the Data class.
-	 */
+	/** Create an empty instance of the Data class. */
 	constructor() {
-		this.modules = new Map();
-		this.moduleItems = new Map();
-		this.states = new Map();
-		this.courseTabs = new Map();
-		this.navTabs = new Map();
-
 		this.elements = {jump_button: null, toc: null};
-
 	}
 }
 

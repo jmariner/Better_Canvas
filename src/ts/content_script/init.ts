@@ -21,15 +21,18 @@ export async function courseTabFlow() {
 
 	const colorsUrl = Utils.formatUrl(V.canvas.api.urls.custom_colors);
 	const courseColors = (
-		await Utils.getJSON<{custom_colors: Map<string, string>}>(colorsUrl)
+		await Utils.getJSON<{custom_colors: {[course: string]: string}}>(colorsUrl)
 	).custom_colors;
+
+	for (const [key, color] of Object.entries(courseColors))
+		DATA.courseColors.set(Number(key.replace("course_", "")), color);
 
 	const favoritesUrl = Utils.formatUrl(V.canvas.api.urls.favorite_courses);
 	const favoriteCourses =
 		await Utils.getJSON<CanvasAPI.Course[]>(favoritesUrl);
 
 	for (const courseData of favoriteCourses) {
-		const color = courseColors["course_" + courseData.id];
+		const color = DATA.courseColors.get(courseData.id);
 		DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
 	}
 

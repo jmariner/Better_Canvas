@@ -33,7 +33,8 @@ module.exports = function (contents) {
 		importer: function(url, prev, done){ typeScriptImporter(url, prev).then(done); }
 	}, (error, result) => {
 		if (error) {
-			callback(error.formatted);
+			console.error(error.formatted);
+			callback(new Error("An error occurred rendering the SCSS."));
 		}
 		else {
 			callback(null, exportWrap(result.css), result.map);
@@ -53,17 +54,36 @@ async function typeScriptImporter(url, prev) {
 	const file = path.resolve(prefixDir, regMatch ? url.slice(1) : url);
 	const name = path.basename(file, ".ts");
 
+	// curly braces are not allowed in values. they are okay to use in the typescript vars, so
+	// make sure they get removed here.
+	const disallowedValueRegex = /[{}]/;
+
 	const parseValue = value => {
 		if (Array.isArray(value)) {
-			return `(${value.map(v => parseValue(v)).join(",")})`;
+
+			return "(" +
+				value
+					.map(item => parseValue(item))
+					.filter(item => item !== null)
+					.join(",")
+				+ ")";
 		}
 		else if (typeof value === "object") {
-			return `(${Object.keys(value)
-				.map(key => `${key}: ${parseValue(value[key])}`)
-				.join(",")})`;
+
+			return "(" +
+				Object.entries(value)
+					.map(([key, val]) => [key, parseValue(val)])
+					.filter(([, val]) => val !== null)
+					.map(pair => pair.join(": "))
+					.join(",")
+				+ ")";
 		}
-		else {
-			return value;
+		else { // value is string
+			// return 'null' if this value is not allowed.
+			if (disallowedValueRegex.test(value))
+				return null;
+			else
+				return value;
 		}
 	};
 
@@ -74,7 +94,7 @@ async function typeScriptImporter(url, prev) {
 		return {contents};
 	}
 	catch (e) {
-		return new Error(`SASS Importer: Problem when parsing typescript -> json -> sass.\nFile: ${file}\nError: ${e}`);
+		return new Error(`SASS Importer: Problem when parsing typescript sass vars.\nFile: ${file}\nError: ${e}`);
 	}
 
 }

@@ -9,7 +9,7 @@ import * as UI from "./ui";
 import * as Message from "../message";
 import * as Utils from "../utils";
 import { V } from "../vars";
-import { DATA, NavTab } from "../objects";
+import { DATA, NavTab, EditMode } from "../objects";
 
 /**
  * Set the boolean value of one of the states in DATA.states. This includes updating the State
@@ -26,10 +26,11 @@ export async function setState(stateName: string, newState: boolean): Promise<bo
 
 	if (!stateObj.onPages.includes(DATA.coursePage)) return;
 
-	const url = Utils.formatUrl(V.canvas.api.urls.custom_data, {
-		dataPath: "/" + V.canvas.api.data_urls.active_states
-	});
-	const success = Utils.editDataArray(url, newState, [stateName]);
+	const success = await Utils.editCustomDataArray(
+		[V.canvas.api.data_urls.active_states],
+		newState ? EditMode.APPEND : EditMode.SUBTRACT,
+		[stateName]
+	);
 
 	if (success) {
 		stateObj.active = newState;
@@ -46,16 +47,15 @@ export async function setState(stateName: string, newState: boolean): Promise<bo
  * Change the custom position of a navigation tab. This includes updating the NavTab object and the
  * custom data storage with the new position and updating the page accordingly.
  *
- * @param {NavTab} tab      the navigation tab object to change
- * @param {number} position the new 1-indexed position to give to this tab
+ * @param {NavTab} tab      The navigation tab object to change
+ * @param {number} position The new 1-indexed position to give to this tab
  */
 export async function setNavTabPosition(tab: NavTab, position: number) {
 
-	const url = Utils.formatUrl(V.canvas.api.urls.custom_data, {
-		dataPath: ["", V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id].join("/")
-	});
-
-	const success = await Utils.putData(url, position);
+	const success = await Utils.putCustomData(
+		[V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id],
+		position
+	);
 
 	if (success) {
 		tab.setPosition(position);
@@ -95,11 +95,11 @@ export async function onCheckboxChange(el: HTMLInputElement) {
 	el.disabled = true;
 	el.title = V.tooltip.waiting;
 
-	const url = Utils.formatUrl(V.canvas.api.urls.custom_data, {
-		dataPath: ["", V.canvas.api.data_urls.completed_assignments, DATA.courseID].join("/")
-	});
-
-	const success = await Utils.editDataArray(url, status, [id]);
+	const success = await Utils.editCustomDataArray(
+		[V.canvas.api.data_urls.completed_assignments, DATA.courseID],
+		status ? EditMode.APPEND : EditMode.SUBTRACT,
+		[id]
+	);
 
 	el.disabled = false;
 	el.title = oldTitle;
@@ -141,11 +141,11 @@ export async function onHideButtonClick(el: JQuery) {
 
 	const newState = !item.hidden;
 
-	const url = Utils.formatUrl(V.canvas.api.urls.custom_data, {
-		dataPath: ["", V.canvas.api.data_urls.hidden_assignments, DATA.courseID].join("/")
-	});
-
-	const success = await Utils.editDataArray(url, newState, [id]);
+	const success = await Utils.editCustomDataArray(
+		[V.canvas.api.data_urls.hidden_assignments, DATA.courseID],
+		newState ? EditMode.APPEND : EditMode.SUBTRACT,
+		[id]
+	);
 
 	if (success) {
 		item.hidden = newState;
@@ -167,12 +167,11 @@ export async function onHideButtonClick(el: JQuery) {
  * completed assignments. Used for synchronizing the checkboxes between pages.
  */
 export async function updateCheckboxes() {
-	const checkboxUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {
-		dataPath: ["", V.canvas.api.data_urls.completed_assignments, DATA.courseID].join("/")
-	});
-	const checked = (
-		await Utils.getJSON<{data: number[]}>(checkboxUrl)
-	).data;
+
+	const checked = await Utils.getCustomData<number[]>(
+		V.canvas.api.data_urls.completed_assignments,
+		DATA.courseID
+	);
 
 	for (const [modItemId, modItem] of DATA.moduleItems)
 		modItem.checked = checked.includes(modItemId);
@@ -184,12 +183,11 @@ export async function updateCheckboxes() {
  * synchronizing the hide status of the items.
  */
 export async function updateHiddenItems() {
-	const checkboxUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {
-		dataPath: ["", V.canvas.api.data_urls.hidden_assignments, DATA.courseID].join("/")
-	});
-	const hidden = (
-		await Utils.getJSON<{data: number[]}>(checkboxUrl)
-	).data;
+
+	const hidden = await Utils.getCustomData<number[]>(
+		V.canvas.api.data_urls.hidden_assignments,
+		DATA.courseID
+	);
 
 	for (const [modItemId, modItem] of DATA.moduleItems)
 		modItem.hidden = hidden.includes(modItemId);

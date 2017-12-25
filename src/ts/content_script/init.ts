@@ -217,8 +217,8 @@ export async function moduleItemFlow() {
 export async function customItemDataFlow() {
 
 	const [completedItems, hiddenItems] = await Promise.all([
-		getCustomData<number[]>(V.canvas.api.data_urls.completed_assignments, DATA.courseID),
-		getCustomData<number[]>(V.canvas.api.data_urls.hidden_assignments, DATA.courseID)
+		Utils.getCustomData<number[]>(V.canvas.api.data_urls.completed_assignments, DATA.courseID),
+		Utils.getCustomData<number[]>(V.canvas.api.data_urls.hidden_assignments, DATA.courseID)
 	]);
 
 	for (const [modItemId, modItem] of DATA.moduleItems) {
@@ -236,7 +236,7 @@ export async function customItemDataFlow() {
  */
 export async function customStatesFlow() {
 
-	let activeStates = await getCustomData<string[]>(V.canvas.api.data_urls.active_states);
+	let activeStates = await Utils.getCustomData<string[]>(V.canvas.api.data_urls.active_states);
 	if (activeStates === null)
 		activeStates = [];
 
@@ -263,7 +263,7 @@ export async function customStatesFlow() {
 export async function customTabPositionsFlow() {
 
 	const tabPositions =
-		await getCustomData<{[tabId: string]: number}>(
+		await Utils.getCustomData<{[tabId: string]: number}>(
 			V.canvas.api.data_urls.tab_positions,
 			DATA.courseID
 		);
@@ -274,27 +274,4 @@ export async function customTabPositionsFlow() {
 		if (tabPositions[tabId] !== undefined)
 			navTab.setPosition(tabPositions[tabId]);
 	}
-}
-
-/**
- * Get a particular set of custom data from the Canvas API given a path.
- *
- * @template T The type of custom data to get.
- * @param   {...any} pathParts    The parts of the path. This will be joined by '/'.
- * @returns {Promise<T | null>}   A Promise containing the result or null if no result.
- */
-async function getCustomData<T>(...pathParts: any[]): Promise<T | null> {
-	const customDataUrl = Utils.formatUrl(V.canvas.api.urls.custom_data, {
-		dataPath: pathParts.length > 0 ? "/" + pathParts.join("/") : ""
-	});
-
-	const resp = await Utils.getJSON<{data: T}>(customDataUrl);
-
-	if (resp.data === null) // no items
-		return null;
-	else if (resp.data === undefined) // invalid scope
-		return null;
-	else
-		return resp.data;
-
 }

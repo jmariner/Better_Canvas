@@ -452,5 +452,13 @@ export enum CanvasPage {
 	FILE_CONTENTS, MODULES, ITEMS
 }
 
+/**
+ * The editing mode used by Utils.editCustomDataArray.
+ */
+export enum EditMode {
+	APPEND,
+	SUBTRACT
+}
+
 /** Create and export an empty Data object. */
 export const DATA = new Data();

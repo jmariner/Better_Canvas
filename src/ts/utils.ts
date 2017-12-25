@@ -11,6 +11,7 @@ import Tab = chrome.tabs.Tab;
 
 import { V } from "./vars";
 import * as Message from "./message";
+import { EditMode } from "./objects";
 
 /** The user's access token for the Canvas API. Starts as 'null' when not set. */
 let ACCESS_TOKEN: string = null;
@@ -108,7 +109,7 @@ export function formatUrl(urlStr: string, obj?: {[key: string]: any}): string {
 		// append remaining object properties as query params
 		for (let [key, val] of Object.entries(obj)) {
 			key = key.replace(/[A-Z]/g, letter => "_" + letter.toLowerCase());
-			
+
 			// translate array value into "key[]=val1&key[]=val2"
 			if (Array.isArray(val)) {
 				for (const item of val)
@@ -160,13 +161,20 @@ export async function getJSON<T>(url: string): Promise<T> {
 /**
  * Send data to the Canvas API.
  *
- * @param {string}      url  The URL to send data to.
- * @param {any[] | any} data The data to send.
+ * @param {any[]}       pathParts The custom data scope path. This will be joined by '/'.
+ * @param {any[] | any} data      The data to send.
  * @returns {Promise<boolean>} A Promise containing the success state of the request.
  */
-export async function putData(url: string, data: any[] | any): Promise<boolean> {
+export async function putCustomData(pathParts: any[], data: any[] | any): Promise<boolean> {
 
 	checkToken();
+
+	if (pathParts.length === 0)
+		throw new Error("Unable to edit custom data root.");
+
+	const customDataUrl = formatUrl(V.canvas.api.urls.custom_data, {
+		dataPath: "/" + pathParts.join("/")
+	});
 
 	const bodyData = {ns: V.canvas.api.namespace, data};
 	const method = Array.isArray(data) && data.length > 0 || data !== undefined ? "PUT" : "DELETE";
@@ -183,10 +191,10 @@ export async function putData(url: string, data: any[] | any): Promise<boolean> 
 		body: JSON.stringify(bodyData)
 	} as RequestInit;
 
-	const resp = await fetch(url, ops);
+	const resp = await fetch(customDataUrl, ops);
 
 	if (!resp.ok || resp.status === 401) { // 401 unauthorized
-		console.error(`Unable to ${method} data to ${url}. resp:`, resp);
+		console.error(`Unable to ${method} data to ${customDataUrl}. resp:`, resp);
 		return false;
 	}
 	else {
@@ -199,21 +207,23 @@ export async function putData(url: string, data: any[] | any): Promise<boolean> 
  * Edit a data array on the Canvas API by either adding or removing elements from it. Requests the
  * existing data using 'getJSON' and updates it using 'putData'.
  *
- * @param {string}  url    The API URL to use.
- * @param {boolean} append To append ('true') or subtract ('false') from the data array.
- * @param {any[]}   values The array of values to either add or subtract.
+ * @param {any[]}    pathParts The custom data scope path. This will be joined by '/'.
+ * @param {EditMode} editMode  The edit mode to use, either APPEND or SUBTRACT.
+ * @param {any[]}    values    The array of values to either add or subtract.
  * @returns {Promise<boolean>} A promise containing the success status of the request.
  */
-export async function editDataArray(url: string, append: boolean, values: any[]): Promise<boolean> {
+export async function editCustomDataArray(
+	pathParts: any[],
+	editMode: EditMode,
+	values: any[]
+): Promise<boolean> {
 
-	const existingData: any[] = (
-		// url is same for get/put
-		await getJSON<{data: any[]}>(url)
-	).data || [];
+	let existingData = await getCustomData<any[]>(...pathParts);
+	if (existingData === null) existingData = [];
 
 	let newArray;
 
-	if (append) {
+	if (editMode === EditMode.APPEND) {
 		newArray = existingData.concat(values);
 	}
 	else { // subtract from data array
@@ -222,7 +232,30 @@ export async function editDataArray(url: string, append: boolean, values: any[])
 		newArray = existingData.filter(val => !values.includes(val));
 	}
 
-	return putData(url, newArray);
+	return putCustomData(pathParts, newArray);
+}
+
+/**
+ * Get a particular set of custom data from the Canvas API given a path.
+ *
+ * @template T The type of custom data to get.
+ * @param   {...any} pathParts    The custom data scope path. This will be joined by '/'.
+ * @returns {Promise<T | null>}   A Promise containing the result or null if no result.
+ */
+export async function getCustomData<T>(...pathParts: any[]): Promise<T | null> {
+	const customDataUrl = formatUrl(V.canvas.api.urls.custom_data, {
+		dataPath: pathParts.length > 0 ? "/" + pathParts.join("/") : ""
+	});
+
+	const resp = await getJSON<{data: T}>(customDataUrl);
+
+	if (resp.data === null) // no items
+		return null;
+	else if (resp.data === undefined) // invalid scope
+		return null;
+	else
+		return resp.data;
+
 }
 
 /**

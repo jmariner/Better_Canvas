@@ -44,22 +44,64 @@ export async function setState(stateName: string, newState: boolean): Promise<bo
 }
 
 /**
- * Change the custom position of a navigation tab. This includes updating the NavTab object and the
- * custom data storage with the new position and updating the page accordingly.
+ * Change the custom position of a navigation tab. This includes changing, or setting, the custom
+ * position of all tabs within the range that this tab is moving. For example, if this tab is moved
+ * from position 6 up to position 2, then tabs 3, 4, and 5 all must be moved down to make space.
+ * The NavTab objects and custom data storage are both updated with these changes.
  *
- * @param {NavTab} tab      The navigation tab object to change
- * @param {number} position The new 1-indexed position to give to this tab
+ * @param {NavTab} targetTab   The navigation tab object to change.
+ * @param {number} newPosition The new 1-indexed position to give to this tab.
  */
-export async function setNavTabPosition(tab: NavTab, position: number) {
+export async function setNavTabPosition(targetTab: NavTab, newPosition: number) {
+
+	// Get the previous position of this tab and go through all tabs between its previous and new
+	// position. If any in between have a custom position, update that custom position by either +1
+	// or -1 depending on which way this tab is changing.
+
+	const prevPos = targetTab.position;
+	const direction = Math.sign(newPosition - prevPos); // negative = up, positive = down
+	const [minPos, maxPos] = [prevPos, newPosition].sort((a, b) => a - b);
+	const sortedTabs = Array.from(DATA.navTabs.values())
+		.filter(tab => !tab.hidden)
+		.sort((a, b) => a.position - b.position);
+
+	const tabUpdates: {[tabId: string]: number} = {};
+	const queuedUpdates = new Array<[NavTab, number]>();
+
+	tabUpdates[targetTab.id] = newPosition;
+	queuedUpdates.push([targetTab, newPosition]);
+
+	// Tab positions are 1-indexed; subtract 1 to reference array items.
+	for (let pos = 1; pos <= sortedTabs.length; pos++) {
+		const curTab = sortedTabs[pos - 1];
+
+		// Special case for tabs in between the moving range. Includes the new position, which may
+		// have previously been taken. This is guaranteed to not contain the target tab.
+		if (pos > minPos && pos < maxPos || pos === newPosition) {
+			// Move each tab in the opposite direction of the target tab's change.
+			const newPos = curTab.position - direction;
+			tabUpdates[curTab.id] = newPos;
+			queuedUpdates.push([curTab, newPos]);
+		}
+		// Keep existing tabs, except the one being changed, the same.
+		else if (curTab.hasCustomPosition && curTab !== targetTab) {
+			tabUpdates[curTab.id] = curTab.position;
+		}
+
+	}
+
+	// Update the API with the new tab data.
 
 	const success = await Utils.putCustomData(
-		[V.canvas.api.data_urls.tab_positions, DATA.courseID, tab.id],
-		position
+		[V.canvas.api.data_urls.tab_positions, DATA.courseID],
+		tabUpdates
 	);
 
 	if (success) {
-		tab.setPosition(position);
-		UI.updateNavTabPosition(tab);
+		for (const [curTab, newPos] of queuedUpdates) {
+			curTab.setPosition(newPos);
+			UI.updateNavTabPosition(curTab);
+		}
 	}
 	else {
 		throw new Error("Tab position update failed.");

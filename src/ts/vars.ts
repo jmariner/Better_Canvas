@@ -53,6 +53,7 @@ class SassVars {
 	id = {
 		toc: "toc",
 		jump_button: "jump-to-top",
+		injected_script: "injected",
 
 		popup_page_missing: "page-missing",
 		popup_ex_name: "extension-name",

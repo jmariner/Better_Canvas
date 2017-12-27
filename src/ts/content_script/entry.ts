@@ -215,6 +215,13 @@ function initPage() {
 
 	PAGE.sidebar.find("li").removeClass("ic-app-header__menu-list-item--active");
 
+	// ==== delete the 'syllabus' nav item and update active item if needed ====
+
+	PAGE.left.find("a.syllabus").parent().remove();
+
+	if (DATA.coursePage === CanvasPage.HOME)
+		PAGE.left.find("a.home").addClass("active");
+
 	// === load initial states ===
 
 	for (const [, state] of DATA.states) {
@@ -229,10 +236,6 @@ function initPage() {
 		// TODO: do more with this accent color - edit more of the --ic-* variables
 		document.documentElement.style.setProperty("--ic-brand-primary", color);
 	}
-
-	// ==== clear empty nav tabs ===
-
-	PAGE.left.find(V.canvas.selector.nav_tabs).find("li:empty").remove();
 
 	// ==== apply the custom nav tab positions ===
 
@@ -527,6 +530,28 @@ function onMessage(msg: Message.Base, src: MessageSender, respond: (x?) => void)
 
 // run overall initialization function
 init();
+
+// Inject code into the global window object to override ECPI's JavaScript additions.
+// So far this has always ran before these overridden functions were called.
+$(function() {
+
+	const noop = "function(){}";
+
+	const windowOverrides = {
+		forgotPasswordLinkFixer: noop,
+		loadCanvaBadges: noop,
+		hideSyllabusLink: noop
+	};
+
+	const injectedSource = Object.entries(windowOverrides).map(([key, value]) =>
+		// let 'value' be coerced to a string
+		`window.${key}=${value};`.replace(/\n/g, "")
+	).join("\n");
+
+	$("body").append(
+		$("<script>").attr("id", V.id.injected_script).html(injectedSource)
+	);
+});
 
 /**
  * Export several constants and modules, exposing them to the global scope when built in

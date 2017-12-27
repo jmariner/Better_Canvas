@@ -188,10 +188,20 @@ export function updateNavTabPosition(tab: NavTab) {
 	const tabList = PAGE.left.find(V.canvas.selector.nav_tabs);
 	const tabEl = tabList.find("a." + tab.id).parent();
 
-	if (tab.hidden)
-		tabEl.hide();
-	else
-		tabEl.show().detach().insertBefore(tabList.children().eq(tab.position - 1));
+	if (tab.hidden) {
+		// hide and send to end of list
+		tabEl.addClass(V.cssClass.item_hidden)
+			.detach()
+			.insertAfter(tabList.children().last());
+	}
+	else {
+		// show and move into correct position
+		tabEl.removeClass(V.cssClass.item_hidden).detach().insertBefore(
+			tabList.children()
+				// tab.position is 1-indexed, so subtract 1
+				.eq(tab.position - 1)
+		);
+	}
 }
 
 /**

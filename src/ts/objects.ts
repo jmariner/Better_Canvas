@@ -79,6 +79,10 @@ export class CustomCourseTab {
 		this.color = color;
 	}
 
+	get isLabCourse() {
+		return this.code.slice(-1) === "L";
+	}
+
 }
 
 /**
@@ -240,7 +244,7 @@ export class ModuleItem {
 	private _indentLevel: number;
 
 	/** The assignment ID corresponding to this module item, if any. */
-	private assignmentData: CanvasAPI.Assignment;
+	private assignmentData: CanvasAPI.Assignment = null;
 
 	/** The ID of the parent module to this module item. */
 	private moduleId: number;
@@ -297,9 +301,6 @@ export class ModuleItem {
 
 		this.checked = false;
 		this.hidden = false;
-
-		// default assignment data to null
-		this.assignmentData = null;
 
 	}
 
@@ -365,7 +366,7 @@ export class ModuleItem {
 		if (!this.isAssignment) return null;
 
 		const sub = this.assignmentData.submission || {} as CanvasAPI.Submission;
-		return sub.missing === false;
+		return sub.workflow_state !== "unsubmitted";
 	}
 
 	/**
@@ -376,7 +377,10 @@ export class ModuleItem {
 		if (!this.isAssignment) return null;
 
 		const sub = this.assignmentData.submission || {} as CanvasAPI.Submission;
-		return sub.score !== null;
+
+		// 'null' if no grade; 'undefined' if missing submission details or score property
+		// return sub.score !== null && sub.score !== undefined;
+		return sub.workflow_state === "graded";
 	}
 
 	/** The checkbox element that was created for this item. */

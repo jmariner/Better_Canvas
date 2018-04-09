@@ -64,10 +64,25 @@ $tocBorderWidth: 1px;
 #menu {
 
 	div.menu-item-icon-container > i {
+
 		@include square($courseLinkSize);
 		color: white;
+		position: relative;
+
 		&:before {
 			@include canvasIcon(star, $courseLinkSize);
+		}
+
+		// carefully positioned "L" next to icon for lab course
+		&#{class(lab_course)}:after {
+			content: "L";
+			position: absolute;
+			font-style: normal;
+			top: 7px;
+			font-size: 15px;
+			right: -5px;
+			font-weight: bold;
+			transform: rotate(-10deg);
 		}
 	}
 

@@ -258,7 +258,7 @@ export interface Submission {
 	late_policy_status: string;
 	points_deducted: number;
 	seconds_late: number;
-	workflow_state: string;
+	workflow_state: "unsubmitted" | "submitted" | "graded";
 }
 
 export interface Tab {

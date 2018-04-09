@@ -24,6 +24,7 @@ class SassVars {
 		checkbox_td: "checkbox-td",
 		flash: "anim-flash",
 		course_link_text: "course-link-text",
+		lab_course: "course-lab",
 		item_hidden: "hidden",
 		hide_button: "btn-hide",
 		hide_disabled: "hide-disabled",
@@ -271,7 +272,9 @@ class Vars extends SassVars {
 				 class='menu-item ic-app-header__menu-list-item'
 			>
 				<a href='/courses/{tabID}/modules' class='ic-app-header__menu-list-link'>
-					<div class='menu-item-icon-container' aria-hidden='true'><i></i></div>
+					<div class='menu-item-icon-container' aria-hidden='true'>
+						<i class='{isLabCourse}'></i>
+					</div>
 					<div style='background-color: {tabColor}; border-right-color: {tabColor}'
 							${this.dataAttr.course_name}='{name}'
 							${this.dataAttr.course_code}='{code}'

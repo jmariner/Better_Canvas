@@ -182,13 +182,32 @@ function initPage() {
 
 	// === insert individual course links after the all courses link ===
 
-	for (const [tabID, courseTab] of DATA.courseTabs) {
-		courseNavLi.after(
+	// sort tabs: first ensuring lab courses come after normal ones, then alphabetically by name
+	const courseTabs =
+		Array.from(DATA.courseTabs.values())
+		.sort((tabA, tabB) => {
+			// if comparing tabs vary in their lab course state
+			if (tabA.isLabCourse !== tabB.isLabCourse) {
+				return tabB.isLabCourse ? -1 : 1;
+			}
+			else {
+				return tabA.name.localeCompare(tabB.name);
+			}
+		});
+
+	// insertion point is the item after the "all courses" item
+	const insertPoint = courseNavLi.next();
+
+	// place tabs before the inserion point so that they maintain their array order.
+	// inserting after instead of before results in a reverse order.
+	for (const courseTab of courseTabs) {
+		insertPoint.before(
 			Utils.format(V.element.course_link, {
 				tabColor: courseTab.color,
-				tabID,
+				tabID: courseTab.id,
 				name: courseTab.name,
-				code: courseTab.code
+				code: courseTab.code,
+				isLabCourse: courseTab.isLabCourse ? V.cssClass.lab_course : ""
 			})
 		);
 	}

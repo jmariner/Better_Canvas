@@ -313,6 +313,14 @@ export class ModuleItem {
 	public setAssignmentData(data: CanvasAPI.Assignment) { this.assignmentData = data; }
 
 	/**
+	 * Set this item's content ID separately from the byContentId static map. This allows for items
+	 * to have the same content ID but different data.
+	 *
+	 * @param {number} contentId The content ID to apply to this item.
+	 */
+	public setContentID(contentId: number) { this._contentId = contentId; }
+
+	/**
 	 * The element ID for this module item, which will vary depending on the current Canvas page.
 	 * Will be 'null' if not on a valid page for this module item.
 	 */

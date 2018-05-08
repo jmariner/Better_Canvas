@@ -150,9 +150,12 @@ export async function moduleItemFlow() {
 
 	This issue was shown to exist on a set of ExternalTool-type items in the same module and all
 	pointing to a page on the same domain.
-	TODO: examine Canvas source to see if this is intended; if not, consider filing an issue.
+
+	On top of that, it is possible for multiple File items to have duplicate content IDs since they
+	refer to the same file. This needs to be supported through the precautions.
 	*/
 
+	//  Track content IDs that have been found in this flow
 	const visitedContentIds = new Array<number>();
 
 	for (const items of moduleItemSets) {
@@ -165,10 +168,14 @@ export async function moduleItemFlow() {
 			const contentId = modItemData.content_id;
 
 			if (ModuleItem.byContentId.has(contentId)) {
-				if (visitedContentIds.includes(contentId))
+				// If this item has a duplicated content ID, create a fresh item with the same ID.
+				if (visitedContentIds.includes(contentId)) {
 					item = new ModuleItem();
-				else
+					item.setContentID(contentId);
+				}
+				else {
 					item = ModuleItem.byContentId.get(contentId);
+				}
 			}
 			else if (contentId !== undefined) {
 				item = ModuleItem.fromContentId(contentId);
@@ -191,19 +198,30 @@ export async function moduleItemFlow() {
 	const fileItems = Array.from(DATA.moduleItems.values())
 		.filter(item => item.type === ModuleItemType.FILE);
 
-	const filePromises: Array<Promise<CanvasAPI.File>> = fileItems.map(item => {
+	type FileAndId = {file: CanvasAPI.File, itemId: number};
+	// TODO implement a cache system for duplicated files.
+
+	const filePromises: Array<Promise<FileAndId>> = fileItems.map(item => {
 		const fileDataUrl = Utils.formatUrl(V.canvas.api.urls.file_direct, {
 			fileID: item.contentId,
 			courseID: DATA.courseID
 		});
+
+		const resultPromise: () => Promise<FileAndId> = async () => {
+			return {
+				file: await Utils.getJSON<CanvasAPI.File>(fileDataUrl),
+				itemId: item.id
+			};
+		};
+
 		// return promise for Promise.all
-		return Utils.getJSON<CanvasAPI.File>(fileDataUrl);
+		return resultPromise();
 	});
 
-	const files: CanvasAPI.File[] = await Promise.all(filePromises);
+	const files: FileAndId[] = await Promise.all(filePromises);
 
-	for (const file of files)
-		ModuleItem.byContentId.get(file.id).fileData = file;
+	for (const {file, itemId} of files)
+		DATA.moduleItems.get(itemId).fileData = file;
 
 }
 

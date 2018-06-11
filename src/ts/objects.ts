@@ -258,6 +258,11 @@ export class ModuleItem {
 	/**
 	 * A static map used to ensure no race condition issues when querying for assignments and module
 	 * items concurrently. Maps an assignment's content ID to its module item instance.
+	 *
+	 * TODO: This needs to support multiple items for the same content ID.
+	 * This is because multiple module items can link to the same content but have different
+	 * module item IDs. How will this affect checkboxes, though?
+	 * 		Consider storing assignment check/hide status by their content ID?
 	 */
 	public static readonly byContentId = new Map<number, ModuleItem>();
 

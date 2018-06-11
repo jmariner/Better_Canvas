@@ -12,6 +12,10 @@
     "icons": "node scripts/update-icons.js",
     "update": "git pull && npm i"
   },
+  "resolutions": {
+    "node-sass/node-gyp": "3.6.2",
+    "node-sass/request": "^2.85.0"
+  },
   "devDependencies": {
     "@types/chrome": "0.0.54",
     "@types/jquery": "^3.2.16",

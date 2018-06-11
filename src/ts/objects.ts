@@ -24,11 +24,8 @@ class Data {
 	/** A map between a state name and a state object. */
 	states = new Map<string, State>();
 
-	/** A map between a course ID and a color string. */
-	courseColors = new Map<number, string>();
-
-	/** A map between a course ID and a course tab object. */
-	courseTabs = new Map<number, CustomCourseTab>();
+	/** A map between a course ID and a course object. */
+	courses = new Map<number, Course>();
 
 	/** A map between a navigation tab name and a nav tab object. */
 	navTabs = new Map<string, NavTab>();
@@ -51,36 +48,44 @@ class Data {
 }
 
 /**
- * A class representing a custom course tab that is inserted into the sidebar. An instance of this
- * is created for every favorited course.
+ * A class representing a Canvas course and its custom color. Manages custom course tabs that are
+ * inserted into the sidebar. An instance of this is created for every favorited course.
  */
-export class CustomCourseTab {
+export class Course {
 	/** The ID number for this course. */
 	readonly id: number;
 
 	/** The long name for this course. */
 	readonly name: string;
 
+	/** The original name for this course. */
+	readonly originalName: string;
+
 	/** The code for this course. For example: "CIS215". */
 	readonly code: string;
+
+	/** Whether or not this course is a lab course. Check if the course code ends with an "L". */
+	readonly isLabCourse: boolean;
 
 	/** The color for this course tab. Can be any color string. */
 	readonly color: string;
 
+	/** Whether or not this course is favorited. */
+	readonly isFavorite: boolean;
+
 	/**
-	 * Create an custom course tab instance given its color and data object.
+	 * Create an course object instance given its data and custom color
 	 * @param {CanvasAPI.Course} courseData The data object from the Canvas API for this course.
-	 * @param {string}           color      The color to give this tab.
+	 * @param {string}           color      The color to give this course's tab.
 	 */
 	constructor(courseData: CanvasAPI.Course, color: string) {
 		this.id = courseData.id;
 		this.name = courseData.name;
+		this.originalName = courseData.original_name;
 		this.code = courseData.course_code;
+		this.isLabCourse = this.code.slice(-1) === "L";
 		this.color = color;
-	}
-
-	get isLabCourse() {
-		return this.code.slice(-1) === "L";
+		this.isFavorite = courseData.is_favorite;
 	}
 
 }

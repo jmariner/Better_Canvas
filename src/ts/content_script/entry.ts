@@ -184,14 +184,15 @@ function initPage() {
 
 	// sort tabs: first ensuring lab courses come after normal ones, then alphabetically by name
 	const courseTabs =
-		Array.from(DATA.courseTabs.values())
-		.sort((tabA, tabB) => {
+		Array.from(DATA.courses.values())
+		.filter(course => course.isFavorite)
+		.sort((courseA, courseB) => {
 			// if comparing tabs vary in their lab course state
-			if (tabA.isLabCourse !== tabB.isLabCourse) {
-				return tabB.isLabCourse ? -1 : 1;
+			if (courseA.isLabCourse !== courseB.isLabCourse) {
+				return courseB.isLabCourse ? -1 : 1;
 			}
 			else {
-				return tabA.name.localeCompare(tabB.name);
+				return courseA.name.localeCompare(courseB.name);
 			}
 		});
 
@@ -248,13 +249,25 @@ function initPage() {
 			PAGE.body.addClass(state.bodyClass);
 	}
 
-	// ==== apply course color to brand colors ====
+	// ==== apply modifications using course data ====
 
-	if (DATA.courseColors.has(DATA.courseID)) {
+	const thisCourseData = DATA.courses.get(DATA.courseID);
+
+	// apply custom course color
+	document.documentElement.style.setProperty("--ic-brand-primary", thisCourseData.color);
+
+	// edit page title to use custom course name
+	document.title = document.title.replace(thisCourseData.originalName, thisCourseData.name);
+
+	/*
+	if (DATA.courses.has(DATA.courseID)) {
 		const color = DATA.courseColors.get(DATA.courseID);
+
 		// TODO: do more with this accent color - edit more of the --ic-* variables
 		document.documentElement.style.setProperty("--ic-brand-primary", color);
-	}
+	}*/
+
+
 
 	// ==== apply the custom nav tab positions ===
 

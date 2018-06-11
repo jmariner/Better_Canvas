@@ -345,7 +345,7 @@ class Vars extends SassVars {
 			absolute_url: "https://" + this._canvas.host + "/api/v1/",
 			urls: {
 				custom_data: `users/self/custom_data{dataPath}?ns=${this._canvas.namespace}`,
-				favorite_courses: "users/self/favorites/courses",
+				courses: "users/self/courses",
 				custom_colors: "users/self/colors",
 				assignments: "users/self/courses/{courseID}/assignments",
 				modules: "courses/{courseID}/modules",

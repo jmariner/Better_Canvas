@@ -8,7 +8,7 @@ import * as CanvasAPI from "../canvas_api";
 import * as Utils from "../utils";
 import { V } from "../vars";
 import { DATA, Module, ModuleItem, ModuleItemType, NavTab,
-	CustomCourseTab, State, StateData } from "../objects";
+	Course, State, StateData } from "../objects";
 
 /**
  * Gather and set data required to set up the custom course tab system. This includes both the
@@ -24,16 +24,19 @@ export async function courseTabFlow() {
 		await Utils.getJSON<{custom_colors: {[course: string]: string}}>(colorsUrl)
 	).custom_colors;
 
-	for (const [key, color] of Object.entries(courseColors))
-		DATA.courseColors.set(Number(key.replace("course_", "")), color);
+//	for (const [key, color] of Object.entries(courseColors))
+//		DATA.courseColors.set(Number(key.replace("course_", "")), color);
 
-	const favoritesUrl = Utils.formatUrl(V.canvas.api.urls.favorite_courses);
-	const favoriteCourses =
-		await Utils.getJSON<CanvasAPI.Course[]>(favoritesUrl);
+	const coursesUrl = Utils.formatUrl(V.canvas.api.urls.courses, {
+		perPage: 100,
+		include: ["favorites"]
+	});
+	const courses = await Utils.getJSON<CanvasAPI.Course[]>(coursesUrl);
 
-	for (const courseData of favoriteCourses) {
-		const color = DATA.courseColors.get(courseData.id);
-		DATA.courseTabs.set(courseData.id, new CustomCourseTab(courseData, color));
+	for (const courseData of courses) {
+		// const color = DATA.courseColors.get(courseData.id);
+		const color = courseColors["course_" + courseData.id];
+		DATA.courses.set(courseData.id, new Course(courseData, color));
 	}
 
 }

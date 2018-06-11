@@ -207,6 +207,9 @@ export interface Course {
 	blueprint?: boolean;
 	blueprint_restrictions?: object;
 	blueprint_restrictions_by_object_type?: object;
+	// undocumented
+	original_name: string;
+	is_favorite: boolean;
 }
 
 export interface File {

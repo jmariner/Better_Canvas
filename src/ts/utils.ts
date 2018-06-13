@@ -26,16 +26,6 @@ function checkToken(): void | never {
 }
 
 /**
- * Format a given URL by appending a query parameter to set the amount of items to request per page.
- *
- * @param {string} url          The URL to format.
- * @param {number} itemsPerPage The amount of items to request per page.
- */
-function perPage(url: string, itemsPerPage: number) {
-	return `${url}?per_page=${itemsPerPage}`;
-}
-
-/**
  * Parse a Response object into JSON, then into a plain object. This may require removing the prefix
  * 'while(1);' from the beginning of the JSON string before parsing.
  *
@@ -84,13 +74,13 @@ export function getOrDefault<T>(obj: object, key: PropertyKey, def: T): T {
 }
 
 /**
- * Format a given URL by applying both the 'perPage' and 'format' functions to it. Uses the given
- * object for both of those functions combined. This also prefixes the URL with the Canvas API
- * prefix.
+ * Format a given URL using the properties defined in a given object. First, make replacements in
+ * the string similar to how 'format' works. Then, add all remaining properties to the query params.
+ * This also prefixes the URL with the Canvas API prefix.
  *
- * @param {string} urlStr       The starting URL to format, including format tokens.
- * @param {object}  obj A plain object used to fill in the format tokens in the URL. Key-value
- *                      pairs not used up in formatting are added as query params to the URL.
+ * @param {string} urlStr The starting URL to format, including format tokens.
+ * @param {object} obj    A plain object used to format the URL string.
+ * @returns {string}      The resulting full URL string.
  */
 export function formatUrl(urlStr: string, obj?: {[key: string]: any}): string {
 

@@ -25,6 +25,13 @@ function checkToken(): void | never {
 		throw new Error("Access token not set");
 }
 
+function getHeaders(token: string = ACCESS_TOKEN): Headers {
+	return new Headers({
+		"Content-Type": "application/json",
+		"Authorization": "Bearer " + token
+	});
+}
+
 /**
  * Parse a Response object into JSON, then into a plain object. This may require removing the prefix
  * 'while(1);' from the beginning of the JSON string before parsing.
@@ -127,10 +134,7 @@ export async function getJSON<T>(url: string): Promise<T> {
 
 	const resp = await fetch(url, {
 		method: "GET",
-		headers: new Headers({
-			"Content-Type": "application/json",
-			"Authorization": "Bearer " + ACCESS_TOKEN
-		})
+		headers: getHeaders()
 	} as RequestInit);
 
 	if (resp.status === 404) {
@@ -174,10 +178,7 @@ export async function putCustomData(pathParts: any[], data: any[] | any): Promis
 
 	const ops = {
 		method,
-		headers: new Headers({
-			"Content-Type": "application/json",
-			"Authorization": "Bearer " + ACCESS_TOKEN
-		}),
+		headers: getHeaders(),
 		body: JSON.stringify(bodyData)
 	} as RequestInit;
 
@@ -263,10 +264,7 @@ export async function testToken(token: string): Promise<{name: string} | null> {
 	try {
 		resp = await fetch(V.canvas.api.absolute_url + "users/self", {
 			method: "GET",
-			headers: new Headers({
-				"Content-Type": "application/json",
-				"Authorization": "Bearer " + token
-			})
+			headers: getHeaders(token)
 		} as RequestInit);
 
 		if (resp.status === 401) // unauthorized

@@ -1,264 +1,572 @@
-$icons-Solid: (
-  add: "\EA01",
-  address-book: "\EA02",
-  admin: "\EA03",
-  alerts: "\EA04",
-  analytics: "\EA05",
-  android: "\EA06",
-  annotate: "\EA07",
-  announcement: "\EA08",
-  apple: "\EA09",
-  arrow-down: "\EA0A",
-  arrow-left: "\EA0B",
-  arrow-open-down: "\EA0C",
-  arrow-open-left: "\EA0D",
-  arrow-open-right: "\EA0E",
-  arrow-open-up: "\EA0F",
-  arrow-right: "\EA10",
-  arrow-up: "\EA11",
-  assignment: "\EA12",
-  attach-media: "\EA13",
-  audio: "\EA14",
-  bank: "\EA15",
-  blueprint-lock: "\EA16",
-  blueprint: "\EA17",
-  bold: "\EA18",
-  bookmark: "\EA19",
-  box: "\EA1A",
-  bullet-list: "\EA1B",
-  calendar-add: "\EA1C",
-  calendar-clock: "\EA1D",
-  calendar-day: "\EA1E",
-  calendar-days: "\EA1F",
-  calendar-month: "\EA20",
-  calendar-reserved: "\EA21",
-  chat: "\EA22",
-  check-dark: "\EA23",
-  check-mark: "\EA24",
-  check-plus: "\EA25",
-  check: "\EA26",
-  clear-text-formatting: "\EA27",
-  clock: "\EA28",
-  cloud-download: "\EA29",
-  cloud-lock: "\EA2A",
-  collapse: "\EA2B",
-  collection-save: "\EA2C",
-  collection: "\EA2D",
-  commons: "\EA2E",
-  complete: "\EA2F",
-  compose: "\EA30",
-  copy-course: "\EA31",
-  copy: "\EA32",
-  courses: "\EA33",
-  dashboard: "\EA34",
-  deactivate-user: "\EA35",
-  discussion-check: "\EA36",
-  discussion-new: "\EA37",
-  discussion-reply-2: "\EA38",
-  discussion-reply-dark: "\EA39",
-  discussion-reply: "\EA3A",
-  discussion-search: "\EA3B",
-  discussion-x: "\EA3C",
-  discussion: "\EA3D",
-  document: "\EA3E",
-  download: "\EA3F",
-  drag-handle: "\EA40",
-  drop-down: "\EA41",
-  edit: "\EA42",
-  educators: "\EA43",
-  email: "\EA44",
-  empty: "\EA45",
-  end: "\EA46",
-  equation: "\EA47",
-  equella: "\EA48",
-  essay: "\EA49",
-  expand-items: "\EA4A",
-  expand-left: "\EA4B",
-  expand: "\EA4C",
-  export-content: "\EA4D",
-  export: "\EA4E",
-  external-link: "\EA4F",
-  eye: "\EA50",
-  facebook-boxed: "\EA51",
-  facebook: "\EA52",
-  fast-forward: "\EA53",
-  feedback: "\EA54",
-  file-locked: "\EA55",
-  files-copyright: "\EA56",
-  files-creative-commons: "\EA57",
-  files-fair-use: "\EA58",
-  files-obtained-permission: "\EA59",
-  files-public-domain: "\EA5A",
-  filmstrip: "\EA5B",
-  flag: "\EA5C",
-  folder-locked: "\EA5D",
-  folder: "\EA5E",
-  forward: "\EA5F",
-  github: "\EA60",
-  gradebook-export: "\EA61",
-  gradebook-import: "\EA62",
-  gradebook: "\EA63",
-  group-dark-new: "\EA64",
-  group-new: "\EA65",
-  group: "\EA66",
-  hamburger: "\EA67",
-  heart: "\EA68",
-  highlighter: "\EA69",
-  home: "\EA6A",
-  hour-glass: "\EA6B",
-  image: "\EA6C",
-  import-content: "\EA6D",
-  import: "\EA6E",
-  inbox: "\EA6F",
-  indent-2: "\EA70",
-  indent: "\EA71",
-  info: "\EA72",
-  instructure: "\EA73",
-  integrations: "\EA74",
-  invitation: "\EA75",
-  italic: "\EA76",
-  keyboard-shortcuts: "\EA77",
-  launch: "\EA78",
-  life-preserver: "\EA79",
-  like: "\EA7A",
-  link: "\EA7B",
-  linkedin: "\EA7C",
-  lock: "\EA7D",
-  lti: "\EA7E",
-  mark-as-read: "\EA7F",
-  marker: "\EA80",
-  masquerade: "\EA81",
-  mastery-paths: "\EA82",
-  materials-required-light: "\EA83",
-  materials-required: "\EA84",
-  mature-light: "\EA85",
-  mature: "\EA86",
-  media: "\EA87",
-  message: "\EA88",
-  mic: "\EA89",
-  mini-arrow-down: "\EA8A",
-  mini-arrow-left: "\EA8B",
-  mini-arrow-right: "\EA8C",
-  mini-arrow-up: "\EA8D",
-  minimize: "\EA8E",
-  module: "\EA8F",
-  more: "\EA90",
-  move-down-bottom: "\EA91",
-  move-down: "\EA92",
-  move-left: "\EA93",
-  move-right: "\EA94",
-  move-up-top: "\EA95",
-  move-up: "\EA96",
-  ms-excel: "\EA97",
-  ms-ppt: "\EA98",
-  ms-word: "\EA99",
-  muted: "\EA9A",
-  next-unread: "\EA9B",
-  not-graded: "\EA9C",
-  note-dark: "\EA9D",
-  note-light: "\EA9E",
-  note: "\EA9F",
-  numbered-list: "\EAA0",
-  off: "\EAA1",
-  open-folder: "\EAA2",
-  outcomes: "\EAA3",
-  outdent: "\EAA4",
-  outdent2: "\EAA5",
-  oval-half: "\EAA6",
-  page-down: "\EAA7",
-  page-up: "\EAA8",
-  paint: "\EAA9",
-  paperclip: "\EAAA",
-  partial: "\EAAB",
-  pause: "\EAAC",
-  pdf: "\EAAD",
-  peer-graded: "\EAAE",
-  peer-review: "\EAAF",
-  pin: "\EAB0",
-  pinterest: "\EAB1",
-  play: "\EAB2",
-  plus: "\EAB3",
-  post-to-sis: "\EAB4",
-  prerequisite: "\EAB5",
-  printer: "\EAB6",
-  publish: "\EAB7",
-  question: "\EAB8",
-  quiz-stats-avg: "\EAB9",
-  quiz-stats-cronbachs-alpha: "\EABA",
-  quiz-stats-deviation: "\EABB",
-  quiz-stats-high: "\EABC",
-  quiz-stats-low: "\EABD",
-  quiz-stats-time: "\EABE",
-  quiz: "\EABF",
-  refresh: "\EAC0",
-  remove-bookmark: "\EAC1",
-  remove-from-collection: "\EAC2",
-  remove-link: "\EAC3",
-  replied: "\EAC4",
-  reply-2: "\EAC5",
-  reply-all-2: "\EAC6",
-  reply: "\EAC7",
-  reset: "\EAC8",
-  rewind: "\EAC9",
-  rss-add: "\EACA",
-  rss: "\EACB",
-  rubric-dark: "\EACC",
-  rubric: "\EACD",
-  save: "\EACE",
-  search-address-book: "\EACF",
-  search: "\EAD0",
-  settings-2: "\EAD1",
-  settings: "\EAD2",
-  shape-oval: "\EAD3",
-  shape-polygon: "\EAD4",
-  shape-rectangle: "\EAD5",
-  sis-imported: "\EAD6",
-  sis-not-synced: "\EAD7",
-  sis-synced: "\EAD8",
-  skype: "\EAD9",
-  speed-grader: "\EADA",
-  standards: "\EADB",
-  star-light: "\EADC",
-  star: "\EADD",
-  stats: "\EADE",
-  stop: "\EADF",
-  strikethrough: "\EAE0",
-  student-view: "\EAE1",
-  syllabus: "\EAE2",
-  table: "\EAE3",
-  tag: "\EAE4",
-  target: "\EAE5",
-  text-background-color: "\EAE6",
-  text-centered: "\EAE7",
-  text-color: "\EAE8",
-  text-left: "\EAE9",
-  text-right: "\EAEA",
-  text-subscript: "\EAEB",
-  text-superscript: "\EAEC",
-  text: "\EAED",
-  textarea: "\EAEE",
-  timer: "\EAEF",
-  toggle-left: "\EAF0",
-  toggle-right: "\EAF1",
-  trash: "\EAF2",
-  trouble: "\EAF3",
-  twitter-boxed: "\EAF4",
-  twitter: "\EAF5",
-  underline: "\EAF6",
-  unlock: "\EAF7",
-  unmuted: "\EAF8",
-  unpublish: "\EAF9",
-  unpublished: "\EAFA",
-  updown: "\EAFB",
-  upload: "\EAFC",
-  user-add: "\EAFD",
-  user: "\EAFE",
-  video: "\EAFF",
-  warning: "\EB00",
-  windows: "\EB01",
-  wordpress: "\EB02",
-  x: "\EB03",
-  zipped: "\EB04",
-  zoom-in: "\EB05",
-  zoom-out: "\EB06"
+/* VERSION: 5.13.1 */
+$icons-solid: (
+  a11y: "\EA01",
+  add: "\EA02",
+  address-book: "\EA03",
+  admin: "\EA04",
+  alerts: "\EA05",
+  analytics: "\EA06",
+  android: "\EA07",
+  annotate: "\EA08",
+  announcement: "\EA09",
+  apple: "\EA0A",
+  arrow-down: "\EA0B",
+  arrow-end: "\EA0C",
+  arrow-left: "\EA0D",
+  arrow-open-down: "\EA0E",
+  arrow-open-end: "\EA0F",
+  arrow-open-left: "\EA10",
+  arrow-open-right: "\EA11",
+  arrow-open-start: "\EA12",
+  arrow-open-up: "\EA13",
+  arrow-right: "\EA14",
+  arrow-start: "\EA15",
+  arrow-up: "\EA16",
+  assignment: "\EA17",
+  attach-media: "\EA18",
+  audio: "\EA19",
+  bank: "\EA1A",
+  blueprint-lock: "\EA1B",
+  blueprint: "\EA1C",
+  bold: "\EA1D",
+  bookmark: "\EA1E",
+  box: "\EA1F",
+  bullet-list: "\EA20",
+  calendar-add: "\EA21",
+  calendar-clock: "\EA22",
+  calendar-day: "\EA23",
+  calendar-days: "\EA24",
+  calendar-month: "\EA25",
+  calendar-reserved: "\EA26",
+  chat: "\EA27",
+  check-dark: "\EA28",
+  check-mark: "\EA29",
+  check-plus: "\EA2A",
+  check: "\EA2B",
+  clear-text-formatting: "\EA2C",
+  clock: "\EA2D",
+  closed-captioning-off: "\EA2E",
+  closed-captioning-on: "\EA2F",
+  cloud-download: "\EA30",
+  cloud-lock: "\EA31",
+  collapse: "\EA32",
+  collection-save: "\EA33",
+  collection: "\EA34",
+  commons: "\EA35",
+  complete: "\EA36",
+  compose: "\EA37",
+  copy-course: "\EA38",
+  copy: "\EA39",
+  courses: "\EA3A",
+  dashboard: "\EA3B",
+  deactivate-user: "\EA3C",
+  discussion-check: "\EA3D",
+  discussion-new: "\EA3E",
+  discussion-reply-2: "\EA3F",
+  discussion-reply-dark: "\EA40",
+  discussion-reply: "\EA41",
+  discussion-search: "\EA42",
+  discussion-x: "\EA43",
+  discussion: "\EA44",
+  document: "\EA45",
+  download: "\EA46",
+  drag-handle: "\EA47",
+  drop-down: "\EA48",
+  edit: "\EA49",
+  educators: "\EA4A",
+  email: "\EA4B",
+  empty: "\EA4C",
+  end: "\EA4D",
+  equation: "\EA4E",
+  equella: "\EA4F",
+  essay: "\EA50",
+  exit-full-screen: "\EA51",
+  expand-items: "\EA52",
+  expand-left: "\EA53",
+  expand-start: "\EA54",
+  expand: "\EA55",
+  export-content: "\EA56",
+  export: "\EA57",
+  external-link: "\EA58",
+  eye: "\EA59",
+  facebook-boxed: "\EA5A",
+  facebook: "\EA5B",
+  fast-forward: "\EA5C",
+  feedback: "\EA5D",
+  file-locked: "\EA5E",
+  files-copyright: "\EA5F",
+  files-creative-commons: "\EA60",
+  files-fair-use: "\EA61",
+  files-obtained-permission: "\EA62",
+  files-public-domain: "\EA63",
+  filmstrip: "\EA64",
+  flag: "\EA65",
+  folder-locked: "\EA66",
+  folder: "\EA67",
+  forward: "\EA68",
+  full-screen: "\EA69",
+  github: "\EA6A",
+  gradebook-export: "\EA6B",
+  gradebook-import: "\EA6C",
+  gradebook: "\EA6D",
+  group-dark-new: "\EA6E",
+  group-new: "\EA6F",
+  group: "\EA70",
+  hamburger: "\EA71",
+  heart: "\EA72",
+  highlighter: "\EA73",
+  home: "\EA74",
+  hour-glass: "\EA75",
+  image: "\EA76",
+  import-content: "\EA77",
+  import: "\EA78",
+  inbox: "\EA79",
+  indent-2: "\EA7A",
+  indent: "\EA7B",
+  info: "\EA7C",
+  instructure: "\EA7D",
+  integrations: "\EA7E",
+  invitation: "\EA7F",
+  italic: "\EA80",
+  keyboard-shortcuts: "\EA81",
+  launch: "\EA82",
+  life-preserver: "\EA83",
+  like: "\EA84",
+  link: "\EA85",
+  linkedin: "\EA86",
+  lock: "\EA87",
+  lti: "\EA88",
+  mark-as-read: "\EA89",
+  marker: "\EA8A",
+  masquerade: "\EA8B",
+  mastery-paths: "\EA8C",
+  materials-required-light: "\EA8D",
+  materials-required: "\EA8E",
+  mature-light: "\EA8F",
+  mature: "\EA90",
+  media: "\EA91",
+  message: "\EA92",
+  mic: "\EA93",
+  mini-arrow-down: "\EA94",
+  mini-arrow-end: "\EA95",
+  mini-arrow-left: "\EA96",
+  mini-arrow-right: "\EA97",
+  mini-arrow-start: "\EA98",
+  mini-arrow-up: "\EA99",
+  minimize: "\EA9A",
+  module: "\EA9B",
+  more: "\EA9C",
+  move-down-bottom: "\EA9D",
+  move-down: "\EA9E",
+  move-end: "\EA9F",
+  move-left: "\EAA0",
+  move-right: "\EAA1",
+  move-start: "\EAA2",
+  move-up-top: "\EAA3",
+  move-up: "\EAA4",
+  ms-excel: "\EAA5",
+  ms-ppt: "\EAA6",
+  ms-word: "\EAA7",
+  muted: "\EAA8",
+  next-unread: "\EAA9",
+  not-graded: "\EAAA",
+  note-dark: "\EAAB",
+  note-light: "\EAAC",
+  note: "\EAAD",
+  numbered-list: "\EAAE",
+  off: "\EAAF",
+  open-folder: "\EAB0",
+  outcomes: "\EAB1",
+  outdent: "\EAB2",
+  outdent2: "\EAB3",
+  oval-half: "\EAB4",
+  page-down: "\EAB5",
+  page-up: "\EAB6",
+  paint: "\EAB7",
+  paperclip: "\EAB8",
+  partial: "\EAB9",
+  pause: "\EABA",
+  pdf: "\EABB",
+  peer-graded: "\EABC",
+  peer-review: "\EABD",
+  pin: "\EABE",
+  pinterest: "\EABF",
+  play: "\EAC0",
+  plus: "\EAC1",
+  post-to-sis: "\EAC2",
+  prerequisite: "\EAC3",
+  printer: "\EAC4",
+  progress: "\EAC5",
+  publish: "\EAC6",
+  question: "\EAC7",
+  quiz-stats-avg: "\EAC8",
+  quiz-stats-cronbachs-alpha: "\EAC9",
+  quiz-stats-deviation: "\EACA",
+  quiz-stats-high: "\EACB",
+  quiz-stats-low: "\EACC",
+  quiz-stats-time: "\EACD",
+  quiz: "\EACE",
+  refresh: "\EACF",
+  remove-bookmark: "\EAD0",
+  remove-from-collection: "\EAD1",
+  remove-link: "\EAD2",
+  replied: "\EAD3",
+  reply-2: "\EAD4",
+  reply-all-2: "\EAD5",
+  reply: "\EAD6",
+  reset: "\EAD7",
+  rewind: "\EAD8",
+  rss-add: "\EAD9",
+  rss: "\EADA",
+  rubric-dark: "\EADB",
+  rubric: "\EADC",
+  save: "\EADD",
+  search-address-book: "\EADE",
+  search: "\EADF",
+  settings-2: "\EAE0",
+  settings: "\EAE1",
+  shape-oval: "\EAE2",
+  shape-polygon: "\EAE3",
+  shape-rectangle: "\EAE4",
+  share: "\EAE5",
+  sis-imported: "\EAE6",
+  sis-not-synced: "\EAE7",
+  sis-synced: "\EAE8",
+  skype: "\EAE9",
+  speed-grader: "\EAEA",
+  standards: "\EAEB",
+  star-light: "\EAEC",
+  star: "\EAED",
+  stats: "\EAEE",
+  stop: "\EAEF",
+  strikethrough: "\EAF0",
+  student-view: "\EAF1",
+  syllabus: "\EAF2",
+  table: "\EAF3",
+  tag: "\EAF4",
+  target: "\EAF5",
+  text-background-color: "\EAF6",
+  text-centered: "\EAF7",
+  text-color: "\EAF8",
+  text-end: "\EAF9",
+  text-left: "\EAFA",
+  text-right: "\EAFB",
+  text-start: "\EAFC",
+  text-subscript: "\EAFD",
+  text-superscript: "\EAFE",
+  text: "\EAFF",
+  textarea: "\EB00",
+  timer: "\EB01",
+  toggle-end: "\EB02",
+  toggle-left: "\EB03",
+  toggle-right: "\EB04",
+  toggle-start: "\EB05",
+  trash: "\EB06",
+  trouble: "\EB07",
+  twitter-boxed: "\EB08",
+  twitter: "\EB09",
+  underline: "\EB0A",
+  unlock: "\EB0B",
+  unmuted: "\EB0C",
+  unpublish: "\EB0D",
+  unpublished: "\EB0E",
+  updown: "\EB0F",
+  upload: "\EB10",
+  user-add: "\EB11",
+  user: "\EB12",
+  video-camera: "\EB13",
+  video: "\EB14",
+  warning: "\EB15",
+  windows: "\EB16",
+  wordpress: "\EB17",
+  x: "\EB18",
+  zipped: "\EB19",
+  zoom-in: "\EB1A",
+  zoom-out: "\EB1B"
+);
+
+$icons-solid-bidirectional: (
+
+
+address-book: "true",
+
+
+
+
+annotate: "true",
+announcement: "true",
+
+
+arrow-end: "true",
+arrow-left: "true",
+
+arrow-open-end: "true",
+arrow-open-left: "true",
+arrow-open-right: "true",
+arrow-open-start: "true",
+
+arrow-right: "true",
+arrow-start: "true",
+
+assignment: "true",
+
+audio: "true",
+
+
+
+
+
+
+bullet-list: "true",
+
+
+
+
+
+
+chat: "true",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+compose: "true",
+
+
+courses: "true",
+
+
+
+
+discussion-reply-2: "true",
+
+
+
+
+discussion: "true",
+document: "true",
+
+
+
+edit: "true",
+
+
+
+
+
+
+essay: "true",
+
+
+expand-left: "true",
+expand-start: "true",
+
+export-content: "true",
+export: "true",
+external-link: "true",
+
+
+
+
+feedback: "true",
+
+
+
+
+
+
+
+
+folder-locked: "true",
+folder: "true",
+forward: "true",
+
+
+gradebook-export: "true",
+gradebook-import: "true",
+
+
+
+
+
+
+highlighter: "true",
+
+
+
+import-content: "true",
+import: "true",
+
+indent-2: "true",
+indent: "true",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+mini-arrow-end: "true",
+mini-arrow-left: "true",
+mini-arrow-right: "true",
+mini-arrow-start: "true",
+
+
+
+
+
+
+move-end: "true",
+move-left: "true",
+move-right: "true",
+move-start: "true",
+
+
+
+
+
+
+next-unread: "true",
+not-graded: "true",
+
+
+note: "true",
+
+
+open-folder: "true",
+
+outdent: "true",
+outdent2: "true",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+quiz-stats-high: "true",
+quiz-stats-low: "true",
+
+quiz: "true",
+
+
+
+
+replied: "true",
+reply-2: "true",
+reply-all-2: "true",
+reply: "true",
+
+
+
+
+rubric-dark: "true",
+rubric: "true",
+
+
+
+
+
+
+
+
+
+sis-imported: "true",
+
+
+
+
+
+
+
+
+
+
+
+syllabus: "true",
+
+
+
+
+
+
+text-end: "true",
+text-left: "true",
+text-right: "true",
+text-start: "true",
+
+
+
+textarea: "true",
+
+toggle-end: "true",
+toggle-left: "true",
+toggle-right: "true",
+toggle-start: "true",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 );
